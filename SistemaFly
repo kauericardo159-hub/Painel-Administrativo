@@ -1,113 +1,91 @@
--- Nome do Script: Fly_Module_Mobile_V4
+-- Nome: Fly_Module_V5
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
--- 1. LOCALIZAÇÃO DO PAINEL (COM ESPERA ROBUSTA)
+-- 1. LOCALIZAR O PAINEL V5
 local pGui = player:WaitForChild("PlayerGui")
-local mainGui = nil
-
--- Loop para garantir que o script encontre o painel injetado via GitHub
-for i = 1, 20 do 
-    mainGui = pGui:FindFirstChild("MainControlPanel")
-    if mainGui then break end
-    task.wait(0.5)
-end
-
-if not mainGui then 
-    warn("ERRO: MainControlPanel não encontrado após 10 segundos.")
-    return 
-end
-
+local mainGui = pGui:WaitForChild("MainControlPanel", 15)
 local scroll = mainGui.MainFrame:WaitForChild("ButtonList")
 
--- 2. VARIÁVEIS DE ESTADO DO FLY
+-- 2. VARIÁVEIS DE ESTADO
 local flying = false
-local flySpeed = 16
+local flySpeed = 50
 local bv, bg
 
--- --- NOTIFICAÇÃO PREMIUM ---
+-- --- NOTIFICAÇÃO ESTILOSA ---
 local function Notify(title, text, color)
     local notifyFrame = Instance.new("Frame")
-    notifyFrame.Size = UDim2.new(0, 240, 0, 70)
-    notifyFrame.Position = UDim2.new(0.5, -120, -0.2, 0) -- Começa fora da tela
-    notifyFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    notifyFrame.Size = UDim2.new(0, 250, 0, 70)
+    notifyFrame.Position = UDim2.new(0.5, -125, -0.2, 0)
+    notifyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     notifyFrame.Parent = mainGui
-    notifyFrame.ZIndex = 10
     
     local corner = Instance.new("UICorner", notifyFrame)
-    corner.CornerRadius = UDim.new(0, 12)
-    
     local stroke = Instance.new("UIStroke", notifyFrame)
     stroke.Color = color
     stroke.Thickness = 2
     
-    local content = Instance.new("TextLabel", notifyFrame)
-    content.Size = UDim2.new(1, -20, 1, -10)
-    content.Position = UDim2.new(0, 10, 0, 5)
-    content.BackgroundTransparency = 1
-    content.Text = "<b>" .. title .. "</b>\n" .. text
-    content.TextColor3 = Color3.new(1,1,1)
-    content.Font = Enum.Font.GothamBold
-    content.TextSize = 14
-    content.RichText = true
+    local lbl = Instance.new("TextLabel", notifyFrame)
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "<b>" .. title .. "</b>\n" .. text
+    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 14
+    lbl.RichText = true
 
-    -- Animação de entrada e saída
-    notifyFrame:TweenPosition(UDim2.new(0.5, -120, 0.05, 0), "Out", "Back", 0.5)
+    notifyFrame:TweenPosition(UDim2.new(0.5, -125, 0.05, 0), "Out", "Back", 0.5)
     task.delay(2.5, function()
-        notifyFrame:TweenPosition(UDim2.new(0.5, -120, -0.2, 0), "In", "Quad", 0.5)
-        task.wait(0.6)
+        notifyFrame:TweenPosition(UDim2.new(0.5, -125, -0.2, 0), "In", "Quad", 0.5)
+        task.wait(0.5)
         notifyFrame:Destroy()
     end)
 end
 
--- 3. ESTRUTURA DO BOTÃO (ALINHADO COM O DESIGN V4)
+-- --- ESTRUTURA DO BOTÃO ---
 local Container = Instance.new("Frame")
-Container.Name = "Fly_Entry"
+Container.Name = "FlyContainer"
 Container.Parent = scroll
-Container.Size = UDim2.new(1, -10, 0, 55) -- Altura ideal para a lista
+Container.Size = UDim2.new(1, -10, 0, 50)
 Container.BackgroundTransparency = 1
 
 local UIList = Instance.new("UIListLayout", Container)
 UIList.FillDirection = Enum.FillDirection.Horizontal
-UIList.Padding = UDim.new(0, 8)
+UIList.Padding = UDim.new(0, 10)
 UIList.VerticalAlignment = Enum.VerticalAlignment.Center
 
--- Input de Velocidade com Estilo Dark
+-- Input de Velocidade
 local SpeedInput = Instance.new("TextBox")
-SpeedInput.Name = "SpeedInput"
-SpeedInput.Size = UDim2.new(0, 80, 0, 45)
+SpeedInput.Size = UDim2.new(0, 80, 0, 40)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 SpeedInput.Text = "50"
-SpeedInput.PlaceholderText = "Vel."
 SpeedInput.TextColor3 = Color3.fromRGB(0, 255, 150)
 SpeedInput.Font = Enum.Font.GothamBold
-SpeedInput.TextSize = 18
-Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 10)
-local InputStroke = Instance.new("UIStroke", SpeedInput)
-InputStroke.Color = Color3.fromRGB(60, 60, 80)
+SpeedInput.TextSize = 16
+Instance.new("UICorner", SpeedInput)
+local sStroke = Instance.new("UIStroke", SpeedInput)
+sStroke.Color = Color3.fromRGB(60, 60, 70)
 
--- Botão de Ativação Principal
+-- Botão Ativar/Desativar
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name = "ToggleFly"
-ToggleBtn.Size = UDim2.new(1, -90, 0, 45)
+ToggleBtn.Size = UDim2.new(1, -90, 0, 40)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 ToggleBtn.Text = "1 | FLY: INATIVO"
-ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.TextColor3 = Color3.new(1,1,1)
 ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextSize = 15
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", ToggleBtn)
 
--- 4. LÓGICA DE MOVIMENTAÇÃO (FLY MOBILE ELITE)
+-- --- LÓGICA DE VOO MOBILE ---
 local function startFly()
     character = player.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
     
     bg = Instance.new("BodyGyro", character.HumanoidRootPart)
     bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bg.P = 15000 -- Estabilização forte
+    bg.P = 15000
     
     bv = Instance.new("BodyVelocity", character.HumanoidRootPart)
     bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
@@ -117,26 +95,25 @@ local function startFly()
     
     task.spawn(function()
         while flying and character and character:FindFirstChild("HumanoidRootPart") do
-            local moveDir = character.Humanoid.MoveDirection -- Lê o analógico do Mobile
+            local moveDir = character.Humanoid.MoveDirection 
             
             if moveDir.Magnitude > 0 then
-                -- O segredo para subir/descer: transformamos o movimento relativo à câmera
-                -- Se o jogador olhar para cima, o Vector3 aponta para cima no espaço do mundo
+                -- Direção baseada na câmara (3D)
                 local camCFrame = camera.CFrame
-                local lookVec = camCFrame.LookVector
-                local rightVec = camCFrame.RightVector
+                local look = camCFrame.LookVector
+                local right = camCFrame.RightVector
                 
-                -- Cálculo de direção 3D completa
-                local finalDir = (lookVec * (moveDir.Z * -1)) + (rightVec * moveDir.X)
-                bv.velocity = finalDir.Unit * flySpeed
+                local direction = (look * (moveDir.Z * -1)) + (right * moveDir.X)
+                bv.velocity = direction.Unit * flySpeed
             else
-                bv.velocity = Vector3.new(0, 0.1, 0) -- Flutuar parado
+                bv.velocity = Vector3.new(0, 0.1, 0)
             end
             
             bg.cframe = camera.CFrame
             RunService.RenderStepped:Wait()
         end
-        -- Limpeza ao sair do loop
+        
+        -- Reset ao sair
         if bg then bg:Destroy() end
         if bv then bv:Destroy() end
         if character:FindFirstChild("Humanoid") then
@@ -145,22 +122,19 @@ local function startFly()
     end)
 end
 
--- 5. EVENTO DE CLIQUE
+-- Evento de Clique
 ToggleBtn.MouseButton1Click:Connect(function()
     flying = not flying
     flySpeed = tonumber(SpeedInput.Text) or 50
     
     if flying then
         ToggleBtn.Text = "1 | FLY: ATIVO"
-        TweenService:Create(ToggleBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 180, 100)}):Play()
-        Notify("FLY ATIVADO", "Controle pelo Analógico\nVelocidade: " .. flySpeed, Color3.fromRGB(0, 255, 120))
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+        Notify("SISTEMA FLY", "Voo Ativado! Vel: " .. flySpeed, Color3.fromRGB(0, 255, 150))
         startFly()
     else
         ToggleBtn.Text = "1 | FLY: INATIVO"
-        TweenService:Create(ToggleBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(45, 45, 55)}):Play()
-        Notify("FLY DESATIVADO", "Modo Caminhada Restaurado", Color3.fromRGB(255, 50, 50))
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+        Notify("SISTEMA FLY", "Voo Desativado", Color3.fromRGB(255, 50, 50))
     end
 end)
-
--- Sincronizar com o ajuste automático do Canvas do MainControlPanel
-scroll.CanvasSize = UDim2.new(0, 0, 0, scroll.UIListLayout.AbsoluteContentSize.Y)
