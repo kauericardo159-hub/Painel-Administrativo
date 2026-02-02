@@ -1,38 +1,36 @@
--- Nome do Script: SpeedInjetor
+-- Nome: Speed_Module
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
-local MainGui = pGui:WaitForChild("MainControlPanel")
-local Scroll = MainGui.MainFrame.ButtonList
+local ScreenGui = pGui:WaitForChild("MainControlPanel", 10)
+local Scroll = ScreenGui.MainFrame:WaitForChild("ButtonList")
 
-local fastSpeed = 100
 local active = false
 
-local function toggleSpeed(btn)
+local Container = Instance.new("Frame")
+Container.Parent = Scroll
+Container.Size = UDim2.new(1, 0, 0, 45)
+Container.BackgroundTransparency = 1
+
+local Button = Instance.new("TextButton")
+Button.Parent = Container
+Button.Size = UDim2.new(1, 0, 1, 0)
+Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Button.Text = "2 | ATIVAR/DESATIVAR SPEED"
+Button.TextColor3 = Color3.new(1, 1, 1)
+Button.Font = Enum.Font.GothamBold
+Button.TextSize = 16
+
+Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
+
+Button.MouseButton1Click:Connect(function()
     active = not active
-    local char = player.Character
-    if char and char:FindFirstChild("Humanoid") then
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
         if active then
-            char.Humanoid.WalkSpeed = fastSpeed
-            btn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+            player.Character.Humanoid.WalkSpeed = 100
+            Button.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
         else
-            char.Humanoid.WalkSpeed = 16
-            btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            player.Character.Humanoid.WalkSpeed = 16
+            Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
         end
     end
-end
-
-local SpeedBtn = Instance.new("TextButton")
-SpeedBtn.Name = "SpeedButton"
-SpeedBtn.Parent = Scroll
-SpeedBtn.Size = UDim2.new(1, 0, 0, 40)
-SpeedBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-SpeedBtn.Text = "2 | ATIVAR/DESATIVAR SPEED"
-SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedBtn.Font = Enum.Font.GothamBold
-SpeedBtn.TextSize = 14
-
-Instance.new("UICorner", SpeedBtn).CornerRadius = UDim.new(0, 8)
-
-SpeedBtn.MouseButton1Click:Connect(function()
-    toggleSpeed(SpeedBtn)
 end)
