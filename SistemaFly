@@ -1,49 +1,18 @@
--- Nome: Fly_Module_Mobile
+-- Nome: Fly_V4_Injector
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local camera = workspace.CurrentCamera
-local RunService = game:GetService("RunService")
 
--- Referências da UI (MainControlPanel)
+-- Localizar o Painel V4
 local pGui = player:WaitForChild("PlayerGui")
-local mainGui = pGui:WaitForChild("MainControlPanel", 10)
+local mainGui = pGui:WaitForChild("MainControlPanel", 15)
 local scroll = mainGui.MainFrame:WaitForChild("ButtonList")
 
--- Variáveis de Estado
 local flying = false
 local flySpeed = 16
 local bv, bg
 
--- --- FUNÇÃO MENSAGEM ESTILOSA (NOTIFICAÇÃO) ---
-local function Notify(title, text, color)
-    local notifyFrame = Instance.new("Frame")
-    notifyFrame.Size = UDim2.new(0, 200, 0, 60)
-    notifyFrame.Position = UDim2.new(0.5, -100, 0.1, -100)
-    notifyFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    notifyFrame.Parent = pGui:FindFirstChild("MainControlPanel")
-    
-    local corner = Instance.new("UICorner", notifyFrame)
-    local stroke = Instance.new("UIStroke", notifyFrame)
-    stroke.Color = color
-    stroke.Thickness = 2
-    
-    local lbl = Instance.new("TextLabel", notifyFrame)
-    lbl.Size = UDim2.new(1, 0, 1, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = title .. "\n" .. text
-    lbl.TextColor3 = Color3.new(1,1,1)
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 14
-
-    notifyFrame:TweenPosition(UDim2.new(0.5, -100, 0.1, 20), "Out", "Back", 0.5)
-    task.delay(2, function()
-        notifyFrame:TweenPosition(UDim2.new(0.5, -100, 0.1, -100), "In", "Quad", 0.5)
-        task.wait(0.5)
-        notifyFrame:Destroy()
-    end)
-end
-
--- --- ESTRUTURA DO BOTÃO ---
+-- Criar Botão Estiloso
 local Container = Instance.new("Frame")
 Container.Name = "FlyContainer"
 Container.Parent = scroll
@@ -55,72 +24,57 @@ Layout.FillDirection = Enum.FillDirection.Horizontal
 Layout.Padding = UDim.new(0, 10)
 Layout.VerticalAlignment = Enum.VerticalAlignment.Center
 
--- Input de Velocidade
 local SpeedInput = Instance.new("TextBox")
-SpeedInput.Size = UDim2.new(0, 100, 0, 40)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-SpeedInput.Text = "16"
-SpeedInput.PlaceholderText = "Vel."
+SpeedInput.Size = UDim2.new(0, 80, 0, 40)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+SpeedInput.Text = "50"
 SpeedInput.TextColor3 = Color3.new(1,1,1)
 SpeedInput.Font = Enum.Font.GothamBold
 Instance.new("UICorner", SpeedInput)
 
--- Botão de Ativar/Inativo
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(1, -110, 0, 40)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(60, 20, 20)
-ToggleBtn.Text = "FLY: INATIVO"
+ToggleBtn.Size = UDim2.new(1, -90, 0, 40)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+ToggleBtn.Text = "FLY: DESATIVADO"
 ToggleBtn.TextColor3 = Color3.new(1,1,1)
 ToggleBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", ToggleBtn)
 
--- --- LÓGICA DO FLY ---
-local function startFly()
-    character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-    
-    bg = Instance.new("BodyGyro", character.HumanoidRootPart)
-    bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bg.P = 12000
-    
-    bv = Instance.new("BodyVelocity", character.HumanoidRootPart)
-    bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-    bv.velocity = Vector3.new(0, 0, 0)
-    
-    character.Humanoid.PlatformStand = true
-    
-    task.spawn(function()
-        while flying do
-            local moveDir = character.Humanoid.MoveDirection -- Pega o Analógico do Mobile
-            if moveDir.Magnitude > 0 then
-                -- Move baseado para onde a câmara olha (incluindo cima/baixo)
-                bv.velocity = camera.CFrame:VectorToWorldSpace(Vector3.new(moveDir.X, 0, moveDir.Z * -1).Unit * flySpeed)
-            else
-                bv.velocity = Vector3.new(0, 0.1, 0)
-            end
-            bg.cframe = camera.CFrame
-            RunService.RenderStepped:Wait()
-        end
-    end)
-end
-
+-- Lógica de Voo
 ToggleBtn.MouseButton1Click:Connect(function()
     flying = not flying
-    flySpeed = tonumber(SpeedInput.Text) or 16
+    flySpeed = tonumber(SpeedInput.Text) or 50
+    character = player.Character
     
     if flying then
         ToggleBtn.Text = "FLY: ATIVO"
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 120, 60)
-        Notify("FLY ATIVADO", "Velocidade: " .. flySpeed, Color3.new(0, 1, 0.5))
-        startFly()
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 100)
+        
+        bg = Instance.new("BodyGyro", character.HumanoidRootPart)
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.P = 12000
+        bv = Instance.new("BodyVelocity", character.HumanoidRootPart)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        
+        character.Humanoid.PlatformStand = true
+        
+        task.spawn(function()
+            while flying do
+                local moveDir = character.Humanoid.MoveDirection
+                if moveDir.Magnitude > 0 then
+                    bv.velocity = camera.CFrame:VectorToWorldSpace(Vector3.new(moveDir.X, 0, moveDir.Z * -1).Unit * flySpeed)
+                else
+                    bv.velocity = Vector3.new(0, 0.1, 0)
+                end
+                bg.cframe = camera.CFrame
+                task.wait()
+            end
+        end)
     else
-        ToggleBtn.Text = "FLY: INATIVO"
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(60, 20, 20)
-        Notify("FLY DESATIVADO", "Modo Caminhada", Color3.new(1, 0.2, 0.2))
+        ToggleBtn.Text = "FLY: DESATIVADO"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
         if bv then bv:Destroy() end
         if bg then bg:Destroy() end
-        if character:FindFirstChild("Humanoid") then
-            character.Humanoid.PlatformStand = false
-        end
+        character.Humanoid.PlatformStand = false
     end
 end)
