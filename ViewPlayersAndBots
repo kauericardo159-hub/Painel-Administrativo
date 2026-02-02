@@ -1,55 +1,73 @@
--- Nome do Script: ViewPlayersAndBots
+-- Nome do Script: ESPInjetor
 local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
+local MainGui = pGui:WaitForChild("MainControlPanel")
+local Scroll = MainGui.MainFrame.ButtonList
 
-local function applyESP(char, color, labelText)
-    -- Criar Outline (Destaque)
+local espActive = false
+
+local function applyESP(char, color, label)
     if not char:FindFirstChild("Highlight") then
-        local highlight = Instance.new("Highlight")
-        highlight.Parent = char
-        highlight.FillColor = color
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-        highlight.FillTransparency = 0.5
-    end
-
-    -- Criar Nome Flutuante (Tag)
-    if not char:FindFirstChild("ESPTag") then
-        local billboard = Instance.new("BillboardGui")
-        billboard.Name = "ESPTag"
-        billboard.AlwaysOnTop = true
-        billboard.Size = UDim2.new(0, 100, 0, 50)
-        billboard.Adornee = char:FindFirstChild("Head")
-        billboard.Parent = char
+        local h = Instance.new("Highlight", char)
+        h.FillColor = color
+        h.OutlineColor = Color3.new(1,1,1)
         
-        local text = Instance.new("TextLabel")
-        text.Parent = billboard
-        text.Size = UDim2.new(1, 0, 1, 0)
-        text.BackgroundTransparency = 1
-        text.Text = labelText
-        text.TextColor3 = color
-        text.Font = Enum.Font.GothamBold
-        text.TextSize = 14
+        local bgui = Instance.new("BillboardGui", char)
+        bgui.Name = "ESP_UI"
+        bgui.AlwaysOnTop = true
+        bgui.Size = UDim2.new(0, 100, 0, 50)
+        bgui.Adornee = char:FindFirstChild("Head")
+        
+        local txt = Instance.new("TextLabel", bgui)
+        txt.Size = UDim2.new(1, 0, 1, 0)
+        txt.BackgroundTransparency = 1
+        txt.TextColor3 = color
+        txt.TextStrokeTransparency = 0
+        txt.Font = Enum.Font.GothamBold
+        txt.TextSize = 12
+        txt.Text = label
     end
 end
 
-local function updateESP()
+local function clearESP()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "Highlight" or v.Name == "ESP_UI" then v:Destroy() end
+    end
+end
+
+local function updateLoop()
+    if not espActive then return end
     for _, model in pairs(workspace:GetChildren()) do
-        if model:FindFirstChild("Humanoid") and model:FindFirstChild("HumanoidRootPart") then
+        local hum = model:FindFirstChild("Humanoid")
+        if hum and model ~= player.Character then
             local p = game.Players:GetPlayerFromCharacter(model)
-            
             if p then
-                -- É um Jogador: Usa a cor do Time (Team)
                 applyESP(model, p.TeamColor.Color, p.Name)
             else
-                -- É um Bot: Usa cor Vermelha
-                if model.Name ~= player.Name then
-                    applyESP(model, Color3.fromRGB(255, 0, 0), "[BOT] " .. model.Name)
-                end
+                applyESP(model, Color3.new(1, 0, 0), "[BOT] " .. model.Name)
             end
         end
     end
 end
 
--- Executa o update a cada quadro (pode ser ligado/desligado)
-local connection = RunService.RenderStepped:Connect(updateESP)
+local EspBtn = Instance.new("TextButton")
+EspBtn.Parent = Scroll
+EspBtn.Size = UDim2.new(1, 0, 0, 40)
+EspBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+EspBtn.Text = "3 | ATIVAR/DESATIVAR VIEW"
+EspBtn.TextColor3 = Color3.new(1,1,1)
+EspBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", EspBtn)
 
--- Para desligar o botão, basta usar: connection:Disconnect()
+EspBtn.MouseButton1Click:Connect(function()
+    espActive = not espActive
+    if espActive then
+        EspBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+    else
+        EspBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        clearESP()
+    end
+end)
+
+RunService.RenderStepped:Connect(updateLoop)
