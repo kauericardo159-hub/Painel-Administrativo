@@ -1,101 +1,139 @@
--- Nome do Script: MainControlPanel_V2
+-- Nome do Script: MainControlPanel_V3_Ultimate
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local player = game.Players.LocalPlayer
-local pGui = player:WaitForChild("PlayerGui")
-
--- Destruir versão antiga se existir para não duplicar
-if pGui:FindFirstChild("MainControlPanel") then
-    pGui.MainControlPanel:Destroy()
-end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MainControlPanel"
-ScreenGui.Parent = pGui
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
--- Frame Principal (Deitado/Horizontal)
+-- FRAME PRINCIPAL
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.Position = UDim2.new(0.5, -250, 0.5, -125) -- Centralizado
-MainFrame.Size = UDim2.new(0, 500, 0, 300) -- Formato deitado
-MainFrame.BorderSizePixel = 0
-MainFrame.Visible = false
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -175)
+MainFrame.Size = UDim2.new(0, 600, 0, 350)
 MainFrame.ClipsDescendants = true
+MainFrame.Visible = false
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 15)
-MainCorner.Parent = MainFrame
+local UICorner = Instance.new("UICorner", MainFrame)
+UICorner.CornerRadius = UDim.new(0, 10)
 
--- Barra de Título (Header)
+-- FUNDO ANIMADO (Gradient)
+local BgGradient = Instance.new("UIGradient")
+BgGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 25)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(35, 20, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
+}
+BgGradient.Parent = MainFrame
+
+task.spawn(function()
+    local rot = 0
+    while true do
+        rot = rot + 1
+        BgGradient.Rotation = rot
+        task.wait(0.05)
+    end
+end)
+
+-- CABEÇALHO (NOME)
 local Header = Instance.new("Frame")
 Header.Name = "Header"
 Header.Parent = MainFrame
-Header.Size = UDim2.new(1, 0, 0, 45)
-Header.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Header.BorderSizePixel = 0
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Header.BackgroundTransparency = 0.4
 
-local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.CornerRadius = UDim.new(0, 15)
-HeaderCorner.Parent = Header
-
--- Título (Nome)
 local Title = Instance.new("TextLabel")
 Title.Parent = Header
 Title.Size = UDim2.new(1, 0, 1, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "MEU PAINEL DE CONTROLE" -- Você pode mudar o nome aqui
+Title.Text = "ADMINISTRATIVE SYSTEM V3"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
+Title.TextSize = 18
+Title.BackgroundTransparency = 1
 
--- Container da Lista de Botões (Rolagem)
-local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Name = "ButtonList"
-ScrollFrame.Parent = MainFrame
-ScrollFrame.Position = UDim2.new(0, 10, 0, 55)
-ScrollFrame.Size = UDim2.new(1, -20, 1, -65)
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.BorderSizePixel = 0
-ScrollFrame.ScrollBarThickness = 4
-ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Ajusta automaticamente
+-- SEÇÃO ESQUERDA (LISTA DE BOTÕES)
+local ButtonListFrame = Instance.new("ScrollingFrame")
+ButtonListFrame.Name = "ButtonList"
+ButtonListFrame.Parent = MainFrame
+ButtonListFrame.Position = UDim2.new(0, 10, 0, 50)
+ButtonListFrame.Size = UDim2.new(0, 380, 1, -60)
+ButtonListFrame.BackgroundTransparency = 0.9
+ButtonListFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ButtonListFrame.ScrollBarThickness = 2
+ButtonListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 
--- Layout da Lista (Grid para botões lado a lado ou List para um abaixo do outro)
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Parent = ScrollFrame
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 10)
+local UIList = Instance.new("UIListLayout", ButtonListFrame)
+UIList.Padding = UDim.new(0, 5)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Ajuste automático do tamanho do Scroll
-UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 20)
-end)
+-- SEÇÃO DIREITA (STATS)
+local StatsFrame = Instance.new("Frame")
+StatsFrame.Name = "StatsFrame"
+StatsFrame.Parent = MainFrame
+StatsFrame.Position = UDim2.new(0, 400, 0, 50)
+StatsFrame.Size = UDim2.new(0, 190, 1, -60)
+StatsFrame.BackgroundTransparency = 0.8
+StatsFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 
--- --- FUNÇÃO DE ANIMAÇÃO ---
-local function toggleMenu(visible)
-    if visible then
-        MainFrame.Visible = true
-        MainFrame.Size = UDim2.new(0, 0, 0, 300) -- Começa fino
-        TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 500, 0, 300)
-        }):Play()
-    else
-        local tween = TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-            Size = UDim2.new(0, 0, 0, 300)
-        })
-        tween:Play()
-        tween.Completed:Connect(function()
-            if MainFrame.Size.X.Offset < 10 then
-                MainFrame.Visible = false
-            end
-        end)
-    end
+Instance.new("UICorner", StatsFrame)
+
+local function CreateStatLabel(name, pos)
+    local lbl = Instance.new("TextLabel")
+    lbl.Name = name
+    lbl.Parent = StatsFrame
+    lbl.Size = UDim2.new(1, -20, 0, 30)
+    lbl.Position = UDim2.new(0, 10, 0, pos)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    lbl.Font = Enum.Font.GothamMedium
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    return lbl
 end
 
--- Detectar quando o botão de abrir for clicado no outro script
--- Nota: Isso assume que o botão de abrir altera a visibilidade do MainFrame
+local FpsLbl = CreateStatLabel("FPS", 10)
+local PingLbl = CreateStatLabel("Ping", 40)
+local ServerLbl = CreateStatLabel("Server", 70)
+local PlayerNumLbl = CreateStatLabel("Players", 100)
+local PlayTimeLbl = CreateStatLabel("PlayTime", 130)
+local ServerAgeLbl = CreateStatLabel("ServerAge", 160)
+
+-- LÓGICA DE ATUALIZAÇÃO DOS STATS
+local startTime = os.time()
+RunService.RenderStepped:Connect(function(dt)
+    if not MainFrame.Visible then return end
+    
+    -- FPS
+    FpsLbl.Text = "FPS: " .. math.floor(1/dt)
+    
+    -- PING (Aproximado)
+    local ping = math.floor(player:GetNetworkPing() * 1000)
+    PingLbl.Text = "PING: " .. ping .. "ms"
+    
+    -- SERVER ID
+    ServerLbl.Text = "ID: " .. game.JobId:sub(1,8)
+    
+    -- NUM PLAYERS
+    PlayerNumLbl.Text = "PLAYERS: " .. #game.Players:GetPlayers()
+    
+    -- TEMPO DE JOGO (Sessão)
+    local diff = os.time() - startTime
+    PlayTimeLbl.Text = "SESSÃO: " .. math.floor(diff/60) .. "m " .. (diff%60) .. "s"
+    
+    -- IDADE SERVER
+    local sAge = math.floor(workspace.DistributedGameTime)
+    ServerAgeLbl.Text = "SERVER AGE: " .. math.floor(sAge/60) .. "m"
+end)
+
+-- ANIMAÇÃO DE ABRIR/FECHAR
 MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-    toggleMenu(MainFrame.Visible)
+    if MainFrame.Visible then
+        MainFrame.Size = UDim2.new(0, 0, 0, 350)
+        TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 600, 0, 350)}):Play()
+    end
 end)
