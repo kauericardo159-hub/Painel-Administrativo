@@ -1,36 +1,113 @@
--- Nome: Speed_Module
+-- Nome: Speed_Module_Mobile
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
-local ScreenGui = pGui:WaitForChild("MainControlPanel", 10)
-local Scroll = ScreenGui.MainFrame:WaitForChild("ButtonList")
 
-local active = false
+-- Referências da UI
+local mainGui = pGui:WaitForChild("MainControlPanel", 10)
+local scroll = mainGui.MainFrame:WaitForChild("ButtonList")
 
+-- Variáveis de Estado
+local speedActive = false
+local normalSpeed = 16
+
+-- --- FUNÇÃO NOTIFICAÇÃO (Mesmo estilo do Fly) ---
+local function Notify(title, text, color)
+    local notifyFrame = Instance.new("Frame")
+    notifyFrame.Size = UDim2.new(0, 220, 0, 60)
+    notifyFrame.Position = UDim2.new(0.5, -110, 0.1, -100)
+    notifyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    notifyFrame.Parent = mainGui
+    
+    local corner = Instance.new("UICorner", notifyFrame)
+    local stroke = Instance.new("UIStroke", notifyFrame)
+    stroke.Color = color
+    stroke.Thickness = 2
+    
+    local lbl = Instance.new("TextLabel", notifyFrame)
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "<b>" .. title .. "</b>\n" .. text
+    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 14
+    lbl.RichText = true
+
+    notifyFrame:TweenPosition(UDim2.new(0.5, -110, 0.1, 20), "Out", "Back", 0.5)
+    task.delay(2, function()
+        notifyFrame:TweenPosition(UDim2.new(0.5, -110, 0.1, -100), "In", "Quad", 0.5)
+        task.wait(0.5)
+        notifyFrame:Destroy()
+    end)
+end
+
+-- --- ESTRUTURA DO BOTÃO ---
 local Container = Instance.new("Frame")
-Container.Parent = Scroll
-Container.Size = UDim2.new(1, 0, 0, 45)
+Container.Name = "SpeedContainer"
+Container.Parent = scroll
+Container.Size = UDim2.new(1, -10, 0, 50)
 Container.BackgroundTransparency = 1
 
-local Button = Instance.new("TextButton")
-Button.Parent = Container
-Button.Size = UDim2.new(1, 0, 1, 0)
-Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Button.Text = "2 | ATIVAR/DESATIVAR SPEED"
-Button.TextColor3 = Color3.new(1, 1, 1)
-Button.Font = Enum.Font.GothamBold
-Button.TextSize = 16
+local Layout = Instance.new("UIListLayout", Container)
+Layout.FillDirection = Enum.FillDirection.Horizontal
+Layout.Padding = UDim.new(0, 10)
+Layout.VerticalAlignment = Enum.VerticalAlignment.Center
 
-Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
+-- Input de Velocidade (Estiloso)
+local SpeedInput = Instance.new("TextBox")
+SpeedInput.Size = UDim2.new(0, 100, 0, 40)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+SpeedInput.Text = "100"
+SpeedInput.PlaceholderText = "Vel."
+SpeedInput.TextColor3 = Color3.fromRGB(0, 200, 255)
+SpeedInput.Font = Enum.Font.GothamBold
+SpeedInput.TextSize = 16
+Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
 
-Button.MouseButton1Click:Connect(function()
-    active = not active
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        if active then
-            player.Character.Humanoid.WalkSpeed = 100
-            Button.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+local InputStroke = Instance.new("UIStroke", SpeedInput)
+InputStroke.Color = Color3.fromRGB(60, 60, 60)
+
+-- Botão de Alternar
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(1, -110, 0, 40)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+ToggleBtn.Text = "SPEED: INATIVO"
+ToggleBtn.TextColor3 = Color3.new(1,1,1)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 14
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
+
+-- --- LÓGICA DO SPEED ---
+local function updateSpeed()
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if speedActive then
+            local targetSpeed = tonumber(SpeedInput.Text) or 100
+            char.Humanoid.WalkSpeed = targetSpeed
         else
-            player.Character.Humanoid.WalkSpeed = 16
-            Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            char.Humanoid.WalkSpeed = normalSpeed
         end
+    end
+end
+
+-- Loop para garantir que a velocidade não resete ao morrer ou por scripts do jogo
+task.spawn(function()
+    while true do
+        updateSpeed()
+        task.wait(0.5)
+    end
+end)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    speedActive = not speedActive
+    
+    if speedActive then
+        local currentVal = tonumber(SpeedInput.Text) or 100
+        ToggleBtn.Text = "SPEED: ATIVO"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255) -- Azul Neon
+        Notify("SPEED ATIVADO", "Velocidade definida para: " .. currentVal, Color3.fromRGB(0, 170, 255))
+    else
+        ToggleBtn.Text = "SPEED: INATIVO"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+        Notify("SPEED DESATIVADO", "Velocidade padrão: 16", Color3.fromRGB(200, 0, 0))
     end
 end)
