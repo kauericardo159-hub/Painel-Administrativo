@@ -1,13 +1,38 @@
--- Nome do Script: SistemaSpeed
+-- Nome do Script: SpeedInjetor
 local player = game.Players.LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
+local MainGui = pGui:WaitForChild("MainControlPanel")
+local Scroll = MainGui.MainFrame.ButtonList
 
-local function setSpeed(valor)
+local fastSpeed = 100
+local active = false
+
+local function toggleSpeed(btn)
+    active = not active
     local char = player.Character
     if char and char:FindFirstChild("Humanoid") then
-        char.Humanoid.WalkSpeed = tonumber(valor) or 16
+        if active then
+            char.Humanoid.WalkSpeed = fastSpeed
+            btn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+        else
+            char.Humanoid.WalkSpeed = 16
+            btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        end
     end
 end
 
--- Para usar no seu painel:
--- setSpeed(100) -- Ativa velocidade 100
--- setSpeed(16)  -- Volta ao normal
+local SpeedBtn = Instance.new("TextButton")
+SpeedBtn.Name = "SpeedButton"
+SpeedBtn.Parent = Scroll
+SpeedBtn.Size = UDim2.new(1, 0, 0, 40)
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+SpeedBtn.Text = "2 | ATIVAR/DESATIVAR SPEED"
+SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBtn.Font = Enum.Font.GothamBold
+SpeedBtn.TextSize = 14
+
+Instance.new("UICorner", SpeedBtn).CornerRadius = UDim.new(0, 8)
+
+SpeedBtn.MouseButton1Click:Connect(function()
+    toggleSpeed(SpeedBtn)
+end)
