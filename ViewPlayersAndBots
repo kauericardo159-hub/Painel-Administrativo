@@ -1,73 +1,51 @@
--- Nome do Script: ESPInjetor
-local RunService = game:GetService("RunService")
+-- Nome: ESP_Module
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
-local MainGui = pGui:WaitForChild("MainControlPanel")
-local Scroll = MainGui.MainFrame.ButtonList
+local ScreenGui = pGui:WaitForChild("MainControlPanel", 10)
+local Scroll = ScreenGui.MainFrame:WaitForChild("ButtonList")
 
 local espActive = false
 
-local function applyESP(char, color, label)
-    if not char:FindFirstChild("Highlight") then
-        local h = Instance.new("Highlight", char)
-        h.FillColor = color
-        h.OutlineColor = Color3.new(1,1,1)
-        
-        local bgui = Instance.new("BillboardGui", char)
-        bgui.Name = "ESP_UI"
-        bgui.AlwaysOnTop = true
-        bgui.Size = UDim2.new(0, 100, 0, 50)
-        bgui.Adornee = char:FindFirstChild("Head")
-        
-        local txt = Instance.new("TextLabel", bgui)
-        txt.Size = UDim2.new(1, 0, 1, 0)
-        txt.BackgroundTransparency = 1
-        txt.TextColor3 = color
-        txt.TextStrokeTransparency = 0
-        txt.Font = Enum.Font.GothamBold
-        txt.TextSize = 12
-        txt.Text = label
-    end
-end
+local Container = Instance.new("Frame")
+Container.Parent = Scroll
+Container.Size = UDim2.new(1, 0, 0, 45)
+Container.BackgroundTransparency = 1
 
-local function clearESP()
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == "Highlight" or v.Name == "ESP_UI" then v:Destroy() end
-    end
-end
+local Button = Instance.new("TextButton")
+Button.Parent = Container
+Button.Size = UDim2.new(1, 0, 1, 0)
+Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Button.Text = "3 | VIEW PLAYERS & BOTS"
+Button.TextColor3 = Color3.new(1, 1, 1)
+Button.Font = Enum.Font.GothamBold
+Button.TextSize = 16
 
-local function updateLoop()
-    if not espActive then return end
+Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
+
+-- Função para limpar e atualizar ESP (Outline e Name)
+local function updateESP()
     for _, model in pairs(workspace:GetChildren()) do
-        local hum = model:FindFirstChild("Humanoid")
-        if hum and model ~= player.Character then
-            local p = game.Players:GetPlayerFromCharacter(model)
-            if p then
-                applyESP(model, p.TeamColor.Color, p.Name)
+        if model:FindFirstChild("Humanoid") and model ~= player.Character then
+            local isPlayer = game.Players:GetPlayerFromCharacter(model)
+            local color = isPlayer and isPlayer.TeamColor.Color or Color3.new(1, 0, 0)
+            
+            if espActive then
+                if not model:FindFirstChild("Highlight") then
+                    local h = Instance.new("Highlight", model)
+                    h.FillColor = color
+                    h.OutlineColor = Color3.new(1,1,1)
+                end
             else
-                applyESP(model, Color3.new(1, 0, 0), "[BOT] " .. model.Name)
+                if model:FindFirstChild("Highlight") then model.Highlight:Destroy() end
             end
         end
     end
 end
 
-local EspBtn = Instance.new("TextButton")
-EspBtn.Parent = Scroll
-EspBtn.Size = UDim2.new(1, 0, 0, 40)
-EspBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-EspBtn.Text = "3 | ATIVAR/DESATIVAR VIEW"
-EspBtn.TextColor3 = Color3.new(1,1,1)
-EspBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", EspBtn)
-
-EspBtn.MouseButton1Click:Connect(function()
+Button.MouseButton1Click:Connect(function()
     espActive = not espActive
-    if espActive then
-        EspBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-    else
-        EspBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        clearESP()
-    end
+    Button.BackgroundColor3 = espActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(45, 45, 45)
+    updateESP()
 end)
 
-RunService.RenderStepped:Connect(updateLoop)
+game:GetService("RunService").RenderStepped:Connect(updateESP)
