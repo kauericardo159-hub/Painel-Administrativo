@@ -1,0 +1,38 @@
+-- Nome do Script: BotaoAtivador
+local ScreenGui = Instance.new("ScreenGui")
+local OpenButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+local UIGradient = Instance.new("UIGradient")
+
+-- Configurações Básicas
+ScreenGui.Name = "PainelAtivadorGui"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+OpenButton.Name = "AbrirFechar"
+OpenButton.Parent = ScreenGui
+OpenButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+OpenButton.Position = UDim2.new(0.02, 0, 0.85, 0) -- Canto inferior esquerdo
+OpenButton.Size = UDim2.new(0, 50, 0, 50)
+OpenButton.Text = "☰"
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.TextSize = 25
+OpenButton.Font = Enum.Font.GothamBold
+
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = OpenButton
+
+UIGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 60)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+}
+UIGradient.Parent = OpenButton
+
+-- Funcionalidade (Ligar ao Painel)
+OpenButton.MouseButton1Click:Connect(function()
+    local mainFrame = ScreenGui.Parent:FindFirstChild("MainControlPanel")
+    if mainFrame then
+        local frame = mainFrame:FindFirstChild("MainFrame")
+        frame.Visible = not frame.Visible
+    end
+end)

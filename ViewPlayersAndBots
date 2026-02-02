@@ -1,0 +1,55 @@
+-- Nome do Script: ViewPlayersAndBots
+local RunService = game:GetService("RunService")
+
+local function applyESP(char, color, labelText)
+    -- Criar Outline (Destaque)
+    if not char:FindFirstChild("Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = char
+        highlight.FillColor = color
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+    end
+
+    -- Criar Nome Flutuante (Tag)
+    if not char:FindFirstChild("ESPTag") then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "ESPTag"
+        billboard.AlwaysOnTop = true
+        billboard.Size = UDim2.new(0, 100, 0, 50)
+        billboard.Adornee = char:FindFirstChild("Head")
+        billboard.Parent = char
+        
+        local text = Instance.new("TextLabel")
+        text.Parent = billboard
+        text.Size = UDim2.new(1, 0, 1, 0)
+        text.BackgroundTransparency = 1
+        text.Text = labelText
+        text.TextColor3 = color
+        text.Font = Enum.Font.GothamBold
+        text.TextSize = 14
+    end
+end
+
+local function updateESP()
+    for _, model in pairs(workspace:GetChildren()) do
+        if model:FindFirstChild("Humanoid") and model:FindFirstChild("HumanoidRootPart") then
+            local p = game.Players:GetPlayerFromCharacter(model)
+            
+            if p then
+                -- É um Jogador: Usa a cor do Time (Team)
+                applyESP(model, p.TeamColor.Color, p.Name)
+            else
+                -- É um Bot: Usa cor Vermelha
+                if model.Name ~= player.Name then
+                    applyESP(model, Color3.fromRGB(255, 0, 0), "[BOT] " .. model.Name)
+                end
+            end
+        end
+    end
+end
+
+-- Executa o update a cada quadro (pode ser ligado/desligado)
+local connection = RunService.RenderStepped:Connect(updateESP)
+
+-- Para desligar o botão, basta usar: connection:Disconnect()

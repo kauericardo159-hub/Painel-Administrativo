@@ -1,0 +1,81 @@
+-- Nome do Script: MainControlPanel
+local TweenService = game:GetService("TweenService")
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local CommandList = Instance.new("ScrollingFrame")
+local UIListLayout = Instance.new("UIListLayout")
+
+-- Setup Inicial
+ScreenGui.Name = "MainControlPanel"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200) -- Centralizado
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.ClipsDescendants = true
+MainFrame.Visible = false -- Começa invisível
+
+local corner = Instance.new("UICorner", MainFrame)
+corner.CornerRadius = UDim.new(0, 10)
+
+-- Título
+Title.Name = "Header"
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.Text = "HUB DE COMANDOS"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+
+-- Lista de Botões/Comandos
+CommandList.Name = "CommandList"
+CommandList.Parent = MainFrame
+CommandList.BackgroundTransparency = 1
+CommandList.Position = UDim2.new(0, 10, 0, 60)
+CommandList.Size = UDim2.new(1, -20, 1, -70)
+CommandList.CanvasSize = UDim2.new(0, 0, 2, 0) -- Scroll
+
+UIListLayout.Parent = CommandList
+UIListLayout.Padding = UDim.new(0, 8)
+
+-- Função para Criar Botões Dinâmicos (Para o seu GitHub)
+local function CreateButton(name, callback)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Parent = CommandList
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 14
+    
+    local bCorner = Instance.new("UICorner", btn)
+    
+    btn.MouseButton1Click:Connect(callback)
+end
+
+-- EXEMPLOS DE BOTÕES (Onde você colocará seu Loadstring)
+CreateButton("Comando Especial 01", function()
+    print("Executando Script do GitHub...")
+    -- loadstring(game:HttpGet("SEU_LINK_RAW_AQUI"))()
+end)
+
+CreateButton("Velocidade (Speed)", function()
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50
+end)
+
+-- Animação de Abrir/Fechar
+MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+    if MainFrame.Visible then
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        local tween = TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Size = UDim2.new(0, 300, 0, 400)})
+        tween:Play()
+    end
+end)

@@ -1,0 +1,13 @@
+-- Nome do Script: SistemaSpeed
+local player = game.Players.LocalPlayer
+
+local function setSpeed(valor)
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.WalkSpeed = tonumber(valor) or 16
+    end
+end
+
+-- Para usar no seu painel:
+-- setSpeed(100) -- Ativa velocidade 100
+-- setSpeed(16)  -- Volta ao normal
