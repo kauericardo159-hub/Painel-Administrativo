@@ -12,11 +12,11 @@ ScreenGui.Name = "MainControlPanel"
 ScreenGui.Parent = pGui
 ScreenGui.ResetOnSpawn = false
 
--- Frame Principal
+-- --- DESIGN DO PAINEL ---
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
 MainFrame.Position = UDim2.new(0.5, -350, 0.5, -200)
 MainFrame.Size = UDim2.new(0, 700, 0, 400)
 MainFrame.ClipsDescendants = true
@@ -25,96 +25,105 @@ MainFrame.Visible = false
 local UICorner = Instance.new("UICorner", MainFrame)
 UICorner.CornerRadius = UDim.new(0, 20)
 
--- FUNDO ANIMADO (Gradiente Fluido)
-local Grad = Instance.new("UIGradient")
-Grad.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 40)),
-	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 20, 60)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 40))
-})
-Grad.Parent = MainFrame
+local UIStroke = Instance.new("UIStroke", MainFrame)
+UIStroke.Thickness = 3
+UIStroke.Color = Color3.fromRGB(0, 170, 255)
+UIStroke.Transparency = 0.5
 
-task.spawn(function()
-	while true do
-		Grad.Rotation = Grad.Rotation + 1
-		task.wait(0.02)
-	end
-end)
+-- --- FUNDO ANIMADO (PARTÍCULAS) ---
+local function CreateParticle()
+    local p = Instance.new("Frame")
+    p.Size = UDim2.new(0, math.random(2, 5), 0, math.random(2, 5))
+    p.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    p.BackgroundTransparency = 0.6
+    p.Position = UDim2.new(math.random(), 0, 1.1, 0)
+    p.Parent = MainFrame
+    Instance.new("UICorner", p).CornerRadius = UDim.new(1, 0)
+    
+    local speed = math.random(5, 10)
+    task.spawn(function()
+        while p.Parent do
+            p.Position = p.Position - UDim2.new(0, 0, 0.002 * speed, 0)
+            if p.Position.Y.Scale < -0.1 then p.Position = UDim2.new(math.random(), 0, 1.1, 0) end
+            RunService.RenderStepped:Wait()
+        end
+    end)
+end
+for i = 1, 15 do CreateParticle() end
 
--- CABEÇALHO
+-- --- ESTRUTURA INTERNA ---
 local Header = Instance.new("Frame", MainFrame)
+Header.Name = "Header"
 Header.Size = UDim2.new(1, 0, 0, 50)
-Header.BackgroundTransparency = 0.9
-Header.BackgroundColor3 = Color3.new(1,1,1)
+Header.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+Header.BackgroundTransparency = 0.3
 
 local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, 0, 1, 0)
-Title.Text = "SISTEMA ADMINISTRATIVO V5"
-Title.TextColor3 = Color3.new(1,1,1)
+Title.Text = "ADMIN HUB • PREMIUM V5"
+Title.TextColor3 = Color3.new(1, 1, 1)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
+Title.TextSize = 18
 Title.BackgroundTransparency = 1
 
--- LISTA DE BOTÕES (Ajustada)
-local Scroll = Instance.new("ScrollingFrame")
+-- LISTA DE BOTÕES (O CORAÇÃO DO SCRIPT)
+local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Name = "ButtonList"
-Scroll.Parent = MainFrame
+Scroll.Size = UDim2.new(0, 450, 1, -70)
 Scroll.Position = UDim2.new(0, 15, 0, 60)
-Scroll.Size = UDim2.new(0, 460, 1, -75)
 Scroll.BackgroundTransparency = 1
-Scroll.BorderSizePixel = 0
-Scroll.ScrollBarThickness = 4
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- Começa em 0
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 200)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- Auto-ajuste
+Scroll.ScrollBarThickness = 2
+Scroll.ScrollingDirection = Enum.ScrollingDirection.Y
 
-local UIList = Instance.new("UIListLayout", Scroll)
-UIList.Padding = UDim.new(0, 10)
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
+local Layout = Instance.new("UIListLayout", Scroll)
+Layout.Padding = UDim.new(0, 10)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- FIX: Função que obriga o Canvas a crescer quando um botão entra
-local function ForceResize()
-	Scroll.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
-end
+-- FIX: Forçar atualização do CanvasSize quando botões entram
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
+end)
 
-UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(ForceResize)
-
--- PAINEL LATERAL (STATS)
+-- --- PAINEL LATERAL (STATS) ---
 local StatsFrame = Instance.new("Frame", MainFrame)
-StatsFrame.Position = UDim2.new(0, 490, 0, 60)
-StatsFrame.Size = UDim2.new(0, 195, 1, -75)
+StatsFrame.Position = UDim2.new(1, -215, 0, 60)
+StatsFrame.Size = UDim2.new(0, 200, 1, -75)
 StatsFrame.BackgroundColor3 = Color3.new(0,0,0)
 StatsFrame.BackgroundTransparency = 0.8
 Instance.new("UICorner", StatsFrame)
 
-local function CreateStat(name, pos)
-	local l = Instance.new("TextLabel", StatsFrame)
-	l.Size = UDim2.new(1, -20, 0, 30)
-	l.Position = UDim2.new(0, 10, 0, pos)
-	l.BackgroundTransparency = 1
-	l.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-	l.Font = Enum.Font.GothamMedium
-	l.TextSize = 14
-	l.TextXAlignment = Enum.TextXAlignment.Left
-	return l
+local function AddStat(name)
+    local l = Instance.new("TextLabel", StatsFrame)
+    l.Size = UDim2.new(1, -20, 0, 30)
+    l.BackgroundTransparency = 1
+    l.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    l.Font = Enum.Font.GothamBold
+    l.TextSize = 13
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.Name = name
+    return l
 end
 
-local fL = CreateStat("FPS: --", 10)
-local pL = CreateStat("PING: --", 45)
-local sL = CreateStat("PLAYERS: --", 80)
+local fpsL = AddStat("FPS")
+local pingL = AddStat("Ping")
+local playL = AddStat("Players")
 
--- Update Stats
-RunService.RenderStepped:Connect(function(dt)
-	if MainFrame.Visible then
-		fL.Text = "⚡ FPS: " .. math.floor(1/dt)
-		pL.Text = "📡 PING: " .. math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
-		sL.Text = "👥 PLAYERS: " .. #game.Players:GetPlayers()
-	end
+Instance.new("UIListLayout", StatsFrame).Padding = UDim.new(0, 5)
+
+-- Loop de Stats
+task.spawn(function()
+    while task.wait(1) do
+        fpsL.Text = " ⚡ FPS: " .. math.floor(workspace:GetRealPhysicsFPS())
+        pingL.Text = " 📡 PING: " .. math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
+        playL.Text = " 👥 PLAYERS: " .. #game.Players:GetPlayers()
+    end
 end)
 
--- Animação de Abrir
+-- --- ANIMAÇÃO DE ABRIR ---
 MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-	if MainFrame.Visible then
-		MainFrame.Size = UDim2.new(0, 0, 0, 400)
-		TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Size = UDim2.new(0, 700, 0, 400)}):Play()
-	end
+    if MainFrame.Visible then
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Size = UDim2.new(0, 700, 0, 400)}):Play()
+    end
 end)
