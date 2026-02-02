@@ -1,38 +1,92 @@
--- Nome do Script: BotaoAtivador
-local ScreenGui = Instance.new("ScreenGui")
-local OpenButton = Instance.new("TextButton")
-local UICorner = Instance.new("UICorner")
-local UIGradient = Instance.new("UIGradient")
+-- Nome do Script: BotaoAtivador_V3_Elite
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
 
--- Configurações Básicas
+-- Configuração da ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PainelAtivadorGui"
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = pGui
 ScreenGui.ResetOnSpawn = false
 
+-- Botão Principal
+local OpenButton = Instance.new("TextButton")
 OpenButton.Name = "AbrirFechar"
 OpenButton.Parent = ScreenGui
-OpenButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-OpenButton.Position = UDim2.new(0.02, 0, 0.85, 0) -- Canto inferior esquerdo
-OpenButton.Size = UDim2.new(0, 50, 0, 50)
+OpenButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+OpenButton.Position = UDim2.new(0.02, 0, 0.75, 0) -- Subi para 75% da tela (estava em 85%)
+OpenButton.Size = UDim2.new(0, 55, 0, 55)
 OpenButton.Text = "☰"
 OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 OpenButton.TextSize = 25
 OpenButton.Font = Enum.Font.GothamBold
+OpenButton.AutoButtonColor = false -- Desativado para usarmos nossas próprias animações
 
-UICorner.CornerRadius = UDim.new(0, 12)
+-- Arredondamento
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
 UICorner.Parent = OpenButton
 
+-- Borda com Brilho (Stroke)
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(0, 170, 255)
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+UIStroke.Parent = OpenButton
+
+-- Gradiente Animado no Botão
+local UIGradient = Instance.new("UIGradient")
 UIGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 60)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 120, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 200))
 }
 UIGradient.Parent = OpenButton
 
--- Funcionalidade (Ligar ao Painel)
+-- Sombra/Brilho Externo (Efeito Neon)
+local Shadow = Instance.new("ImageLabel")
+Shadow.Name = "Shadow"
+Shadow.Parent = OpenButton
+Shadow.BackgroundTransparency = 1
+Shadow.Position = UDim2.new(0.5, -40, 0.5, -40)
+Shadow.Size = UDim2.new(0, 80, 0, 80)
+Shadow.ZIndex = 0
+Shadow.Image = "rbxassetid://1316045217" -- Textura de Glow
+Shadow.ImageColor3 = Color3.fromRGB(0, 170, 255)
+Shadow.ImageTransparency = 0.5
+
+-- --- ANIMAÇÕES ---
+
+-- Rotação suave do gradiente
+task.spawn(function()
+    while true do
+        UIGradient.Rotation = UIGradient.Rotation + 2
+        task.wait(0.03)
+    end
+end)
+
+-- Efeito de Hover (Passar o Mouse)
+OpenButton.MouseEnter:Connect(function()
+    TweenService:Create(OpenButton, TweenInfo.new(0.3), {Size = UDim2.new(0, 65, 0, 65), BackgroundColor3 = Color3.fromRGB(40, 40, 50)}):Play()
+    TweenService:Create(UIStroke, TweenInfo.new(0.3), {Thickness = 4}):Play()
+end)
+
+OpenButton.MouseLeave:Connect(function()
+    TweenService:Create(OpenButton, TweenInfo.new(0.3), {Size = UDim2.new(0, 55, 0, 55), BackgroundColor3 = Color3.fromRGB(30, 30, 35)}):Play()
+    TweenService:Create(UIStroke, TweenInfo.new(0.3), {Thickness = 2}):Play()
+end)
+
+-- Função de Click para abrir o Painel V3
 OpenButton.MouseButton1Click:Connect(function()
-    local mainFrame = ScreenGui.Parent:FindFirstChild("MainControlPanel")
-    if mainFrame then
-        local frame = mainFrame:FindFirstChild("MainFrame")
-        frame.Visible = not frame.Visible
+    -- Som de click (opcional)
+    local clickSound = Instance.new("Sound", OpenButton)
+    clickSound.SoundId = "rbxassetid://12222242"
+    clickSound:Play()
+    
+    local mainGui = pGui:FindFirstChild("MainControlPanel")
+    if mainGui then
+        local frame = mainGui:FindFirstChild("MainFrame")
+        if frame then
+            frame.Visible = not frame.Visible
+        end
     end
 end)
