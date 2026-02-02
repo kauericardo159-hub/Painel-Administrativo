@@ -1,21 +1,20 @@
--- Nome: Fly_System_V4_Universal
+-- Nome do Script: FlyMobile_Elite
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
 local RunService = game:GetService("RunService")
 
--- Sincronização com o Painel Principal
-local ScreenGui = pGui:WaitForChild("MainControlPanel", 15)
+-- Espera o Painel Principal
+local ScreenGui = pGui:WaitForChild("MainControlPanel", 10)
 local Scroll = ScreenGui.MainFrame:WaitForChild("ButtonList")
 
 -- Variáveis de Controle
 local flying = false
-local flySpeed = 16
-local bodyVelocity, bodyGyro
+local flySpeed = 50
+local bv, bg
 
 -- --- INTERFACE DO BOTÃO ---
-
 local Container = Instance.new("Frame")
-Container.Name = "FlyModuleContainer"
+Container.Name = "FlyContainer"
 Container.Parent = Scroll
 Container.Size = UDim2.new(1, -10, 0, 50)
 Container.BackgroundTransparency = 1
@@ -25,116 +24,95 @@ UIList.FillDirection = Enum.FillDirection.Horizontal
 UIList.Padding = UDim.new(0, 10)
 UIList.VerticalAlignment = Enum.VerticalAlignment.Center
 
--- 1. Input de Velocidade (TextBox)
+-- Input de Velocidade
 local SpeedInput = Instance.new("TextBox")
 SpeedInput.Name = "SpeedInput"
 SpeedInput.Parent = Container
 SpeedInput.Size = UDim2.new(0, 120, 0, 40)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-SpeedInput.Text = "Vel: 16"
-SpeedInput.PlaceholderText = "Velocidade"
+SpeedInput.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+SpeedInput.Text = "Vel: 50"
+SpeedInput.PlaceholderText = "Vel..."
 SpeedInput.TextColor3 = Color3.new(1, 1, 1)
 SpeedInput.Font = Enum.Font.GothamBold
 SpeedInput.TextSize = 14
 
-local SpeedCorner = Instance.new("UICorner", SpeedInput)
-local SpeedStroke = Instance.new("UIStroke", SpeedInput)
-SpeedStroke.Color = Color3.fromRGB(0, 170, 255)
-SpeedStroke.Thickness = 1.5
+local UICornerInput = Instance.new("UICorner", SpeedInput)
+UICornerInput.CornerRadius = UDim.new(0, 8)
 
--- 2. Botão de Ativar/Inativo
+-- Botão de Ativar/Desativar
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name = "ToggleFly"
+ToggleBtn.Name = "ToggleBtn"
 ToggleBtn.Parent = Container
 ToggleBtn.Size = UDim2.new(1, -130, 0, 40)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-ToggleBtn.Text = "ATIVAR | INATIVO"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+ToggleBtn.Text = "FLY: INATIVO"
 ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.TextSize = 14
 
-local BtnCorner = Instance.new("UICorner", ToggleBtn)
-local BtnStroke = Instance.new("UIStroke", ToggleBtn)
-BtnStroke.Color = Color3.fromRGB(255, 255, 255)
-BtnStroke.Thickness = 2
-BtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
--- Animação do UIStroke (Arco-íris suave)
-task.spawn(function()
-    local h = 0
-    while true do
-        h = h + 1/360
-        BtnStroke.Color = Color3.fromHSV(h, 0.8, 1)
-        task.wait(0.02)
-    end
-end)
+local UICornerBtn = Instance.new("UICorner", ToggleBtn)
+UICornerBtn.CornerRadius = UDim.new(0, 8)
 
 -- --- LÓGICA DO FLY ---
 
--- Atualizar Velocidade pelo Value
+-- Atualizar Velocidade pelo Input
 SpeedInput.FocusLost:Connect(function()
-    local val = SpeedInput.Text:gsub("Vel: ", "")
-    local num = tonumber(val)
-    if num then
-        flySpeed = num
-        SpeedInput.Text = "Vel: " .. num
+    local val = tonumber(SpeedInput.Text:match("%d+"))
+    if val then
+        flySpeed = val
+        SpeedInput.Text = "Vel: " .. val
     else
         SpeedInput.Text = "Vel: " .. flySpeed
     end
 end)
 
 local function startFly()
-    local char = player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
     
-    local root = char.HumanoidRootPart
-    local hum = char.Humanoid
+    bg = Instance.new("BodyGyro", root)
+    bg.P = 9e4
+    bg.maxTorque = Vector3.new(9e4, 9e4, 9e4)
+    bg.cframe = root.CFrame
     
-    bodyVelocity = Instance.new("BodyVelocity", root)
-    bodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    
-    bodyGyro = Instance.new("BodyGyro", root)
-    bodyGyro.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
-    bodyGyro.P = 10000
+    bv = Instance.new("BodyVelocity", root)
+    bv.velocity = Vector3.new(0, 0, 0)
+    bv.maxForce = Vector3.new(9e4, 9e4, 9e4)
     
     hum.PlatformStand = true
     
     task.spawn(function()
         while flying do
-            local camera = workspace.CurrentCamera
-            -- MoveDirection detecta Analógico (Mobile) e Teclado (PC) automaticamente
+            -- A mágica do Mobile: Pegar a direção que o Humanoid quer andar (Analógico)
             local moveDir = hum.MoveDirection
             
             if moveDir.Magnitude > 0 then
-                bodyVelocity.Velocity = camera.CFrame:VectorToWorldSpace(Vector3.new(moveDir.X, moveDir.Y, moveDir.Z)) * flySpeed
+                bv.velocity = moveDir * flySpeed
             else
-                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                bv.velocity = Vector3.new(0, 0, 0)
             end
             
-            bodyGyro.CFrame = camera.CFrame
+            -- Mantém o corpo virado para onde a câmera aponta
+            bg.cframe = workspace.CurrentCamera.CFrame
             RunService.RenderStepped:Wait()
         end
     end)
 end
 
-local function stopFly()
-    if bodyVelocity then bodyVelocity:Destroy() end
-    if bodyGyro then bodyGyro:Destroy() end
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.PlatformStand = false
-    end
-end
-
 ToggleBtn.MouseButton1Click:Connect(function()
     flying = not flying
     if flying then
-        ToggleBtn.Text = "ATIVAR | ATIVO"
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        ToggleBtn.Text = "FLY: ATIVO"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
         startFly()
     else
-        ToggleBtn.Text = "ATIVAR | INATIVO"
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        stopFly()
+        ToggleBtn.Text = "FLY: INATIVO"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        if bg then bg:Destroy() end
+        if bv then bv:Destroy() end
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.PlatformStand = false
+        end
     end
 end)
