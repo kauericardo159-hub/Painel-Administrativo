@@ -1,118 +1,147 @@
--- Nome do Script: FlyMobile_Elite
+-- Nome: Fly_Mobile_Module
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
--- Espera o Painel Principal
+-- Referência ao seu Painel
 local ScreenGui = pGui:WaitForChild("MainControlPanel", 10)
 local Scroll = ScreenGui.MainFrame:WaitForChild("ButtonList")
 
 -- Variáveis de Controle
 local flying = false
-local flySpeed = 50
-local bv, bg
+local flySpeed = 16
+local bodyGyro, bodyVelocity
+local connection
 
--- --- INTERFACE DO BOTÃO ---
+-- --- SISTEMA DE NOTIFICAÇÃO (BALÃO) ---
+local function Notify(text, color)
+    local notificationGui = Instance.new("ScreenGui", pGui)
+    local frame = Instance.new("Frame", notificationGui)
+    frame.Size = UDim2.new(0, 200, 0, 50)
+    frame.Position = UDim2.new(0.5, -100, 0.1, -60)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BorderSizePixel = 0
+    
+    local corner = Instance.new("UICorner", frame)
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Color = color
+    stroke.Thickness = 2
+    
+    local lbl = Instance.new("TextLabel", frame)
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.new(1, 1, 1)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 14
+    
+    -- Animação de entrada e saída
+    frame:TweenPosition(UDim2.new(0.5, -100, 0.1, 0), "Out", "Back", 0.5)
+    task.delay(2, function()
+        frame:TweenPosition(UDim2.new(0.5, -100, 0.1, -60), "In", "Back", 0.5)
+        task.wait(0.5)
+        notificationGui:Destroy()
+    end)
+end
+
+-- --- ESTRUTURA DO BOTÃO (LAYOUT SOLICITADO) ---
 local Container = Instance.new("Frame")
-Container.Name = "FlyContainer"
+Container.Name = "FlyControl"
 Container.Parent = Scroll
-Container.Size = UDim2.new(1, -10, 0, 50)
-Container.BackgroundTransparency = 1
+Container.Size = UDim2.new(1, 0, 0, 50)
+Container.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+local cCorner = Instance.new("UICorner", Container)
 
-local UIList = Instance.new("UIListLayout", Container)
-UIList.FillDirection = Enum.FillDirection.Horizontal
-UIList.Padding = UDim.new(0, 10)
-UIList.VerticalAlignment = Enum.VerticalAlignment.Center
+local Layout = Instance.new("UIListLayout", Container)
+Layout.FillDirection = Enum.FillDirection.Horizontal
+Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+Layout.Padding = UDim.new(0, 10)
 
 -- Input de Velocidade
 local SpeedInput = Instance.new("TextBox")
-SpeedInput.Name = "SpeedInput"
 SpeedInput.Parent = Container
-SpeedInput.Size = UDim2.new(0, 120, 0, 40)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-SpeedInput.Text = "Vel: 50"
+SpeedInput.Size = UDim2.new(0, 120, 0, 35)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+SpeedInput.Text = "Vel: 16"
 SpeedInput.PlaceholderText = "Vel..."
 SpeedInput.TextColor3 = Color3.new(1, 1, 1)
-SpeedInput.Font = Enum.Font.GothamBold
+SpeedInput.Font = Enum.Font.Gotham
 SpeedInput.TextSize = 14
+Instance.new("UICorner", SpeedInput)
 
-local UICornerInput = Instance.new("UICorner", SpeedInput)
-UICornerInput.CornerRadius = UDim.new(0, 8)
-
--- Botão de Ativar/Desativar
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name = "ToggleBtn"
-ToggleBtn.Parent = Container
-ToggleBtn.Size = UDim2.new(1, -130, 0, 40)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-ToggleBtn.Text = "FLY: INATIVO"
-ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextSize = 14
-
-local UICornerBtn = Instance.new("UICorner", ToggleBtn)
-UICornerBtn.CornerRadius = UDim.new(0, 8)
-
--- --- LÓGICA DO FLY ---
-
--- Atualizar Velocidade pelo Input
 SpeedInput.FocusLost:Connect(function()
     local val = tonumber(SpeedInput.Text:match("%d+"))
     if val then
         flySpeed = val
-        SpeedInput.Text = "Vel: " .. val
+        SpeedInput.Text = "Vel: "..val
     else
-        SpeedInput.Text = "Vel: " .. flySpeed
+        flySpeed = 16
+        SpeedInput.Text = "Vel: 16"
     end
 end)
 
-local function startFly()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
-    local hum = char:WaitForChild("Humanoid")
+-- Botão Ativar/Desativar
+local ActionBtn = Instance.new("TextButton")
+ActionBtn.Parent = Container
+ActionBtn.Size = UDim2.new(0, 200, 0, 35)
+ActionBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+ActionBtn.Text = "ATIVAR: INATIVO"
+ActionBtn.TextColor3 = Color3.new(1, 1, 1)
+ActionBtn.Font = Enum.Font.GothamBold
+ActionBtn.TextSize = 14
+Instance.new("UICorner", ActionBtn)
+
+-- --- LÓGICA DO FLY (MOBILE FRIENDLY) ---
+local function ToggleFly()
+    local char = player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
     
-    bg = Instance.new("BodyGyro", root)
-    bg.P = 9e4
-    bg.maxTorque = Vector3.new(9e4, 9e4, 9e4)
-    bg.cframe = root.CFrame
+    if not root or not hum then return end
     
-    bv = Instance.new("BodyVelocity", root)
-    bv.velocity = Vector3.new(0, 0, 0)
-    bv.maxForce = Vector3.new(9e4, 9e4, 9e4)
+    flying = not flying
     
-    hum.PlatformStand = true
-    
-    task.spawn(function()
-        while flying do
-            -- A mágica do Mobile: Pegar a direção que o Humanoid quer andar (Analógico)
+    if flying then
+        ActionBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        ActionBtn.Text = "ATIVAR: ATIVO"
+        Notify("FLY ATIVADO", Color3.fromRGB(0, 255, 100))
+        
+        -- Configuração de Forças
+        bodyGyro = Instance.new("BodyGyro", root)
+        bodyGyro.P = 9e4
+        bodyGyro.maxTorque = Vector3.new(9e4, 9e4, 9e4)
+        
+        bodyVelocity = Instance.new("BodyVelocity", root)
+        bodyVelocity.velocity = Vector3.new(0, 0, 0)
+        bodyVelocity.maxForce = Vector3.new(9e4, 9e4, 9e4)
+        
+        hum.PlatformStand = true
+        
+        -- Loop de Movimento baseado na Câmera (Igual HD Admin)
+        connection = RunService.RenderStepped:Connect(function()
+            bodyGyro.cframe = workspace.CurrentCamera.CFrame
+            
+            -- Detectar movimento pelo analógico/teclado
             local moveDir = hum.MoveDirection
-            
             if moveDir.Magnitude > 0 then
-                bv.velocity = moveDir * flySpeed
+                -- O MoveDirection já considera para onde o analógico aponta.
+                -- Multiplicamos pelo LookVector da câmera para subir/descer se olhar para cima/baixo.
+                bodyVelocity.velocity = workspace.CurrentCamera.CFrame.LookVector * (moveDir.Magnitude * flySpeed)
             else
-                bv.velocity = Vector3.new(0, 0, 0)
+                bodyVelocity.velocity = Vector3.new(0, 0, 0)
             end
-            
-            -- Mantém o corpo virado para onde a câmera aponta
-            bg.cframe = workspace.CurrentCamera.CFrame
-            RunService.RenderStepped:Wait()
-        end
-    end)
+        end)
+    else
+        ActionBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+        ActionBtn.Text = "ATIVAR: INATIVO"
+        Notify("FLY DESATIVADO", Color3.fromRGB(255, 50, 50))
+        
+        if connection then connection:Disconnect() end
+        if bodyGyro then bodyGyro:Destroy() end
+        if bodyVelocity then bodyVelocity:Destroy() end
+        hum.PlatformStand = false
+    end
 end
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    flying = not flying
-    if flying then
-        ToggleBtn.Text = "FLY: ATIVO"
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        startFly()
-    else
-        ToggleBtn.Text = "FLY: INATIVO"
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        if bg then bg:Destroy() end
-        if bv then bv:Destroy() end
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid.PlatformStand = false
-        end
-    end
-end)
+ActionBtn.MouseButton1Click:Connect(ToggleFly)
