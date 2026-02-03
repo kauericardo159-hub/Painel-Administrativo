@@ -1,124 +1,146 @@
--- Nome: MainControlPanel_V7_Fixed
+-- Nome: MainControlPanel_V7_Refeito
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
 
--- Limpeza Total
+-- Limpeza absoluta de vestígios anteriores
 if pGui:FindFirstChild("MainControlPanel") then pGui.MainControlPanel:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MainControlPanel"
 ScreenGui.Parent = pGui
 ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- Ocupa a tela inteira se necessário
 
--- --- FRAME PRINCIPAL ---
+-- --- FRAME PRINCIPAL (DESIGN PREMIUM) ---
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 MainFrame.Position = UDim2.new(0.5, -350, 0.5, -200)
 MainFrame.Size = UDim2.new(0, 700, 0, 400)
 MainFrame.ClipsDescendants = true
-MainFrame.Visible = true -- Mude para false se for usar o botão de abrir
+MainFrame.Visible = false
 
-local UICorner = Instance.new("UICorner", MainFrame)
-UICorner.CornerRadius = UDim.new(0, 15)
+local MainCorner = Instance.new("UICorner", MainFrame)
+MainCorner.CornerRadius = UDim.new(0, 15)
 
--- Borda Neon Animada
+-- Borda Neon com Gradiente Animado
 local MainStroke = Instance.new("UIStroke", MainFrame)
-MainStroke.Thickness = 2
-MainStroke.Color = Color3.fromRGB(0, 170, 255)
+MainStroke.Thickness = 3
+MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+MainStroke.Color = Color3.new(1, 1, 1)
+
+local StrokeGradient = Instance.new("UIGradient", MainStroke)
+StrokeGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(170, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 170, 255))
+}
 
 -- --- HEADER (NOME) ---
 local Header = Instance.new("Frame", MainFrame)
+Header.Name = "Header"
 Header.Size = UDim2.new(1, 0, 0, 50)
-Header.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Header.BackgroundTransparency = 0.95
+Header.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+Header.BackgroundTransparency = 0.5
 
 local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, 0, 1, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "ADMIN SYSTEM PREMIUM • V7"
+Title.Text = "CONTROL HUB • ELITE EDITION"
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
+Title.TextSize = 20
 
--- --- SCROLLING FRAME (A CORREÇÃO) ---
+-- --- SCROLLING FRAME (O MOTOR DA LISTA) ---
 local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Name = "ButtonList"
-Scroll.Size = UDim2.new(0, 460, 1, -70)
-Scroll.Position = UDim2.new(0, 15, 0, 60)
-Scroll.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-Scroll.BackgroundTransparency = 0.5
+Scroll.Size = UDim2.new(0, 460, 1, -80)
+Scroll.Position = UDim2.new(0, 15, 0, 65)
+Scroll.BackgroundColor3 = Color3.fromRGB(35, 35, 45) -- Cinza Escuro solicitado
+Scroll.BackgroundTransparency = 0.4
 Scroll.BorderSizePixel = 0
 Scroll.ScrollBarThickness = 4
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
-
--- ISSO FAZ A ROLAGEM FUNCIONAR SOZINHA
-Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- Importante: Começa em 0
+Scroll.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y -- O segredo para a rolagem funcionar sozinha
 
 local ScrollCorner = Instance.new("UICorner", Scroll)
 ScrollCorner.CornerRadius = UDim.new(0, 10)
 
--- ORGANIZADOR AUTOMÁTICO
+-- UIListLayout: Organiza mas NÃO mexe no Size dos botões (você controla o Size no script do botão)
 local Layout = Instance.new("UIListLayout", Scroll)
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Padding = UDim.new(0, 10) -- Espaço entre os botões
+Layout.Padding = UDim.new(0, 10)
 Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Padding para o primeiro botão não colar no topo
-local UIPadding = Instance.new("UIPadding", Scroll)
-UIPadding.PaddingTop = UDim.new(0, 10)
-UIPadding.PaddingBottom = UDim.new(0, 10)
-
--- --- PAINEL DE STATS ---
+-- --- PAINEL DE ESTATÍSTICAS (DIREITA) ---
 local StatsFrame = Instance.new("Frame", MainFrame)
-StatsFrame.Position = UDim2.new(1, -210, 0, 60)
-StatsFrame.Size = UDim2.new(0, 195, 1, -70)
+StatsFrame.Name = "Stats"
+StatsFrame.Position = UDim2.new(1, -210, 0, 65)
+StatsFrame.Size = UDim2.new(0, 195, 1, -80)
 StatsFrame.BackgroundTransparency = 1
 
-local function CreateStatBox(text, color)
-    local box = Instance.new("TextLabel", StatsFrame)
-    box.Size = UDim2.new(1, 0, 0, 35)
-    box.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    box.TextColor3 = Color3.new(1,1,1)
-    box.Font = Enum.Font.GothamMedium
-    box.TextSize = 12
-    box.Text = text
-    Instance.new("UICorner", box)
-    local s = Instance.new("UIStroke", box)
+local function CreateStat(name, icon, color)
+    local frame = Instance.new("Frame", StatsFrame)
+    frame.Size = UDim2.new(1, 0, 0, 35)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    frame.BorderSizePixel = 0
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    
+    local s = Instance.new("UIStroke", frame)
     s.Color = color
     s.Thickness = 1
-    return box
+    
+    local l = Instance.new("TextLabel", frame)
+    l.Size = UDim2.new(1, -10, 1, 0)
+    l.Position = UDim2.new(0, 10, 0, 0)
+    l.BackgroundTransparency = 1
+    l.TextColor3 = Color3.fromRGB(200, 200, 200)
+    l.Font = Enum.Font.GothamMedium
+    l.TextSize = 12
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.Text = icon .. " " .. name .. ": --"
+    return l
 end
 
-local fpsL = CreateStatBox("FPS: --", Color3.fromRGB(0, 255, 150))
-local pingL = CreateStatBox("PING: --", Color3.fromRGB(255, 150, 0))
-local servL = CreateStatBox("SERVER ID", Color3.fromRGB(0, 150, 255))
-local playL = CreateStatBox("PLAYERS: --", Color3.fromRGB(150, 0, 255))
-local timeL = CreateStatBox("SESSÃO: --", Color3.fromRGB(255, 255, 0))
-local ageL = CreateStatBox("IDADE SV: --", Color3.fromRGB(255, 50, 50))
+local fpsL = CreateStat("FPS", "⚡", Color3.fromRGB(0, 255, 150))
+local pingL = CreateStat("PING", "📡", Color3.fromRGB(255, 180, 0))
+local servL = CreateStat("ID", "🆔", Color3.fromRGB(0, 150, 255))
+local playL = CreateStat("PLAYERS", "👥", Color3.fromRGB(180, 0, 255))
+local sessL = CreateStat("SESSÃO", "⏱️", Color3.fromRGB(255, 255, 0))
+local ageL = CreateStat("IDADE", "📅", Color3.fromRGB(255, 50, 50))
+
 Instance.new("UIListLayout", StatsFrame).Padding = UDim.new(0, 8)
 
--- Loop de Stats
-local startTick = tick()
+-- --- ANIMAÇÃO DE FUNDO ---
+task.spawn(function()
+    local rot = 0
+    while true do
+        rot = rot + 1
+        StrokeGradient.Rotation = rot
+        task.wait(0.05)
+    end
+end)
+
+-- --- LÓGICA DE ATUALIZAÇÃO ---
+local startTime = tick()
 RunService.RenderStepped:Connect(function(dt)
     if not MainFrame.Visible then return end
     fpsL.Text = "⚡ FPS: " .. math.floor(1/dt)
     pingL.Text = "📡 PING: " .. math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
     playL.Text = "👥 PLAYERS: " .. #game.Players:GetPlayers()
-    timeL.Text = "⏱️ SESSÃO: " .. math.floor(tick() - startTick) .. "s"
-    ageL.Text = "📅 IDADE SV: " .. math.floor(workspace.DistributedGameTime) .. "s"
+    servL.Text = "🆔 SERVER: " .. (game.JobId ~= "" and game.JobId:sub(1,5) or "Local")
+    sessL.Text = "⏱️ SESSÃO: " .. math.floor(tick() - startTime) .. "s"
+    ageL.Text = "📅 IDADE: " .. math.floor(workspace.DistributedGameTime) .. "s"
 end)
 
--- Fundo Animado Simples
-task.spawn(function()
-    while true do
-        for i = 0, 1, 0.01 do
-            MainStroke.Color = Color3.fromHSV(i, 0.8, 1)
-            task.wait(0.05)
-        end
+-- --- ANIMAÇÃO DE ABRIR ---
+MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+    if MainFrame.Visible then
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Size = UDim2.new(0, 700, 0, 400)}):Play()
     end
 end)
