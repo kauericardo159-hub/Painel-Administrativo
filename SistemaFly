@@ -1,103 +1,103 @@
--- Nome: Fly_Module_V7
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
 
--- Busca o painel (usa sua referência de espera)
+-- 1. LOCALIZAR O PAINEL (Espera até que o painel.lua tenha carregado)
 local ScreenGui = pGui:WaitForChild("MainControlPanel", 15)
 local Scroll = ScreenGui.MainFrame:WaitForChild("ButtonList")
 
+-- 2. VARIÁVEIS DE ESTADO
 local flying = false
-local speed = 50
+local speed = 16
 local bv, bg
 local camera = workspace.CurrentCamera
 
--- ESTRUTURA IDENTICA AO ESP (Para garantir que apareça)
+-- 3. CRIAÇÃO DO CONTENTOR DO BOTÃO (Para organizar na lista)
 local Container = Instance.new("Frame")
-Container.Name = "Fly_Container"
+Container.Name = "Fly_Entry"
 Container.Parent = Scroll
-Container.Size = UDim2.new(1, 0, 0, 45) -- Mesma altura do seu ESP
+Container.Size = UDim2.new(1, 0, 0, 45) -- Tamanho padrão para não bugar a lista
 Container.BackgroundTransparency = 1
 
--- Campo de Velocidade (TextBox) à esquerda
+local Layout = Instance.new("UIListLayout", Container)
+Layout.FillDirection = Enum.FillDirection.Horizontal
+Layout.Padding = UDim.new(0, 5)
+Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+-- 4. CAMPO DE VALOR (Value/Velocidade)
 local SpeedInput = Instance.new("TextBox")
 SpeedInput.Parent = Container
-SpeedInput.Size = UDim2.new(0, 70, 1, 0)
-SpeedInput.Position = UDim2.new(0, 0, 0, 0)
+SpeedInput.Size = UDim2.new(0, 60, 0, 35)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 SpeedInput.Text = "50"
-SpeedInput.TextColor3 = Color3.fromRGB(0, 255, 255)
+SpeedInput.PlaceholderText = "Vel."
+SpeedInput.TextColor3 = Color3.new(0, 1, 1)
 SpeedInput.Font = Enum.Font.GothamBold
 SpeedInput.TextSize = 14
-Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", SpeedInput)
 
--- Botão de Ativação (Ocupa o resto do espaço)
-local Button = Instance.new("TextButton")
-Button.Parent = Container
-Button.Size = UDim2.new(1, -75, 1, 0)
-Button.Position = UDim2.new(0, 75, 0, 0)
-Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Button.Text = "1 | ATIVAR FLY CONTROL"
-Button.TextColor3 = Color3.new(1, 1, 1)
-Button.Font = Enum.Font.GothamBold
-Button.TextSize = 14
-Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
+-- 5. BOTÃO ATIVO/INATIVO
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Parent = Container
+ToggleBtn.Size = UDim2.new(1, -65, 0, 35)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ToggleBtn.Text = "FLY: INATIVO"
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 14
+Instance.new("UICorner", ToggleBtn)
 
--- LÓGICA DE VOO MELHORADA
-local function toggleFly()
+-- 6. LÓGICA DO FLY (MOBILE FRIENDLY)
+local function startFly()
     local char = player.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-
-    if flying then
-        -- Criar forças
-        bg = Instance.new("BodyGyro", char.HumanoidRootPart)
-        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-        bg.P = 12000
-        
-        bv = Instance.new("BodyVelocity", char.HumanoidRootPart)
-        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-        
-        char.Humanoid.PlatformStand = true
-        
-        -- Loop de Movimento (Mobile Friendly)
-        task.spawn(function()
-            while flying and char:FindFirstChild("HumanoidRootPart") do
-                local moveDir = char.Humanoid.MoveDirection
-                speed = tonumber(SpeedInput.Text) or 50
-                
-                if moveDir.Magnitude > 0 then
-                    -- Direção baseada na câmera (Olhar para cima = Subir)
-                    local look = camera.CFrame.LookVector
-                    local right = camera.CFrame.RightVector
-                    local finalDir = (look * (moveDir.Z * -1)) + (right * moveDir.X)
-                    bv.velocity = finalDir.Unit * speed
-                else
-                    bv.velocity = Vector3.new(0, 0.1, 0) -- Flutuar parado
-                end
-                
-                bg.cframe = camera.CFrame
-                game:GetService("RunService").RenderStepped:Wait()
+    
+    bg = Instance.new("BodyGyro", char.HumanoidRootPart)
+    bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bg.P = 15000
+    
+    bv = Instance.new("BodyVelocity", char.HumanoidRootPart)
+    bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+    
+    char.Humanoid.PlatformStand = true
+    
+    task.spawn(function()
+        while flying and char and char:FindFirstChild("HumanoidRootPart") do
+            local moveDir = char.Humanoid.MoveDirection -- Analógico Mobile
+            speed = tonumber(SpeedInput.Text) or 50
+            
+            if moveDir.Magnitude > 0 then
+                -- Move na direção da câmara (olhar para cima = subir)
+                local look = camera.CFrame.LookVector
+                local right = camera.CFrame.RightVector
+                local finalDir = (look * (moveDir.Z * -1)) + (right * moveDir.X)
+                bv.velocity = finalDir.Unit * speed
+            else
+                bv.velocity = Vector3.new(0, 0.1, 0) -- Flutuar parado
             end
-        end)
-    else
-        -- Limpar forças
+            
+            bg.cframe = camera.CFrame
+            game:GetService("RunService").RenderStepped:Wait()
+        end
+        
+        -- Limpeza ao sair
         if bg then bg:Destroy() end
         if bv then bv:Destroy() end
         if char:FindFirstChild("Humanoid") then
             char.Humanoid.PlatformStand = false
         end
-    end
+    end)
 end
 
-Button.MouseButton1Click:Connect(function()
+-- 7. EVENTO DE CLIQUE
+ToggleBtn.MouseButton1Click:Connect(function()
     flying = not flying
     
     if flying then
-        Button.Text = "1 | FLY: ATIVO"
-        Button.BackgroundColor3 = Color3.fromRGB(0, 150, 100) -- Verde
+        ToggleBtn.Text = "FLY: ATIVO"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        startFly()
     else
-        Button.Text = "1 | ATIVAR FLY CONTROL"
-        Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45) -- Cinza Original
+        ToggleBtn.Text = "FLY: INATIVO"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     end
-    
-    toggleFly()
 end)
