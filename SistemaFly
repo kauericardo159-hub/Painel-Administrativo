@@ -1,60 +1,103 @@
--- Nome: Fly_V7_Injector
+-- Nome: Fly_Module_V7
 local player = game.Players.LocalPlayer
-local camera = workspace.CurrentCamera
-local RunService = game:GetService("RunService")
-
 local pGui = player:WaitForChild("PlayerGui")
-local mainGui = pGui:WaitForChild("MainControlPanel", 15)
-local scroll = mainGui.MainFrame:WaitForChild("ButtonList")
+
+-- Busca o painel (usa sua referência de espera)
+local ScreenGui = pGui:WaitForChild("MainControlPanel", 15)
+local Scroll = ScreenGui.MainFrame:WaitForChild("ButtonList")
 
 local flying = false
 local speed = 50
 local bv, bg
+local camera = workspace.CurrentCamera
 
--- Botão Customizado
-local FlyButton = Instance.new("TextButton")
-FlyButton.Name = "FlyButton"
-FlyButton.Parent = scroll
-FlyButton.Size = UDim2.new(0.9, 0, 0, 45) -- Tamanho fixo que o painel vai respeitar
-FlyButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-FlyButton.Text = "1 | ATIVAR FLY CONTROL"
-FlyButton.TextColor3 = Color3.new(1, 1, 1)
-FlyButton.Font = Enum.Font.GothamBold
-FlyButton.TextSize = 14
+-- ESTRUTURA IDENTICA AO ESP (Para garantir que apareça)
+local Container = Instance.new("Frame")
+Container.Name = "Fly_Container"
+Container.Parent = Scroll
+Container.Size = UDim2.new(1, 0, 0, 45) -- Mesma altura do seu ESP
+Container.BackgroundTransparency = 1
 
-local corner = Instance.new("UICorner", FlyButton)
-local stroke = Instance.new("UIStroke", FlyButton)
-stroke.Color = Color3.fromRGB(0, 170, 255)
+-- Campo de Velocidade (TextBox) à esquerda
+local SpeedInput = Instance.new("TextBox")
+SpeedInput.Parent = Container
+SpeedInput.Size = UDim2.new(0, 70, 1, 0)
+SpeedInput.Position = UDim2.new(0, 0, 0, 0)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+SpeedInput.Text = "50"
+SpeedInput.TextColor3 = Color3.fromRGB(0, 255, 255)
+SpeedInput.Font = Enum.Font.GothamBold
+SpeedInput.TextSize = 14
+Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
 
-FlyButton.MouseButton1Click:Connect(function()
-    flying = not flying
+-- Botão de Ativação (Ocupa o resto do espaço)
+local Button = Instance.new("TextButton")
+Button.Parent = Container
+Button.Size = UDim2.new(1, -75, 1, 0)
+Button.Position = UDim2.new(0, 75, 0, 0)
+Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Button.Text = "1 | ATIVAR FLY CONTROL"
+Button.TextColor3 = Color3.new(1, 1, 1)
+Button.Font = Enum.Font.GothamBold
+Button.TextSize = 14
+Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
+
+-- LÓGICA DE VOO MELHORADA
+local function toggleFly()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
     if flying then
-        FlyButton.Text = "1 | FLY: ATIVO"
-        FlyButton.BackgroundColor3 = Color3.fromRGB(0, 80, 50)
-        -- Lógica do Fly (BodyVelocity/BodyGyro)
-        local char = player.Character
+        -- Criar forças
         bg = Instance.new("BodyGyro", char.HumanoidRootPart)
         bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.P = 12000
+        
         bv = Instance.new("BodyVelocity", char.HumanoidRootPart)
         bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        
         char.Humanoid.PlatformStand = true
+        
+        -- Loop de Movimento (Mobile Friendly)
         task.spawn(function()
-            while flying do
-                local dir = camera.CFrame.LookVector
-                if char.Humanoid.MoveDirection.Magnitude > 0 then
-                    bv.velocity = (camera.CFrame:VectorToWorldSpace(Vector3.new(char.Humanoid.MoveDirection.X, 0, char.Humanoid.MoveDirection.Z * -1)).Unit) * speed
+            while flying and char:FindFirstChild("HumanoidRootPart") do
+                local moveDir = char.Humanoid.MoveDirection
+                speed = tonumber(SpeedInput.Text) or 50
+                
+                if moveDir.Magnitude > 0 then
+                    -- Direção baseada na câmera (Olhar para cima = Subir)
+                    local look = camera.CFrame.LookVector
+                    local right = camera.CFrame.RightVector
+                    local finalDir = (look * (moveDir.Z * -1)) + (right * moveDir.X)
+                    bv.velocity = finalDir.Unit * speed
                 else
-                    bv.velocity = Vector3.new(0, 0.1, 0)
+                    bv.velocity = Vector3.new(0, 0.1, 0) -- Flutuar parado
                 end
+                
                 bg.cframe = camera.CFrame
-                RunService.RenderStepped:Wait()
+                game:GetService("RunService").RenderStepped:Wait()
             end
-            if bg then bg:Destroy() end
-            if bv then bv:Destroy() end
-            char.Humanoid.PlatformStand = false
         end)
     else
-        FlyButton.Text = "1 | ATIVAR FLY CONTROL"
-        FlyButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        -- Limpar forças
+        if bg then bg:Destroy() end
+        if bv then bv:Destroy() end
+        if char:FindFirstChild("Humanoid") then
+            char.Humanoid.PlatformStand = false
+        end
     end
+end
+
+Button.MouseButton1Click:Connect(function()
+    flying = not flying
+    
+    if flying then
+        Button.Text = "1 | FLY: ATIVO"
+        Button.BackgroundColor3 = Color3.fromRGB(0, 150, 100) -- Verde
+    else
+        Button.Text = "1 | ATIVAR FLY CONTROL"
+        Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45) -- Cinza Original
+    end
+    
+    toggleFly()
 end)
