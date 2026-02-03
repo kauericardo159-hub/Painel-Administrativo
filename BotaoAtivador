@@ -1,28 +1,39 @@
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
 
--- Referência ao Painel (Espera ele carregar)
-local ScreenGui = pGui:WaitForChild("MainControlPanel")
-local MainFrame = ScreenGui:WaitForChild("MainFrame")
+-- Remove versão antiga
+if pGui:FindFirstChild("ToggleGui") then pGui.ToggleGui:Destroy() end
 
--- Botão de Ativar
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name = "OpenCloseBtn"
-ToggleBtn.Parent = ScreenGui -- Mantém na mesma ScreenGui para facilitar
-ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-ToggleBtn.Position = UDim2.new(0.02, 0, 0.7, 0) -- Posição mais alta para mobile
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ToggleBtn.Text = "MENU"
-ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextSize = 12
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ToggleGui"
+ScreenGui.Parent = pGui
+ScreenGui.ResetOnSpawn = false
 
-local BCorner = Instance.new("UICorner", ToggleBtn)
-BCorner.CornerRadius = UDim.new(0, 10)
-local BStroke = Instance.new("UIStroke", ToggleBtn)
-BStroke.Color = Color3.new(1, 1, 1)
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Name = "OpenClose"
+OpenBtn.Parent = ScreenGui
+OpenBtn.Size = UDim2.new(0, 50, 0, 50)
+OpenBtn.Position = UDim2.new(0.02, 0, 0.7, 0) -- Posição elevada para mobile
+OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+OpenBtn.Text = "ON"
+OpenBtn.TextColor3 = Color3.new(1, 1, 1)
+OpenBtn.Font = Enum.Font.GothamBold
+OpenBtn.TextSize = 14
 
--- Função de Abrir/Fechar
-ToggleBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
+local Corner = Instance.new("UICorner", OpenBtn)
+Corner.CornerRadius = UDim.new(1, 0) -- Botão redondo
+
+local Stroke = Instance.new("UIStroke", OpenBtn)
+Stroke.Thickness = 2
+Stroke.Color = Color3.new(1, 1, 1)
+
+-- Função de Clique
+OpenBtn.MouseButton1Click:Connect(function()
+    local mainPanel = pGui:FindFirstChild("MainControlPanel")
+    if mainPanel and mainPanel:FindFirstChild("MainFrame") then
+        local frame = mainPanel.MainFrame
+        frame.Visible = not frame.Visible
+        OpenBtn.Text = frame.Visible and "OFF" or "ON"
+        OpenBtn.BackgroundColor3 = frame.Visible and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 170, 255)
+    end
 end)
