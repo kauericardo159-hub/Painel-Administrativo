@@ -1,7 +1,7 @@
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
 
--- Limpeza
+-- Remove versão antiga para evitar bugs
 if pGui:FindFirstChild("MainControlPanel") then pGui.MainControlPanel:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -9,55 +9,47 @@ ScreenGui.Name = "MainControlPanel"
 ScreenGui.Parent = pGui
 ScreenGui.ResetOnSpawn = false
 
--- Painel Central
+-- Frame Principal
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200) -- Centralizado
 MainFrame.Size = UDim2.new(0, 300, 0, 400)
 MainFrame.Visible = false -- Começa fechado
+MainFrame.BorderSizePixel = 0
 
 local UICorner = Instance.new("UICorner", MainFrame)
-local UIStroke = Instance.new("UIStroke", MainFrame)
-UIStroke.Thickness = 2
-UIStroke.Color = Color3.fromRGB(255, 255, 255)
+UICorner.CornerRadius = UDim.new(0, 10)
 
--- Barra de Título
-local TitleFrame = Instance.new("Frame")
-TitleFrame.Name = "TitleFrame"
-TitleFrame.Parent = MainFrame
-TitleFrame.Size = UDim2.new(1, 0, 0, 40)
-TitleFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Thickness = 2
+Stroke.Color = Color3.fromRGB(0, 170, 255)
 
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Parent = TitleFrame
-TitleLabel.Size = UDim2.new(1, 0, 1, 0)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "CONTROL PANEL"
-TitleLabel.TextColor3 = Color3.new(1, 1, 1)
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 16
-
-local TCorner = Instance.new("UICorner", TitleFrame)
+-- Título
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Name = "Title"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Title.Text = "CONTROL PANEL"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+Instance.new("UICorner", Title)
 
 -- ScrollingFrame (Lista de Botões)
-local Scroll = Instance.new("ScrollingFrame")
+local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Name = "ButtonList"
-Scroll.Parent = MainFrame
-Scroll.Position = UDim2.new(0.05, 0, 0.12, 0)
-Scroll.Size = UDim2.new(0.9, 0, 0.85, 0)
-Scroll.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Scroll.Size = UDim2.new(1, -20, 1, -60)
+Scroll.Position = UDim2.new(0, 10, 0, 50)
+Scroll.BackgroundTransparency = 1
 Scroll.BorderSizePixel = 0
 Scroll.ScrollBarThickness = 4
 Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Scroll.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y -- Faz a rolagem funcionar sozinha
+Scroll.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y -- Ajusta o tamanho da rolagem sozinho
 
-local SCorner = Instance.new("UICorner", Scroll)
-
--- Organizador Automático
-local Layout = Instance.new("UIListLayout")
-Layout.Parent = Scroll
-Layout.Padding = UDim.new(0, 8)
+-- Organização Automática
+local Layout = Instance.new("UIListLayout", Scroll)
+Layout.Padding = UDim.new(0, 10)
 Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
