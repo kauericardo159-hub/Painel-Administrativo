@@ -1,4 +1,4 @@
--- Nome: MainControlPanel_V6_Ultra
+-- Nome: MainControlPanel_V7_Fixed
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local player = game.Players.LocalPlayer
@@ -15,7 +15,7 @@ ScreenGui.ResetOnSpawn = false
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
 MainFrame.Position = UDim2.new(0.5, -350, 0.5, -200)
 MainFrame.Size = UDim2.new(0, 700, 0, 400)
 MainFrame.ClipsDescendants = true
@@ -24,130 +24,107 @@ MainFrame.Visible = false
 local UICorner = Instance.new("UICorner", MainFrame)
 UICorner.CornerRadius = UDim.new(0, 15)
 
--- Borda Estilosa com Gradiente
+-- Borda Neon
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Thickness = 2.5
-MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+MainStroke.Color = Color3.fromRGB(0, 170, 255)
 
-local StrokeGradient = Instance.new("UIGradient", MainStroke)
-StrokeGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))
-}
-
--- --- FUNDO ANIMADO (GRADIENTE E BRILHO) ---
+-- --- FUNDO ANIMADO ---
 local BgGradient = Instance.new("UIGradient", MainFrame)
 BgGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 10, 25)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 10, 40))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 10, 25)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 20, 50))
 }
 
 task.spawn(function()
-    local rot = 0
-    while true do
-        rot = rot + 1
-        BgGradient.Rotation = rot
-        StrokeGradient.Rotation = -rot -- Borda gira ao contrário
-        task.wait(0.05)
-    end
+	while true do
+		BgGradient.Rotation = BgGradient.Rotation + 1
+		task.wait(0.05)
+	end
 end)
 
 -- --- HEADER ---
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 50)
 Header.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Header.BackgroundTransparency = 0.92
+Header.BackgroundTransparency = 0.95
 
 local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, 0, 1, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "SYSTEM CONTROL • V6"
+Title.Text = "SYSTEM CONTROL • V7 FIXED"
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
+Title.TextSize = 18
 
--- --- LISTA DE BOTÕES (SCROLLING FRAME CINZA) ---
+-- --- SCROLLING FRAME (CORRIGIDA) ---
 local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Name = "ButtonList"
-Scroll.Size = UDim2.new(0, 460, 1, -70)
-Scroll.Position = UDim2.new(0, 15, 0, 60)
-Scroll.BackgroundColor3 = Color3.fromRGB(40, 40, 45) -- Cor cinza solicitada
-Scroll.BackgroundTransparency = 0.6 -- Transparência para ver o fundo animado
+Scroll.Size = UDim2.new(0, 460, 1, -80)
+Scroll.Position = UDim2.new(0, 20, 0, 65)
+Scroll.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+Scroll.BackgroundTransparency = 0.5
 Scroll.BorderSizePixel = 0
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Scroll.ScrollBarThickness = 3
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+Scroll.ScrollBarThickness = 4
+Scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
+Scroll.ClipsDescendants = true
+Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y -- O segredo para rolar sozinho
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- Começa zerado e expande
 
 local ScrollCorner = Instance.new("UICorner", Scroll)
-ScrollCorner.CornerRadius = UDim.new(0, 10)
 
-local ScrollStroke = Instance.new("UIStroke", Scroll)
-ScrollStroke.Color = Color3.fromRGB(100, 100, 100)
-ScrollStroke.Thickness = 1
-
+-- LAYOUT AUTOMÁTICO (Organiza sem deformar os botões)
 local Layout = Instance.new("UIListLayout", Scroll)
-Layout.Padding = UDim.new(0, 8)
-Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+Layout.Padding = UDim.new(0, 10)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+-- IMPORTANTE: Não usamos FillEmptySpace ou escalas forçadas aqui para não mexer no Size dos botões
 
-Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 15)
-end)
+local UIPadding = Instance.new("UIPadding", Scroll)
+UIPadding.PaddingTop = UDim.new(0, 10)
+UIPadding.PaddingBottom = UDim.new(0, 10)
 
 -- --- PAINEL DE STATS (DIREITA) ---
 local StatsFrame = Instance.new("Frame", MainFrame)
-StatsFrame.Position = UDim2.new(1, -210, 0, 60)
-StatsFrame.Size = UDim2.new(0, 195, 1, -70)
+StatsFrame.Position = UDim2.new(1, -200, 0, 65)
+StatsFrame.Size = UDim2.new(0, 180, 1, -80)
 StatsFrame.BackgroundTransparency = 1
 
 local function CreateStatBox(name, color)
-    local box = Instance.new("TextLabel", StatsFrame)
-    box.Size = UDim2.new(1, 0, 0, 35)
-    box.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    box.TextColor3 = Color3.fromRGB(220, 220, 220)
-    box.Font = Enum.Font.GothamMedium
-    box.TextSize = 13
-    box.Text = name .. ": --"
-    box.RichText = true
-    
-    local c = Instance.new("UICorner", box)
-    c.CornerRadius = UDim.new(0, 8)
-    local s = Instance.new("UIStroke", box)
-    s.Color = color
-    s.Thickness = 1
-    return box
+	local box = Instance.new("TextLabel", StatsFrame)
+	box.Size = UDim2.new(1, 0, 0, 35)
+	box.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+	box.TextColor3 = Color3.fromRGB(220, 220, 220)
+	box.Font = Enum.Font.GothamMedium
+	box.TextSize = 12
+	box.Text = " " .. name .. ": --"
+	box.TextXAlignment = Enum.TextXAlignment.Left
+	
+	Instance.new("UICorner", box)
+	local s = Instance.new("UIStroke", box)
+	s.Color = color
+	s.Thickness = 1
+	return box
 end
 
 local fpsL = CreateStatBox("⚡ FPS", Color3.fromRGB(0, 255, 150))
 local pingL = CreateStatBox("📡 PING", Color3.fromRGB(255, 150, 0))
-local servL = CreateStatBox("🆔 SERVER", Color3.fromRGB(0, 150, 255))
 local playL = CreateStatBox("👥 PLAYERS", Color3.fromRGB(150, 0, 255))
-local timeL = CreateStatBox("⏱️ SESSÃO", Color3.fromRGB(255, 255, 0))
 local ageL = CreateStatBox("📅 IDADE SV", Color3.fromRGB(255, 50, 50))
 
-Instance.new("UIListLayout", StatsFrame).Padding = UDim.new(0, 10)
+Instance.new("UIListLayout", StatsFrame).Padding = UDim.new(0, 8)
 
 -- Loop de Stats
-local startTick = tick()
 RunService.RenderStepped:Connect(function(dt)
-    if not MainFrame.Visible then return end
-    fpsL.Text = "⚡ FPS: " .. math.floor(1/dt)
-    pingL.Text = "📡 PING: " .. math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
-    playL.Text = "👥 PLAYERS: " .. #game.Players:GetPlayers() .. "/" .. game.Players.MaxPlayers
-    servL.Text = "🆔 SERVER: " .. (game.JobId ~= "" and game.JobId:sub(1,5) or "Studio")
-    timeL.Text = "⏱️ SESSÃO: " .. math.floor(tick() - startTick) .. "s"
-    ageL.Text = "📅 IDADE SV: " .. math.floor(workspace.DistributedGameTime) .. "s"
+	if MainFrame.Visible then
+		fpsL.Text = " ⚡ FPS: " .. math.floor(1/dt)
+		pingL.Text = " 📡 PING: " .. math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
+		playL.Text = " 👥 PLAYERS: " .. #game.Players:GetPlayers()
+		ageL.Text = " 📅 IDADE SV: " .. math.floor(workspace.DistributedGameTime) .. "s"
+	end
 end)
 
 -- --- ANIMAÇÃO DE ABRIR ---
-MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-    if MainFrame.Visible then
-        MainFrame.Size = UDim2.new(0, 0, 0, 0)
-        MainFrame.BackgroundTransparency = 1
-        TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
-            Size = UDim2.new(0, 700, 0, 400),
-            BackgroundTransparency = 0
-        }):Play()
-    end
-end)
+MainFrame.Visible = true -- Para testes, mude para false se quiser abrir via botão
+MainFrame.Size = UDim2.new(0, 0, 0, 0)
+TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Size = UDim2.new(0, 700, 0, 400)}):Play()
