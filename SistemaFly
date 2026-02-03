@@ -1,149 +1,60 @@
--- Nome: Fly_Control_V6_Injetor
+-- Nome: Fly_V7_Injector
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
--- 1. LOCALIZAR O PAINEL V6 (SISTEMA DE ESPERA)
 local pGui = player:WaitForChild("PlayerGui")
 local mainGui = pGui:WaitForChild("MainControlPanel", 15)
 local scroll = mainGui.MainFrame:WaitForChild("ButtonList")
 
--- 2. VARIÁVEIS DE CONTROLE
 local flying = false
 local speed = 50
 local bv, bg
 
--- --- NOTIFICAÇÃO PREMIUM (Estilo Neon) ---
-local function Notify(title, text, color)
-    local notifyFrame = Instance.new("Frame")
-    notifyFrame.Size = UDim2.new(0, 250, 0, 70)
-    notifyFrame.Position = UDim2.new(0.5, -125, -0.2, 0)
-    notifyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-    notifyFrame.Parent = mainGui
-    
-    Instance.new("UICorner", notifyFrame).CornerRadius = UDim.new(0, 12)
-    local s = Instance.new("UIStroke", notifyFrame)
-    s.Color = color
-    s.Thickness = 2
-    
-    local lbl = Instance.new("TextLabel", notifyFrame)
-    lbl.Size = UDim2.new(1, -20, 1, 0)
-    lbl.Position = UDim2.new(0, 10, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = "<b>" .. title .. "</b>\n" .. text
-    lbl.TextColor3 = Color3.new(1, 1, 1)
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 13
-    lbl.RichText = true
+-- Botão Customizado
+local FlyButton = Instance.new("TextButton")
+FlyButton.Name = "FlyButton"
+FlyButton.Parent = scroll
+FlyButton.Size = UDim2.new(0.9, 0, 0, 45) -- Tamanho fixo que o painel vai respeitar
+FlyButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+FlyButton.Text = "1 | ATIVAR FLY CONTROL"
+FlyButton.TextColor3 = Color3.new(1, 1, 1)
+FlyButton.Font = Enum.Font.GothamBold
+FlyButton.TextSize = 14
 
-    notifyFrame:TweenPosition(UDim2.new(0.5, -125, 0.05, 0), "Out", "Back", 0.5)
-    task.delay(2.5, function()
-        notifyFrame:TweenPosition(UDim2.new(0.5, -125, -0.2, 0), "In", "Quad", 0.5)
-        task.wait(0.5)
-        notifyFrame:Destroy()
-    end)
-end
+local corner = Instance.new("UICorner", FlyButton)
+local stroke = Instance.new("UIStroke", FlyButton)
+stroke.Color = Color3.fromRGB(0, 170, 255)
 
--- --- ESTRUTURA DO BOTÃO (Design V6) ---
-local Entry = Instance.new("Frame")
-Entry.Name = "Fly_Entry"
-Entry.Parent = scroll
-Entry.Size = UDim2.new(0.95, 0, 0, 55)
-Entry.BackgroundTransparency = 1
-
-local UIList = Instance.new("UIListLayout", Entry)
-UIList.FillDirection = Enum.FillDirection.Horizontal
-UIList.Padding = UDim.new(0, 10)
-UIList.VerticalAlignment = Enum.VerticalAlignment.Center
-
--- Input de Velocidade
-local SpeedInput = Instance.new("TextBox")
-SpeedInput.Size = UDim2.new(0, 80, 0, 40)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-SpeedInput.Text = "50"
-SpeedInput.PlaceholderText = "Vel."
-SpeedInput.TextColor3 = Color3.fromRGB(0, 255, 255)
-SpeedInput.Font = Enum.Font.GothamBold
-SpeedInput.TextSize = 16
-Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
-local sStroke = Instance.new("UIStroke", SpeedInput)
-sStroke.Color = Color3.fromRGB(0, 255, 255)
-sStroke.Thickness = 1.5
-
--- Botão de Ativação
-local Btn = Instance.new("TextButton")
-Btn.Size = UDim2.new(1, -95, 0, 40)
-Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-Btn.Text = "1 | FLY CONTROL: INATIVO"
-Btn.TextColor3 = Color3.new(1,1,1)
-Btn.Font = Enum.Font.GothamBold
-Btn.TextSize = 14
-Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
-
-local BtnStroke = Instance.new("UIStroke", Btn)
-BtnStroke.Color = Color3.fromRGB(100, 100, 110)
-BtnStroke.Thickness = 1
-
--- --- LÓGICA DE VOO MOBILE/PC ---
-local function startFly()
-    local char = player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    
-    bg = Instance.new("BodyGyro", char.HumanoidRootPart)
-    bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bg.P = 20000 -- Estabilidade extrema
-    
-    bv = Instance.new("BodyVelocity", char.HumanoidRootPart)
-    bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-    bv.velocity = Vector3.new(0, 0.1, 0)
-    
-    char.Humanoid.PlatformStand = true
-    
-    task.spawn(function()
-        while flying and char and char:FindFirstChild("HumanoidRootPart") do
-            local moveDir = char.Humanoid.MoveDirection 
-            
-            if moveDir.Magnitude > 0 then
-                -- O segredo do controle: Câmara 3D
-                local look = camera.CFrame.LookVector
-                local right = camera.CFrame.RightVector
-                local dir = (look * (moveDir.Z * -1)) + (right * moveDir.X)
-                
-                bv.velocity = dir.Unit * speed
-            else
-                bv.velocity = Vector3.new(0, 0.1, 0) -- Flutuar suave
-            end
-            
-            bg.cframe = camera.CFrame
-            RunService.RenderStepped:Wait()
-        end
-        
-        -- Reset ao desligar
-        if bg then bg:Destroy() end
-        if bv then bv:Destroy() end
-        if char:FindFirstChild("Humanoid") then
-            char.Humanoid.PlatformStand = false
-        end
-    end)
-end
-
--- EVENTO DE CLIQUE
-Btn.MouseButton1Click:Connect(function()
+FlyButton.MouseButton1Click:Connect(function()
     flying = not flying
-    speed = tonumber(SpeedInput.Text) or 50
-    
     if flying then
-        Btn.Text = "1 | FLY CONTROL: ATIVO"
-        BtnStroke.Color = Color3.fromRGB(0, 255, 150)
-        TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 80, 50)}):Play()
-        Notify("FLY CONTROL", "Voo Ativado com Sucesso!\nVelocidade: " .. speed, Color3.fromRGB(0, 255, 150))
-        startFly()
+        FlyButton.Text = "1 | FLY: ATIVO"
+        FlyButton.BackgroundColor3 = Color3.fromRGB(0, 80, 50)
+        -- Lógica do Fly (BodyVelocity/BodyGyro)
+        local char = player.Character
+        bg = Instance.new("BodyGyro", char.HumanoidRootPart)
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bv = Instance.new("BodyVelocity", char.HumanoidRootPart)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        char.Humanoid.PlatformStand = true
+        task.spawn(function()
+            while flying do
+                local dir = camera.CFrame.LookVector
+                if char.Humanoid.MoveDirection.Magnitude > 0 then
+                    bv.velocity = (camera.CFrame:VectorToWorldSpace(Vector3.new(char.Humanoid.MoveDirection.X, 0, char.Humanoid.MoveDirection.Z * -1)).Unit) * speed
+                else
+                    bv.velocity = Vector3.new(0, 0.1, 0)
+                end
+                bg.cframe = camera.CFrame
+                RunService.RenderStepped:Wait()
+            end
+            if bg then bg:Destroy() end
+            if bv then bv:Destroy() end
+            char.Humanoid.PlatformStand = false
+        end)
     else
-        Btn.Text = "1 | FLY CONTROL: INATIVO"
-        BtnStroke.Color = Color3.fromRGB(100, 100, 110)
-        TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 35)}):Play()
-        Notify("FLY CONTROL", "Voo Desativado", Color3.fromRGB(255, 50, 50))
+        FlyButton.Text = "1 | ATIVAR FLY CONTROL"
+        FlyButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     end
 end)
-
