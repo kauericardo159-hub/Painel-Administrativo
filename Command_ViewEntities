@@ -1,6 +1,6 @@
 --[[
-    GITHUB: Command_ViewEntities.lua
-    Função: Visualizar Players (Cor do Time) e Bots (Vermelho) com ESP e Otimização.
+    GITHUB: Command_ViewEntities_V2.lua
+    Função: ESP de Players e Bots com interface detalhada e notificações personalizadas.
 ]]
 
 local Players = game:GetService("Players")
@@ -11,127 +11,162 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- [CONFIGURAÇÕES]
-local DISTANCIA_MAXIMA = 500 -- Distância para evitar lag
+local DISTANCIA_MAXIMA = 500
 local ESTADO_ATIVO = false
 local NOME_COMANDO = "View Bots & Players"
 
--- [LOCALIZAÇÃO DA LISTA NO PAINEL]
+-- [LOCALIZAÇÃO DA LISTA]
 local panelGui = playerGui:WaitForChild("MainPanel_ScreenGui")
 local mainFrame = panelGui:WaitForChild("MainFrame")
 local listFrame = mainFrame:WaitForChild("CommandList")
 
--- [LIMPEZA DE DUPLICATAS DO BOTÃO]
-if listFrame:FindFirstChild(NOME_COMANDO) then
-    listFrame[NOME_COMANDO]:Destroy()
-end
+-- [LIMPEZA DE DUPLICATAS]
+if listFrame:FindFirstChild(NOME_COMANDO) then listFrame[NOME_COMANDO]:Destroy() end
 
 -- [CRIAÇÃO DO BOTÃO NA LISTA]
-local cmdBtn = Instance.new("TextButton")
+local cmdBtn = Instance.new("Frame")
 cmdBtn.Name = NOME_COMANDO
-cmdBtn.Size = UDim2.new(0.95, 0, 0, 40)
-cmdBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-cmdBtn.Text = NOME_COMANDO .. " [ Inativo ]"
-cmdBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-cmdBtn.Font = Enum.Font.GothamMedium
-cmdBtn.TextSize = 14
+cmdBtn.Size = UDim2.new(0.9, 0, 0, 45)
+cmdBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
 cmdBtn.Parent = listFrame
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 6)
-corner.Parent = cmdBtn
+Instance.new("UICorner", cmdBtn).CornerRadius = UDim.new(0, 8)
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = Color3.fromRGB(255, 255, 255)
+btnStroke.Thickness = 1.5
+btnStroke.Parent = cmdBtn
 
--- [SISTEMA DE NOTIFICAÇÃO]
-local function Notify(msg, color)
-    local notif = Instance.new("TextLabel")
-    notif.Size = UDim2.new(0, 200, 0, 30)
-    notif.Position = UDim2.new(1, -210, 0.9, 0)
-    notif.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    notif.Text = msg
-    notif.TextColor3 = color
-    notif.Font = Enum.Font.GothamBold
-    notif.Parent = screenGui or playerGui:FindFirstChild("MainButton_ScreenGui")
-    
-    Instance.new("UICorner", notif)
-    task.wait(2)
-    TweenService:Create(notif, TweenInfo.new(1), {TextTransparency = 1, BackgroundTransparency = 1}):Play()
-    game:GetService("Debris"):AddItem(notif, 1.1)
+-- Nome do Comando (Fica sempre branco)
+local nameLabel = Instance.new("TextLabel")
+nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
+nameLabel.Position = UDim2.new(0.05, 0, 0, 0)
+nameLabel.BackgroundTransparency = 1
+nameLabel.Text = "| " .. NOME_COMANDO
+nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+nameLabel.Font = Enum.Font.GothamMedium
+nameLabel.TextSize = 14
+nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+nameLabel.Parent = cmdBtn
+
+-- Status (Muda de cor)
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(0.35, 0, 1, 0)
+statusLabel.Position = UDim2.new(0.6, 0, 0, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "( Inativo ) |"
+statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80) -- Vermelho inicial
+statusLabel.Font = Enum.Font.GothamBold
+statusLabel.TextSize = 14
+statusLabel.TextXAlignment = Enum.TextXAlignment.Right
+statusLabel.Parent = cmdBtn
+
+local clickRegion = Instance.new("TextButton")
+clickRegion.Size = UDim2.new(1, 0, 1, 0)
+clickRegion.BackgroundTransparency = 1
+clickRegion.Text = ""
+clickRegion.Parent = cmdBtn
+
+-- [SISTEMA DE AVISO PERSONALIZADO]
+local function CustomNotify(comando, estado)
+    local notifyFrame = Instance.new("Frame")
+    notifyFrame.Size = UDim2.new(0, 220, 0, 100)
+    notifyFrame.Position = UDim2.new(1, 50, 0.7, 0) -- Começa fora da tela
+    notifyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    notifyFrame.Parent = panelGui
+
+    Instance.new("UICorner", notifyFrame)
+    local s = Instance.new("UIStroke", notifyFrame)
+    s.Color = Color3.fromRGB(255,255,255) s.Thickness = 2
+
+    local header = Instance.new("TextLabel")
+    header.Size = UDim2.new(1, 0, 0, 30)
+    header.Text = "---------- Aviso ----------"
+    header.TextColor3 = Color3.fromRGB(255, 255, 255)
+    header.BackgroundTransparency = 1
+    header.Font = Enum.Font.GothamBold
+    header.Parent = notifyFrame
+
+    local content = Instance.new("TextLabel")
+    content.Size = UDim2.new(1, 0, 0, 60)
+    content.Position = UDim2.new(0, 0, 0.35, 0)
+    content.Text = "O comando:\n" .. comando .. "\nfoi " .. estado
+    content.TextColor3 = Color3.fromRGB(200, 200, 200)
+    content.BackgroundTransparency = 1
+    content.Font = Enum.Font.Gotham
+    content.TextSize = 13
+    content.Parent = notifyFrame
+
+    -- Animação
+    notifyFrame:TweenPosition(UDim2.new(1, -240, 0.7, 0), "Out", "Back", 0.5)
+    task.wait(4)
+    notifyFrame:TweenPosition(UDim2.new(1, 50, 0.7, 0), "In", "Quad", 0.5)
+    game:GetService("Debris"):AddItem(notifyFrame, 0.6)
 end
 
--- [LÓGICA DO ESP]
+-- [LÓGICA DO ESP (HEAD INFO)]
 local espFolder = Instance.new("Folder", workspace)
-espFolder.Name = "ESP_Storage"
+espFolder.Name = "ESP_Storage_V2"
 
 local function UpdateESP()
     espFolder:ClearAllChildren()
     if not ESTADO_ATIVO then return end
 
     for _, target in ipairs(workspace:GetDescendants()) do
-        local humanoid = target:FindFirstChildOfClass("Humanoid")
+        local hum = target:FindFirstChildOfClass("Humanoid")
         local root = target:FindFirstChild("HumanoidRootPart")
         
-        if humanoid and root and target ~= player.Character then
-            local dist = (player.Character and player.Character:FindFirstChild("HumanoidRootPart")) 
-                and (root.Position - player.Character.HumanoidRootPart.Position).Magnitude or 0
+        if hum and root and target ~= player.Character then
+            local dist = (player.Character and player.Character.PrimaryPart) and (root.Position - player.Character.PrimaryPart.Position).Magnitude or 0
             
             if dist < DISTANCIA_MAXIMA then
-                -- Diferenciar Bot de Player
                 local isPlayer = Players:GetPlayerFromCharacter(target)
-                local color = Color3.fromRGB(255, 0, 0) -- Padrão Bot (Vermelho)
+                local color = isPlayer and isPlayer.TeamColor.Color or Color3.fromRGB(255, 0, 0)
 
-                if isPlayer then
-                    color = isPlayer.TeamColor.Color
-                end
-
-                -- Criar Outline (Highlight)
-                local highlight = Instance.new("Highlight")
-                highlight.FillTransparency = 1
-                highlight.OutlineColor = color
+                local highlight = Instance.new("Highlight", espFolder)
                 highlight.Adornee = target
-                highlight.Parent = espFolder
+                highlight.OutlineColor = color
+                highlight.FillTransparency = 1
 
-                -- Criar Billboard (Nick e Pos)
-                local billboard = Instance.new("BillboardGui")
-                billboard.Size = UDim2.new(0, 200, 0, 50)
-                billboard.Adornee = target:FindFirstChild("Head")
+                local billboard = Instance.new("BillboardGui", espFolder)
+                billboard.Size = UDim2.new(0, 250, 0, 70)
+                billboard.Adornee = target:FindFirstChild("Head") or root
                 billboard.AlwaysOnTop = true
-                billboard.ExtentsOffset = Vector3.new(0, 3, 0)
-                billboard.Parent = espFolder
+                billboard.ExtentsOffset = Vector3.new(0, 3.5, 0)
 
-                local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.Text = string.format("%s\n[%.0f, %.0f, %.0f]", target.Name, root.Position.X, root.Position.Y, root.Position.Z)
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.TextStrokeTransparency = 0
-                label.Font = Enum.Font.GothamBold
-                label.TextSize = 12
-                label.Parent = billboard
+                local container = Instance.new("TextLabel", billboard)
+                container.Size = UDim2.new(1, 0, 1, 0)
+                container.BackgroundTransparency = 1
+                container.TextColor3 = Color3.fromRGB(255, 255, 255)
+                container.TextStrokeTransparency = 0.5
+                container.Font = Enum.Font.GothamBold
+                container.TextSize = 13
+                
+                -- Formatação da Head Info
+                local vida = math.floor(hum.Health)
+                container.Text = string.format("👤: %s\n📏 Metros: %d | ❤ Vida: %d", target.Name, dist, vida)
             end
         end
     end
 end
 
--- Loop de atualização (Otimizado)
+-- Loop Otimizado
 task.spawn(function()
-    while task.wait(0.5) do
-        if ESTADO_ATIVO then
-            UpdateESP()
-        end
+    while task.wait(0.6) do
+        if ESTADO_ATIVO then UpdateESP() end
     end
 end)
 
--- [EVENTO DE CLIQUE]
-cmdBtn.MouseButton1Click:Connect(function()
+-- Clique
+clickRegion.MouseButton1Click:Connect(function()
     ESTADO_ATIVO = not ESTADO_ATIVO
-    
     if ESTADO_ATIVO then
-        cmdBtn.Text = NOME_COMANDO .. " [ Ativo ]"
-        cmdBtn.TextColor3 = Color3.fromRGB(0, 255, 127)
-        Notify("Comando Ativado!", Color3.fromRGB(0, 255, 0))
+        statusLabel.Text = "( Ativo ) |"
+        statusLabel.TextColor3 = Color3.fromRGB(80, 255, 80)
+        CustomNotify(NOME_COMANDO, "ATIVO")
     else
-        cmdBtn.Text = NOME_COMANDO .. " [ Inativo ]"
-        cmdBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        statusLabel.Text = "( Inativo ) |"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
         espFolder:ClearAllChildren()
-        Notify("Comando Desativado!", Color3.fromRGB(255, 0, 0))
+        CustomNotify(NOME_COMANDO, "INATIVO")
     end
 end)
