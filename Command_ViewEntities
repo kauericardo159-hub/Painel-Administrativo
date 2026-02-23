@@ -1,6 +1,6 @@
 --[[
     GITHUB: Command_ViewEntities_V4.lua
-    Função: ESP Distinto com Toggles Animados para Players e Bots no mesmo bloco.
+    Função: ESP Distinto com Toggles Animados para Players e Bots separados.
 ]]
 
 local Players = game:GetService("Players")
@@ -12,9 +12,9 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 -- [CONFIGURAÇÕES GERAIS]
 local DISTANCIA_MAXIMA = 350
-local ESTADO_PLAYER = false
-local ESTADO_BOT = false
-local NOME_COMANDO = "ViewEntities_Toggles" -- Nome interno para evitar conflitos
+local PLAYER_ATIVO = false
+local BOT_ATIVO = false
+local NOME_COMANDO = "ViewEntities_Container"
 
 -- [LOCALIZAÇÃO DA LISTA NO PAINEL]
 local panelGui = playerGui:WaitForChild("MainPanel_ScreenGui")
@@ -26,117 +26,140 @@ if listFrame:FindFirstChild(NOME_COMANDO) then
     listFrame[NOME_COMANDO]:Destroy()
 end
 
--- [SISTEMA DE AVISOS (ESPAÇO RESERVADO PARA SEU FUTURO SCRIPT)]
-local function SistemaDeAvisos(titulo, mensagem)
-    -- * Aqui você colocará o seu Script de Avisos no futuro. *
-    -- Por enquanto, usaremos a notificação nativa do Roblox para testar:
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = titulo,
-        Text = mensagem,
-        Duration = 3
-    })
-end
+-- ==========================================================
+-- 1. CRIAÇÃO DA INTERFACE (BASEADA NA NOVA IMAGEM)
+-- ==========================================================
+local cmdContainer = Instance.new("Frame")
+cmdContainer.Name = NOME_COMANDO
+cmdContainer.Size = UDim2.new(0.95, 0, 0, 60)
+cmdContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+cmdContainer.Parent = listFrame
 
--- [CRIAÇÃO DA ESTRUTURA DO BOTÃO]
-local cmdBtn = Instance.new("Frame")
-cmdBtn.Name = NOME_COMANDO
-cmdBtn.Size = UDim2.new(0.95, 0, 0, 60) -- Mais alto para caber os interruptores
-cmdBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-cmdBtn.Parent = listFrame
+Instance.new("UICorner", cmdContainer).CornerRadius = UDim.new(0, 8)
+local containerStroke = Instance.new("UIStroke", cmdContainer)
+containerStroke.Color = Color3.fromRGB(255, 255, 255)
+containerStroke.Thickness = 1.5
 
-Instance.new("UICorner", cmdBtn).CornerRadius = UDim.new(0, 8)
-local btnStroke = Instance.new("UIStroke", cmdBtn)
-btnStroke.Color = Color3.fromRGB(255, 255, 255)
-btnStroke.Thickness = 1.5
+-- Título Lateral (VIEW:)
+local viewLabel = Instance.new("TextLabel")
+viewLabel.Size = UDim2.new(0.25, 0, 1, 0)
+viewLabel.Position = UDim2.new(0.02, 0, 0, 0)
+viewLabel.BackgroundTransparency = 1
+viewLabel.Text = "VIEW:"
+viewLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+viewLabel.Font = Enum.Font.GothamBold
+viewLabel.TextSize = 16
+viewLabel.TextXAlignment = Enum.TextXAlignment.Left
+viewLabel.Parent = cmdContainer
 
--- [TÍTULO "VIEW:"]
-local viewTitle = Instance.new("TextLabel")
-viewTitle.Size = UDim2.new(0.25, 0, 1, 0)
-viewTitle.Position = UDim2.new(0.02, 0, 0, 0)
-viewTitle.BackgroundTransparency = 1
-viewTitle.Text = "VIEW:"
-viewTitle.TextColor3 = Color3.fromRGB(255, 30, 30) -- Vermelho da imagem
-viewTitle.Font = Enum.Font.GothamBlack
-viewTitle.TextSize = 18
-viewTitle.TextXAlignment = Enum.TextXAlignment.Left
-viewTitle.Parent = cmdBtn
+-- ==========================================================
+-- FUNÇÃO PARA CRIAR OS TOGGLES (CHAVES LIGA/DESLIGA)
+-- ==========================================================
+local function CreateToggle(parent, posX, titleText)
+    local section = Instance.new("Frame")
+    section.Size = UDim2.new(0.3, 0, 1, 0)
+    section.Position = UDim2.new(posX, 0, 0, 0)
+    section.BackgroundTransparency = 1
+    section.Parent = parent
 
--- [FUNÇÃO PARA CRIAR OS INTERRUPTORES (TOGGLES)]
-local function CriarToggle(nome, icone, posX)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(0.3, 0, 1, 0)
-    container.Position = UDim2.new(posX, 0, 0, 0)
-    container.BackgroundTransparency = 1
-    container.Parent = cmdBtn
+    -- Nome em cima do botão
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0.45, 0)
+    title.BackgroundTransparency = 1
+    title.Text = titleText
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.Font = Enum.Font.GothamMedium
+    title.TextSize = 13
+    title.Parent = section
 
-    -- Título (Ex: 👤 Player:)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0.4, 0)
-    label.Position = UDim2.new(0, 0, 0.1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = icone .. " " .. nome .. ":"
-    label.TextColor3 = Color3.fromRGB(255, 30, 30)
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 14
-    label.Parent = container
+    -- Fundo do botão (Vermelho por padrão)
+    local toggleBG = Instance.new("Frame")
+    toggleBG.Size = UDim2.new(0, 46, 0, 24)
+    toggleBG.Position = UDim2.new(0.5, -23, 0.5, 2)
+    toggleBG.BackgroundColor3 = Color3.fromRGB(255, 80, 80) -- Inativo = Vermelho
+    toggleBG.Parent = section
+    Instance.new("UICorner", toggleBG).CornerRadius = UDim.new(1, 0)
 
-    -- Fundo do Toggle (A caixinha)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 50, 0, 22)
-    toggleBg.Position = UDim2.new(0.5, -25, 0.55, 0)
-    toggleBg.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-    toggleBg.Parent = container
-    
-    local stroke = Instance.new("UIStroke", toggleBg)
-    stroke.Color = Color3.fromRGB(255, 255, 255)
-    stroke.Thickness = 1.5
+    -- Bolinha do botão
+    local toggleKnob = Instance.new("Frame")
+    toggleKnob.Size = UDim2.new(0, 18, 0, 18)
+    toggleKnob.Position = UDim2.new(0, 3, 0.5, -9) -- Posição inicial (Esquerda)
+    toggleKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    toggleKnob.Parent = toggleBG
+    Instance.new("UICorner", toggleKnob).CornerRadius = UDim.new(1, 0)
 
-    -- Linha Divisória no meio
-    local divisor = Instance.new("Frame")
-    divisor.Size = UDim2.new(0, 2, 0.8, 0)
-    divisor.Position = UDim2.new(0.5, -1, 0.1, 0)
-    divisor.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
-    divisor.BorderSizePixel = 0
-    divisor.Parent = toggleBg
-
-    -- Círculo do Toggle
-    local circle = Instance.new("Frame")
-    circle.Size = UDim2.new(0, 16, 0, 16)
-    circle.Position = UDim2.new(0, 3, 0.5, -8) -- Posição Inativa (Esquerda)
-    circle.BackgroundColor3 = Color3.fromRGB(150, 150, 150) -- Cinza
-    circle.Parent = toggleBg
-    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-
-    -- Botão invisível para clicar
+    -- Área de Clique
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 1, 0)
     btn.BackgroundTransparency = 1
     btn.Text = ""
-    btn.Parent = toggleBg
+    btn.Parent = toggleBG
 
-    return circle, btn
+    return toggleBG, toggleKnob, btn
 end
 
--- Criando os dois Toggles
-local playerCircle, playerBtn = CriarToggle("Player", "👤", 0.3)
-local botCircle, botBtn = CriarToggle("BOT", "🤖", 0.65)
+local playerBG, playerKnob, playerBtn = CreateToggle(cmdContainer, 0.3, "👤 Player")
+local botBG, botKnob, botBtn = CreateToggle(cmdContainer, 0.65, "🤖 BOT")
 
--- [ANIMAÇÃO DE ATIVAR/DESATIVAR]
-local function AnimarToggle(circle, ativo)
-    local endPos = ativo and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-    local endColor = ativo and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(150, 150, 150)
-
-    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    TweenService:Create(circle, tweenInfo, {Position = endPos, BackgroundColor3 = endColor}):Play()
+-- ==========================================================
+-- 2. SISTEMA PREPARATÓRIO DE AVISOS
+-- ==========================================================
+local function SistemaDeAvisos(alvo, estaAtivo)
+    -- LUGAR RESERVADO PARA O FUTURO SCRIPT DE AVISOS
+    -- Quando criarmos o Script de Avisos, chamaremos a função dele aqui!
+    
+    local estado = estaAtivo and "ATIVADO" or "DESATIVADO"
+    local cor = estaAtivo and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80)
+    
+    -- Notificação Temporária Simples
+    local tempAviso = Instance.new("TextLabel")
+    tempAviso.Size = UDim2.new(0, 200, 0, 30)
+    tempAviso.Position = UDim2.new(0.5, -100, 0.8, 0)
+    tempAviso.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    tempAviso.TextColor3 = cor
+    tempAviso.Text = alvo .. " " .. estado
+    tempAviso.Font = Enum.Font.GothamBold
+    tempAviso.Parent = panelGui
+    Instance.new("UICorner", tempAviso)
+    Instance.new("UIStroke", tempAviso).Color = Color3.fromRGB(255,255,255)
+    
+    game:GetService("Debris"):AddItem(tempAviso, 2)
 end
 
--- [LÓGICA DO ESP]
+-- ==========================================================
+-- 3. ANIMAÇÕES E EVENTOS DE CLIQUE
+-- ==========================================================
+local function AnimateToggle(bg, knob, isActive)
+    -- Definir cores e posições
+    local targetColor = isActive and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80)
+    local targetPos = isActive and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+    
+    -- Iniciar Animação Fluida (Tween)
+    TweenService:Create(bg, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+    TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+end
+
+playerBtn.MouseButton1Click:Connect(function()
+    PLAYER_ATIVO = not PLAYER_ATIVO
+    AnimateToggle(playerBG, playerKnob, PLAYER_ATIVO)
+    SistemaDeAvisos("Visualização de Players", PLAYER_ATIVO)
+end)
+
+botBtn.MouseButton1Click:Connect(function()
+    BOT_ATIVO = not BOT_ATIVO
+    AnimateToggle(botBG, botKnob, BOT_ATIVO)
+    SistemaDeAvisos("Visualização de Bots", BOT_ATIVO)
+end)
+
+-- ==========================================================
+-- 4. LÓGICA DO ESP (PLAYERS E BOTS SEPARADOS)
+-- ==========================================================
 local espFolder = Instance.new("Folder", workspace)
-espFolder.Name = "EntityESP_Storage"
+espFolder.Name = "EntityESP_Storage_V4"
 
 local function UpdateESP()
     espFolder:ClearAllChildren()
-    if not ESTADO_PLAYER and not ESTADO_BOT then return end
+    if not PLAYER_ATIVO and not BOT_ATIVO then return end
     
     local charLocal = player.Character
     local rootLocal = charLocal and charLocal:FindFirstChild("HumanoidRootPart")
@@ -152,19 +175,20 @@ local function UpdateESP()
             if dist <= DISTANCIA_MAXIMA then
                 local isPlayer = Players:GetPlayerFromCharacter(target)
                 
-                -- Verifica se o ESP específico está ligado para renderizar
-                if (isPlayer and ESTADO_PLAYER) or (not isPlayer and ESTADO_BOT) then
-                    
+                -- Checa se deve mostrar baseado nas chaves Ativas
+                local deveMostrar = (isPlayer and PLAYER_ATIVO) or (not isPlayer and BOT_ATIVO)
+                
+                if deveMostrar then
                     local icon = isPlayer and "👤" or "🤖"
                     local baseColor = isPlayer and (isPlayer.TeamColor and isPlayer.TeamColor.Color or Color3.fromRGB(255, 255, 255)) or Color3.fromRGB(255, 50, 50)
                     
-                    -- Highlight
+                    -- Outline
                     local highlight = Instance.new("Highlight", espFolder)
                     highlight.Adornee = target
-                    highlight.FillTransparency = 1
+                    highlight.FillTransparency = 1 
                     highlight.OutlineColor = baseColor
                     
-                    -- Billboard
+                    -- Letreiros (Billboard)
                     local billboard = Instance.new("BillboardGui", espFolder)
                     billboard.Size = UDim2.new(0, 200, 0, 50)
                     billboard.Adornee = target:FindFirstChild("Head") or root
@@ -180,33 +204,17 @@ local function UpdateESP()
                     infoLabel.Font = Enum.Font.GothamBold
                     infoLabel.TextSize = 13
                     
-                    infoLabel.Text = string.format("%s: %s\n📏 %d Metros | ❤ %d Vida", icon, target.Name, math.floor(dist), math.floor(hum.Health))
+                    local vida = math.floor(hum.Health)
+                    infoLabel.Text = string.format("%s %s\n📏 %d Metros | ❤ %d Vida", icon, target.Name, math.floor(dist), vida)
                 end
             end
         end
     end
 end
 
--- [LOOP OTIMIZADO]
+-- Loop de Atualização
 task.spawn(function()
     while task.wait(0.5) do
         UpdateESP()
     end
-end)
-
--- [EVENTOS DE CLIQUE]
-playerBtn.MouseButton1Click:Connect(function()
-    ESTADO_PLAYER = not ESTADO_PLAYER
-    AnimarToggle(playerCircle, ESTADO_PLAYER)
-    
-    local txtEstado = ESTADO_PLAYER and "Ativado" or "Desativado"
-    SistemaDeAvisos("ESP de Players", "O ESP de jogadores foi " .. txtEstado)
-end)
-
-botBtn.MouseButton1Click:Connect(function()
-    ESTADO_BOT = not ESTADO_BOT
-    AnimarToggle(botCircle, ESTADO_BOT)
-    
-    local txtEstado = ESTADO_BOT and "Ativado" or "Desativado"
-    SistemaDeAvisos("ESP de Bots", "O ESP de bots foi " .. txtEstado)
 end)
