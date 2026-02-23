@@ -1,0 +1,170 @@
+--[[
+    GITHUB: Command_ViewItems_V3.lua
+    Função: Detectar itens reais (Handle), Outline Laranja, Filtro de Acessórios e Otimização Extrema.
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- [CONFIGURAÇÕES]
+local DISTANCIA_MAXIMA = 300 -- Limite de distância para evitar lag
+local ESTADO_ATIVO = false
+local NOME_COMANDO = "View Items"
+
+-- [LOCALIZAÇÃO DA LISTA]
+local panelGui = playerGui:WaitForChild("MainPanel_ScreenGui")
+local mainFrame = panelGui:WaitForChild("MainFrame")
+local listFrame = mainFrame:WaitForChild("CommandList")
+
+-- [LIMPEZA DE DUPLICATAS]
+if listFrame:FindFirstChild(NOME_COMANDO) then listFrame[NOME_COMANDO]:Destroy() end
+
+-- [CRIAÇÃO DO BOTÃO NA LISTA]
+local cmdBtn = Instance.new("Frame")
+cmdBtn.Name = NOME_COMANDO
+cmdBtn.Size = UDim2.new(0.95, 0, 0, 45)
+cmdBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+cmdBtn.Parent = listFrame
+
+Instance.new("UICorner", cmdBtn).CornerRadius = UDim.new(0, 8)
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = Color3.fromRGB(255, 255, 255)
+btnStroke.Thickness = 1.5
+btnStroke.Parent = cmdBtn
+
+local nameLabel = Instance.new("TextLabel")
+nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
+nameLabel.Position = UDim2.new(0.05, 0, 0, 0)
+nameLabel.BackgroundTransparency = 1
+nameLabel.Text = NOME_COMANDO
+nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+nameLabel.Font = Enum.Font.GothamMedium
+nameLabel.TextSize = 14
+nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+nameLabel.Parent = cmdBtn
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(0.35, 0, 1, 0)
+statusLabel.Position = UDim2.new(0.6, 0, 0, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "( Inativo )"
+statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+statusLabel.Font = Enum.Font.GothamBold
+statusLabel.TextSize = 14
+statusLabel.TextXAlignment = Enum.TextXAlignment.Right
+statusLabel.Parent = cmdBtn
+
+local clickRegion = Instance.new("TextButton")
+clickRegion.Size = UDim2.new(1, 0, 1, 0)
+clickRegion.BackgroundTransparency = 1
+clickRegion.Text = ""
+clickRegion.Parent = cmdBtn
+
+-- [PASTA DE RENDERIZAÇÃO]
+local itemEspFolder = Instance.new("Folder", workspace)
+itemEspFolder.Name = "Clean_Item_ESP"
+
+-- [FUNÇÃO PARA CHECAR SE É ITEM REAL]
+local function IsRealItem(obj)
+    if not obj:IsA("BasePart") or obj.Name ~= "Handle" then return false end
+    
+    local parent = obj.Parent
+    -- Ignora se estiver dentro de um Player, Bot ou se for um Acessório
+    if parent:IsA("Accessory") or parent:IsA("Hat") then return false end
+    if parent:FindFirstAncestorOfClass("Model") and (parent:FindFirstAncestorOfClass("Model"):FindFirstChild("Humanoid")) then
+        return false
+    end
+    
+    return true
+end
+
+-- [SISTEMA DE AVISO]
+local function CustomNotify(comando, estado)
+    local notifyFrame = Instance.new("Frame")
+    notifyFrame.Size = UDim2.new(0, 220, 0, 100)
+    notifyFrame.Position = UDim2.new(1, 50, 0.7, 0)
+    notifyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    notifyFrame.Parent = panelGui
+    Instance.new("UICorner", notifyFrame)
+    Instance.new("UIStroke", notifyFrame).Color = Color3.fromRGB(255,255,255)
+
+    local content = Instance.new("TextLabel")
+    content.Size = UDim2.new(1, 0, 1, 0)
+    content.Text = "---------- Aviso ----------\n\n" .. comando .. "\nfoi " .. estado
+    content.TextColor3 = Color3.fromRGB(255, 255, 255)
+    content.BackgroundTransparency = 1
+    content.Font = Enum.Font.GothamBold
+    content.TextSize = 13
+    content.Parent = notifyFrame
+
+    notifyFrame:TweenPosition(UDim2.new(1, -240, 0.7, 0), "Out", "Back", 0.5)
+    task.wait(4)
+    notifyFrame:TweenPosition(UDim2.new(1, 50, 0.7, 0), "In", "Quad", 0.5)
+    game:GetService("Debris"):AddItem(notifyFrame, 0.6)
+end
+
+-- [LOOP DE ATUALIZAÇÃO OTIMIZADO]
+task.spawn(function()
+    while task.wait(1) do
+        if not ESTADO_ATIVO then 
+            itemEspFolder:ClearAllChildren()
+            continue 
+        end
+
+        itemEspFolder:ClearAllChildren()
+        
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if IsRealItem(obj) then
+                local dist = root and (obj.Position - root.Position).Magnitude or 0
+                
+                if dist <= DISTANCIA_MAXIMA then
+                    -- Criar Highlight Laranja
+                    local hl = Instance.new("Highlight")
+                    hl.Adornee = obj.Parent
+                    hl.FillTransparency = 1
+                    hl.OutlineColor = Color3.fromRGB(255, 120, 0) -- Laranja
+                    hl.OutlineTransparency = 0
+                    hl.Parent = itemEspFolder
+
+                    -- Billboard de Informação
+                    local bb = Instance.new("BillboardGui")
+                    bb.Size = UDim2.new(0, 150, 0, 40)
+                    bb.Adornee = obj
+                    bb.AlwaysOnTop = true
+                    bb.ExtentsOffset = Vector3.new(0, 2, 0)
+                    bb.Parent = itemEspFolder
+
+                    local label = Instance.new("TextLabel")
+                    label.Size = UDim2.new(1, 0, 1, 0)
+                    label.BackgroundTransparency = 1
+                    label.Text = string.format("%s\n[%d m]", obj.Parent.Name, dist)
+                    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    label.Font = Enum.Font.GothamBold
+                    label.TextSize = 11
+                    label.Parent = bb
+                end
+            end
+        end
+    end
+end)
+
+-- Evento de Clique
+clickRegion.MouseButton1Click:Connect(function()
+    ESTADO_ATIVO = not ESTADO_ATIVO
+    if ESTADO_ATIVO then
+        statusLabel.Text = "( Ativo )"
+        statusLabel.TextColor3 = Color3.fromRGB(80, 255, 80)
+        CustomNotify(NOME_COMANDO, "ATIVO")
+    else
+        statusLabel.Text = "( Inativo )"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        CustomNotify(NOME_COMANDO, "INATIVO")
+    end
+end)
