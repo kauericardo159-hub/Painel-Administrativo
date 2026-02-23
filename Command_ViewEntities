@@ -1,6 +1,6 @@
 --[[
-    GITHUB: Command_ViewEntities_V3.lua
-    Função: ESP Distinto para Players (Cor da Equipa + 👤) e Bots (Vermelho + 🤖).
+    GITHUB: Command_ViewEntities_V4.lua
+    Função: ESP Distinto com Toggles Animados para Players e Bots no mesmo bloco.
 ]]
 
 local Players = game:GetService("Players")
@@ -11,9 +11,10 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- [CONFIGURAÇÕES GERAIS]
-local DISTANCIA_MAXIMA = 350 -- Limite estrito para não causar lag
-local ESTADO_ATIVO = false
-local NOME_COMANDO = "View Bots & Players"
+local DISTANCIA_MAXIMA = 350
+local ESTADO_PLAYER = false
+local ESTADO_BOT = false
+local NOME_COMANDO = "ViewEntities_Toggles" -- Nome interno para evitar conflitos
 
 -- [LOCALIZAÇÃO DA LISTA NO PAINEL]
 local panelGui = playerGui:WaitForChild("MainPanel_ScreenGui")
@@ -25,11 +26,22 @@ if listFrame:FindFirstChild(NOME_COMANDO) then
     listFrame[NOME_COMANDO]:Destroy()
 end
 
--- [CRIAÇÃO DO BOTÃO NA LISTA]
+-- [SISTEMA DE AVISOS (ESPAÇO RESERVADO PARA SEU FUTURO SCRIPT)]
+local function SistemaDeAvisos(titulo, mensagem)
+    -- * Aqui você colocará o seu Script de Avisos no futuro. *
+    -- Por enquanto, usaremos a notificação nativa do Roblox para testar:
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = titulo,
+        Text = mensagem,
+        Duration = 3
+    })
+end
+
+-- [CRIAÇÃO DA ESTRUTURA DO BOTÃO]
 local cmdBtn = Instance.new("Frame")
 cmdBtn.Name = NOME_COMANDO
-cmdBtn.Size = UDim2.new(0.9, 0, 0, 45)
-cmdBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+cmdBtn.Size = UDim2.new(0.95, 0, 0, 60) -- Mais alto para caber os interruptores
+cmdBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 cmdBtn.Parent = listFrame
 
 Instance.new("UICorner", cmdBtn).CornerRadius = UDim.new(0, 8)
@@ -37,75 +49,94 @@ local btnStroke = Instance.new("UIStroke", cmdBtn)
 btnStroke.Color = Color3.fromRGB(255, 255, 255)
 btnStroke.Thickness = 1.5
 
-local nameLabel = Instance.new("TextLabel")
-nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
-nameLabel.Position = UDim2.new(0.05, 0, 0, 0)
-nameLabel.BackgroundTransparency = 1
-nameLabel.Text = NOME_COMANDO
-nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-nameLabel.Font = Enum.Font.GothamMedium
-nameLabel.TextSize = 14
-nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-nameLabel.Parent = cmdBtn
+-- [TÍTULO "VIEW:"]
+local viewTitle = Instance.new("TextLabel")
+viewTitle.Size = UDim2.new(0.25, 0, 1, 0)
+viewTitle.Position = UDim2.new(0.02, 0, 0, 0)
+viewTitle.BackgroundTransparency = 1
+viewTitle.Text = "VIEW:"
+viewTitle.TextColor3 = Color3.fromRGB(255, 30, 30) -- Vermelho da imagem
+viewTitle.Font = Enum.Font.GothamBlack
+viewTitle.TextSize = 18
+viewTitle.TextXAlignment = Enum.TextXAlignment.Left
+viewTitle.Parent = cmdBtn
 
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(0.35, 0, 1, 0)
-statusLabel.Position = UDim2.new(0.6, 0, 0, 0)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "( Inativo )"
-statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-statusLabel.Font = Enum.Font.GothamBold
-statusLabel.TextSize = 14
-statusLabel.TextXAlignment = Enum.TextXAlignment.Right
-statusLabel.Parent = cmdBtn
+-- [FUNÇÃO PARA CRIAR OS INTERRUPTORES (TOGGLES)]
+local function CriarToggle(nome, icone, posX)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0.3, 0, 1, 0)
+    container.Position = UDim2.new(posX, 0, 0, 0)
+    container.BackgroundTransparency = 1
+    container.Parent = cmdBtn
 
-local clickRegion = Instance.new("TextButton")
-clickRegion.Size = UDim2.new(1, 0, 1, 0)
-clickRegion.BackgroundTransparency = 1
-clickRegion.Text = ""
-clickRegion.Parent = cmdBtn
+    -- Título (Ex: 👤 Player:)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0.4, 0)
+    label.Position = UDim2.new(0, 0, 0.1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = icone .. " " .. nome .. ":"
+    label.TextColor3 = Color3.fromRGB(255, 30, 30)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 14
+    label.Parent = container
 
--- [NOVO SISTEMA DE NOTIFICAÇÃO (TOAST MODERNO)]
-local function ModernNotify(estado, cor)
-    local toast = Instance.new("Frame")
-    toast.Size = UDim2.new(0, 250, 0, 40)
-    toast.Position = UDim2.new(0.5, -125, 0, -50) -- Começa fora do ecrã (topo)
-    toast.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    toast.Parent = panelGui
+    -- Fundo do Toggle (A caixinha)
+    local toggleBg = Instance.new("Frame")
+    toggleBg.Size = UDim2.new(0, 50, 0, 22)
+    toggleBg.Position = UDim2.new(0.5, -25, 0.55, 0)
+    toggleBg.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    toggleBg.Parent = container
     
-    Instance.new("UICorner", toast).CornerRadius = UDim.new(0, 8)
-    local stroke = Instance.new("UIStroke", toast)
-    stroke.Color = cor
-    stroke.Thickness = 2
-    
-    local msg = Instance.new("TextLabel")
-    msg.Size = UDim2.new(1, 0, 1, 0)
-    msg.BackgroundTransparency = 1
-    msg.Text = NOME_COMANDO .. " [" .. estado .. "]"
-    msg.TextColor3 = Color3.fromRGB(255, 255, 255)
-    msg.Font = Enum.Font.GothamBold
-    msg.TextSize = 14
-    msg.Parent = toast
-    
-    -- Animação de descida e desvanecimento
-    toast:TweenPosition(UDim2.new(0.5, -125, 0.1, 0), "Out", "Back", 0.5)
-    task.wait(2.5)
-    
-    local fadeOut = TweenService:Create(toast, TweenInfo.new(0.5), {BackgroundTransparency = 1})
-    local fadeText = TweenService:Create(msg, TweenInfo.new(0.5), {TextTransparency = 1})
-    local fadeStroke = TweenService:Create(stroke, TweenInfo.new(0.5), {Transparency = 1})
-    
-    fadeOut:Play() fadeText:Play() fadeStroke:Play()
-    game:GetService("Debris"):AddItem(toast, 0.6)
+    local stroke = Instance.new("UIStroke", toggleBg)
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = 1.5
+
+    -- Linha Divisória no meio
+    local divisor = Instance.new("Frame")
+    divisor.Size = UDim2.new(0, 2, 0.8, 0)
+    divisor.Position = UDim2.new(0.5, -1, 0.1, 0)
+    divisor.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+    divisor.BorderSizePixel = 0
+    divisor.Parent = toggleBg
+
+    -- Círculo do Toggle
+    local circle = Instance.new("Frame")
+    circle.Size = UDim2.new(0, 16, 0, 16)
+    circle.Position = UDim2.new(0, 3, 0.5, -8) -- Posição Inativa (Esquerda)
+    circle.BackgroundColor3 = Color3.fromRGB(150, 150, 150) -- Cinza
+    circle.Parent = toggleBg
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+
+    -- Botão invisível para clicar
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.Parent = toggleBg
+
+    return circle, btn
 end
 
--- [LÓGICA DO ESP: PLAYERS E BOTS]
+-- Criando os dois Toggles
+local playerCircle, playerBtn = CriarToggle("Player", "👤", 0.3)
+local botCircle, botBtn = CriarToggle("BOT", "🤖", 0.65)
+
+-- [ANIMAÇÃO DE ATIVAR/DESATIVAR]
+local function AnimarToggle(circle, ativo)
+    local endPos = ativo and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+    local endColor = ativo and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(150, 150, 150)
+
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(circle, tweenInfo, {Position = endPos, BackgroundColor3 = endColor}):Play()
+end
+
+-- [LÓGICA DO ESP]
 local espFolder = Instance.new("Folder", workspace)
 espFolder.Name = "EntityESP_Storage"
 
 local function UpdateESP()
     espFolder:ClearAllChildren()
-    if not ESTADO_ATIVO then return end
+    if not ESTADO_PLAYER and not ESTADO_BOT then return end
     
     local charLocal = player.Character
     local rootLocal = charLocal and charLocal:FindFirstChild("HumanoidRootPart")
@@ -118,67 +149,64 @@ local function UpdateESP()
         if hum and root and target ~= charLocal and hum.Health > 0 then
             local dist = (rootLocal.Position - root.Position).Magnitude
             
-            -- Limite de Distância para evitar lentidão no jogo
             if dist <= DISTANCIA_MAXIMA then
                 local isPlayer = Players:GetPlayerFromCharacter(target)
                 
-                -- Configuração dinâmica das cores e ícones
-                local icon = isPlayer and "👤" or "🤖"
-                local baseColor = isPlayer and (isPlayer.TeamColor and isPlayer.TeamColor.Color or Color3.fromRGB(255, 255, 255)) or Color3.fromRGB(255, 50, 50)
-                
-                -- 1. Outline (Highlight)
-                local highlight = Instance.new("Highlight", espFolder)
-                highlight.Adornee = target
-                highlight.FillTransparency = 1 -- Apenas as bordas
-                highlight.OutlineColor = baseColor
-                highlight.OutlineTransparency = 0
-                
-                -- 2. Informações Visuais (Billboard)
-                local billboard = Instance.new("BillboardGui", espFolder)
-                billboard.Size = UDim2.new(0, 200, 0, 50)
-                billboard.Adornee = target:FindFirstChild("Head") or root
-                billboard.AlwaysOnTop = true
-                billboard.ExtentsOffset = Vector3.new(0, 3, 0)
-                
-                local infoLabel = Instance.new("TextLabel", billboard)
-                infoLabel.Size = UDim2.new(1, 0, 1, 0)
-                infoLabel.BackgroundTransparency = 1
-                infoLabel.TextColor3 = baseColor
-                infoLabel.TextStrokeTransparency = 0.2
-                infoLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-                infoLabel.Font = Enum.Font.GothamBold
-                infoLabel.TextSize = 13
-                
-                -- Texto Formatado (Ícone, Metros e Vida)
-                local vida = math.floor(hum.Health)
-                local distArredondada = math.floor(dist)
-                infoLabel.Text = string.format("%s: %s\n📏 %d Metros | ❤ %d Vida", icon, target.Name, distArredondada, vida)
+                -- Verifica se o ESP específico está ligado para renderizar
+                if (isPlayer and ESTADO_PLAYER) or (not isPlayer and ESTADO_BOT) then
+                    
+                    local icon = isPlayer and "👤" or "🤖"
+                    local baseColor = isPlayer and (isPlayer.TeamColor and isPlayer.TeamColor.Color or Color3.fromRGB(255, 255, 255)) or Color3.fromRGB(255, 50, 50)
+                    
+                    -- Highlight
+                    local highlight = Instance.new("Highlight", espFolder)
+                    highlight.Adornee = target
+                    highlight.FillTransparency = 1
+                    highlight.OutlineColor = baseColor
+                    
+                    -- Billboard
+                    local billboard = Instance.new("BillboardGui", espFolder)
+                    billboard.Size = UDim2.new(0, 200, 0, 50)
+                    billboard.Adornee = target:FindFirstChild("Head") or root
+                    billboard.AlwaysOnTop = true
+                    billboard.ExtentsOffset = Vector3.new(0, 3, 0)
+                    
+                    local infoLabel = Instance.new("TextLabel", billboard)
+                    infoLabel.Size = UDim2.new(1, 0, 1, 0)
+                    infoLabel.BackgroundTransparency = 1
+                    infoLabel.TextColor3 = baseColor
+                    infoLabel.TextStrokeTransparency = 0.2
+                    infoLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                    infoLabel.Font = Enum.Font.GothamBold
+                    infoLabel.TextSize = 13
+                    
+                    infoLabel.Text = string.format("%s: %s\n📏 %d Metros | ❤ %d Vida", icon, target.Name, math.floor(dist), math.floor(hum.Health))
+                end
             end
         end
     end
 end
 
--- [LOOP OTIMIZADO DE ATUALIZAÇÃO]
+-- [LOOP OTIMIZADO]
 task.spawn(function()
     while task.wait(0.5) do
-        if ESTADO_ATIVO then
-            UpdateESP()
-        end
+        UpdateESP()
     end
 end)
 
--- [EVENTO DO BOTÃO]
-clickRegion.MouseButton1Click:Connect(function()
-    ESTADO_ATIVO = not ESTADO_ATIVO
+-- [EVENTOS DE CLIQUE]
+playerBtn.MouseButton1Click:Connect(function()
+    ESTADO_PLAYER = not ESTADO_PLAYER
+    AnimarToggle(playerCircle, ESTADO_PLAYER)
     
-    if ESTADO_ATIVO then
-        statusLabel.Text = "( Ativo )"
-        statusLabel.TextColor3 = Color3.fromRGB(80, 255, 80)
-        ModernNotify("ATIVADO", Color3.fromRGB(80, 255, 80))
-    else
-        statusLabel.Text = "( Inativo )"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-        espFolder:ClearAllChildren()
-        ModernNotify("DESATIVADO", Color3.fromRGB(255, 80, 80))
-    end
+    local txtEstado = ESTADO_PLAYER and "Ativado" or "Desativado"
+    SistemaDeAvisos("ESP de Players", "O ESP de jogadores foi " .. txtEstado)
+end)
+
+botBtn.MouseButton1Click:Connect(function()
+    ESTADO_BOT = not ESTADO_BOT
+    AnimarToggle(botCircle, ESTADO_BOT)
+    
+    local txtEstado = ESTADO_BOT and "Ativado" or "Desativado"
+    SistemaDeAvisos("ESP de Bots", "O ESP de bots foi " .. txtEstado)
 end)
