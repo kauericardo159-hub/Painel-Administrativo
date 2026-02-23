@@ -1,13 +1,14 @@
 --[[
-    GITHUB: ListManager_V2.lua
-    Função: Criar a Lista de Comandos com design transparente e borda branca.
+    GITHUB: ListManager_V3_RGB.lua
+    Função: Criar a ScrollingFrame centralizada com suporte a RGB dinâmico.
 ]]
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Aguarda o painel principal existir
+-- Aguarda a existência do painel principal para evitar erros
 local panelGui = playerGui:WaitForChild("MainPanel_ScreenGui")
 local mainFrame = panelGui:WaitForChild("MainFrame")
 
@@ -16,36 +17,49 @@ if mainFrame:FindFirstChild("CommandList") then
     mainFrame.CommandList:Destroy()
 end
 
--- [ÁREA DA LISTA (Fundo Cinza e Transparente)]
+-- [ÁREA DA LISTA - CENTRALIZADA]
 local listFrame = Instance.new("ScrollingFrame")
 listFrame.Name = "CommandList"
-listFrame.Size = UDim2.new(0.9, 0, 0.78, 0)
-listFrame.Position = UDim2.new(0.05, 0, 0.18, 0)
-listFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 65) -- Cinza mais claro que o fundo
-listFrame.BackgroundTransparency = 0.25 -- Um pouco transparente
+-- Tamanho e posição ajustados para o centro conforme o desenho
+listFrame.Size = UDim2.new(0, 310, 0, 200) 
+listFrame.Position = UDim2.new(0.5, -155, 0.55, -100)
+listFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+listFrame.BackgroundTransparency = 0.3
 listFrame.BorderSizePixel = 0
-listFrame.CanvasSize = UDim2.new(0, 0, 2, 0)
-listFrame.ScrollBarThickness = 5
-listFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
-listFrame.Parent = mainFrame
+listFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Cresce com os comandos
+local listCorner = Instance.new("UICorner", listFrame)
+listCorner.CornerRadius = UDim.new(0, 8)
 
-Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 8)
-
--- UIStroke Branco na Lista
+-- UIStroke RGB da Lista
 local listStroke = Instance.new("UIStroke")
 listStroke.Color = Color3.fromRGB(255, 255, 255)
 listStroke.Thickness = 2
 listStroke.Parent = listFrame
 
--- [ORGANIZAÇÃO AUTOMÁTICA DOS BOTÕES]
+-- [CONFIGURAÇÃO DE LAYOUT]
 local layout = Instance.new("UIListLayout")
 layout.Parent = listFrame
 layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Padding = UDim.new(0, 8)
+layout.Padding = UDim.new(0, 10)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local padding = Instance.new("UIPadding")
 padding.PaddingTop = UDim.new(0, 10)
 padding.Parent = listFrame
 
-print("Lista de comandos carregada. Pronta para receber botões.")
+-- [SINCRONIZAÇÃO RGB]
+-- Faz a borda da lista brilhar na mesma frequência que o painel principal
+task.spawn(function()
+    while true do
+        local hue = tick() % 5 / 5
+        local color = Color3.fromHSV(hue, 1, 1)
+        listStroke.Color = color
+        
+        -- Ajusta o CanvasSize automaticamente conforme novos comandos entram
+        listFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
+        
+        RunService.RenderStepped:Wait()
+    end
+end)
+
+print("Gerenciador de Lista V3 (Centralizado) carregado com sucesso.")
