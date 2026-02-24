@@ -1,0 +1,22 @@
+--[[
+    Animação de Reflexo Cinza Dinâmico no Fundo
+]]
+local TweenService = game:GetService("TweenService")
+local mainFrame = script.Parent -- Certifique-se que este script seja filho do MainFrame
+
+-- Criar o Gradiente
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 12, 14)), -- Cor escura (Fundo)
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(35, 35, 40)), -- Brilho Cinza
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 14)) -- Cor escura (Fundo)
+})
+gradient.Rotation = 45 -- Diagonal para ficar elegante
+gradient.Offset = Vector2.new(-1, 0) -- Começa fora do painel
+gradient.Parent = mainFrame
+
+-- Loop da Animação
+local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+local tween = TweenService:Create(gradient, tweenInfo, {Offset = Vector2.new(1, 0)})
+
+tween:Play()
