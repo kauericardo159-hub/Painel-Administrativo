@@ -1,39 +1,14 @@
 --[[
-    GITHUB: PanelInterface_V5_Ultimate.lua
-    Versão: 5.1 (Premium Dark Edition)
-    Inovações: 
-    - Efeito Bloom Suave (pós-processamento global)
-    - Gradiente de Reflexo Cinza (animação de superfície)
-    - Interface Expandida 650x420
+    GITHUB: PanelInterface_V5_Tabs.lua
+    Função: Painel Expandido com Sidebar, Sistema de Abas e Transições Suaves.
 ]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
-local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
---------------------------------------------------------------------
--- [SISTEMA DE EFEITOS AMBIENTAIS]
---------------------------------------------------------------------
--- Remove efeitos antigos para evitar sobreposição
-local oldBloom = Lighting:FindFirstChild("PanelBloomEffect")
-if oldBloom then oldBloom:Destroy() end
-
--- Configuração do Bloom (Brilho suave nas luzes sem embaçar)
-local bloom = Instance.new("BloomEffect")
-bloom.Name = "PanelBloomEffect"
-bloom.Intensity = 0.4 -- Intensidade controlada para não cegar
-bloom.Size = 12       -- Espalhamento suave
-bloom.Threshold = 0.8 -- Garante que apenas tons claros brilhem
-bloom.Enabled = true
-bloom.Parent = Lighting
-
---------------------------------------------------------------------
--- [CONSTRUÇÃO DA INTERFACE]
---------------------------------------------------------------------
+-- [LIMPEZA]
 if playerGui:FindFirstChild("MainPanel_ScreenGui") then
     playerGui.MainPanel_ScreenGui:Destroy()
 end
@@ -44,7 +19,7 @@ screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = playerGui
 
--- [MAINFRAME - PAINEL PRINCIPAL]
+-- [PAINEL PRINCIPAL]
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 650, 0, 420) 
@@ -52,108 +27,116 @@ mainFrame.Position = UDim2.new(0.5, -325, 0.5, -210)
 mainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 14)
 mainFrame.BackgroundTransparency = 0.05
 mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false -- Controlado pelo ButtonController
 mainFrame.Parent = screenGui
 
-local mainCorner = Instance.new("UICorner", mainFrame)
-mainCorner.CornerRadius = UDim.new(0, 20)
-
--- Borda Fixa Metálica
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 15)
 local mainStroke = Instance.new("UIStroke", mainFrame)
-mainStroke.Color = Color3.fromRGB(70, 70, 75)
-mainStroke.Thickness = 2.5
-mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+mainStroke.Color = Color3.fromRGB(60, 60, 65)
+mainStroke.Thickness = 2
 
 --------------------------------------------------------------------
--- [ANIMAÇÃO DE REFLEXO CINZA (UIGradient)]
+-- [SIDEBAR - BARRA LATERAL]
 --------------------------------------------------------------------
-local shineGradient = Instance.new("UIGradient")
-shineGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 12, 14)),   -- Fundo Negro
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(45, 45, 50)), -- Brilho Cinza (Reflexo)
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 14))    -- Fundo Negro
-})
-shineGradient.Rotation = 45
-shineGradient.Offset = Vector2.new(-1, 0)
-shineGradient.Parent = mainFrame
+local sidebar = Instance.new("Frame")
+sidebar.Name = "Sidebar"
+sidebar.Size = UDim2.new(0, 160, 1, 0)
+sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 20)
+sidebar.BorderSizePixel = 0
+sidebar.Parent = mainFrame
 
--- Loop contínuo do reflexo passando pelo painel
-task.spawn(function()
-    local tweenInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
-    local tween = TweenService:Create(shineGradient, tweenInfo, {Offset = Vector2.new(1, 0)})
-    tween:Play()
-end)
+local sideCorner = Instance.new("UICorner", sidebar)
+sideCorner.CornerRadius = UDim.new(0, 15)
 
---------------------------------------------------------------------
--- [ELEMENTOS DO HEADER]
---------------------------------------------------------------------
-local headerLine = Instance.new("Frame", mainFrame)
-headerLine.Size = UDim2.new(1, -60, 0, 1)
-headerLine.Position = UDim2.new(0, 30, 0, 85)
-headerLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-headerLine.BackgroundTransparency = 0.8
-headerLine.BorderSizePixel = 0
+-- Linha divisória vertical
+local div = Instance.new("Frame", sidebar)
+div.Size = UDim2.new(0, 1, 1, -40)
+div.Position = UDim2.new(1, 0, 0, 20)
+div.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+div.BackgroundTransparency = 0.9
+div.BorderSizePixel = 0
 
--- Foto de Perfil Circular
-local profilePic = Instance.new("ImageLabel", mainFrame)
-profilePic.Name = "UserProfilePic"
-profilePic.Size = UDim2.new(0, 65, 0, 65)
-profilePic.Position = UDim2.new(0, 30, 0, 12)
-profilePic.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-profilePic.BackgroundTransparency = 0.2
-Instance.new("UICorner", profilePic).CornerRadius = UDim.new(1, 0)
+local tabContainer = Instance.new("Frame", sidebar)
+tabContainer.Name = "TabContainer"
+tabContainer.Size = UDim2.new(1, 0, 0.7, 0)
+tabContainer.Position = UDim2.new(0, 0, 0.25, 0)
+tabContainer.BackgroundTransparency = 1
 
-local profileStroke = Instance.new("UIStroke", profilePic)
-profileStroke.Thickness = 2
-profileStroke.Color = Color3.fromRGB(255, 255, 255)
-profileStroke.Transparency = 0.4
-
-local content, isReady = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-if isReady then profilePic.Image = content end
-
--- Nome do Jogador (Branco Gotham)
-local playerName = Instance.new("TextLabel", mainFrame)
-playerName.Size = UDim2.new(0, 350, 0, 30)
-playerName.Position = UDim2.new(0, 110, 0, 24)
-playerName.BackgroundTransparency = 1
-playerName.Text = player.DisplayName:upper()
-playerName.TextColor3 = Color3.fromRGB(255, 255, 255)
-playerName.Font = Enum.Font.GothamBold
-playerName.TextSize = 22
-playerName.TextXAlignment = Enum.TextXAlignment.Left
-
--- Versão
-local versionLabel = Instance.new("TextLabel", mainFrame)
-versionLabel.Size = UDim2.new(0, 120, 0, 20)
-versionLabel.Position = UDim2.new(1, -150, 0, 27)
-versionLabel.BackgroundTransparency = 1
-versionLabel.Text = "SYSTEM V5.1"
-versionLabel.TextColor3 = Color3.fromRGB(180, 180, 185)
-versionLabel.Font = Enum.Font.GothamMedium
-versionLabel.TextSize = 13
-versionLabel.TextXAlignment = Enum.TextXAlignment.Right
-
--- Barra de Status Estilizada
-local loadingBar = Instance.new("Frame", mainFrame)
-loadingBar.Size = UDim2.new(0, 180, 0, 2)
-loadingBar.Position = UDim2.new(0, 110, 0, 56)
-loadingBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-loadingBar.BackgroundTransparency = 0.85
-
-local progress = Instance.new("Frame", loadingBar)
-progress.Size = UDim2.new(0.7, 0, 1, 0) -- Preenchimento parcial para efeito estético
-progress.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-progress.BorderSizePixel = 0
+local tabLayout = Instance.new("UIListLayout", tabContainer)
+tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tabLayout.Padding = UDim.new(0, 8)
+tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 --------------------------------------------------------------------
--- [ANIMAÇÃO DE ENTRADA]
+-- [CONTAINER DE CONTEÚDO (DIREITA)]
 --------------------------------------------------------------------
-mainFrame.GroupTransparency = 1 -- Requer CanvasGroup para transparência de grupo, usando transparência direta para compatibilidade
-mainFrame.Position = UDim2.new(0.5, -325, 0.6, -210)
-mainFrame.BackgroundTransparency = 1
+local contentArea = Instance.new("Frame")
+contentArea.Name = "ContentArea"
+contentArea.Size = UDim2.new(0, 470, 0, 320)
+contentArea.Position = UDim2.new(0, 170, 0, 85)
+contentArea.BackgroundTransparency = 1
+contentArea.Parent = mainFrame
 
-TweenService:Create(mainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-    Position = UDim2.new(0.5, -325, 0.5, -210),
-    BackgroundTransparency = 0.05
-}):Play()
+-- Pasta para guardar as páginas das abas
+local pages = Instance.new("Folder", contentArea)
+pages.Name = "Pages"
 
-print("Painel V5 Ultimate com Efeitos Visuais Ativados.")
+--------------------------------------------------------------------
+-- [LÓGICA DO SISTEMA DE ABAS]
+--------------------------------------------------------------------
+local function CreateTab(name, icon, isDefault)
+    -- 1. Criar Botão na Sidebar
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Name = name .. "Tab"
+    tabBtn.Size = UDim2.new(0.85, 0, 0, 35)
+    tabBtn.BackgroundColor3 = isDefault and Color3.fromRGB(30, 30, 35) or Color3.fromRGB(25, 25, 28)
+    tabBtn.BackgroundTransparency = isDefault and 0 or 1
+    tabBtn.Text = icon .. "  " .. name
+    tabBtn.TextColor3 = isDefault and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
+    tabBtn.Font = Enum.Font.GothamMedium
+    tabBtn.TextSize = 13
+    tabBtn.Parent = tabContainer
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
+
+    -- 2. Criar Página de Conteúdo (ScrollingFrame)
+    local page = Instance.new("ScrollingFrame")
+    page.Name = name .. "Page"
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.Visible = isDefault
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 2
+    page.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
+    page.Parent = pages
+
+    local layout = Instance.new("UIListLayout", page)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 10)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    -- Evento de Clique para trocar de aba
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, p in ipairs(pages:GetChildren()) do p.Visible = false end
+        for _, b in ipairs(tabContainer:GetChildren()) do 
+            if b:IsA("TextButton") then
+                TweenService:Create(b, TweenInfo.new(0.3), {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(150, 150, 150)}):Play()
+            end
+        end
+        
+        page.Visible = true
+        TweenService:Create(tabBtn, TweenInfo.new(0.3), {BackgroundTransparency = 0, TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    end)
+
+    return page
+end
+
+-- [CRIANDO AS ABAS]
+local homePage = CreateTab("INÍCIO", "🏠", true)
+local espPage = CreateTab("VISUAIS", "👁️", false)
+local itemPage = CreateTab("ITENS", "📦", false)
+local settingsPage = CreateTab("AJUSTES", "⚙️", false)
+
+-- Exemplo: Como adicionar um botão à aba de Visuais
+-- Seu script de View Players deve agora usar `espPage` como Parent em vez de `listFrame`.
+
+print("Sistema de Abas V5.5 Carregado.")
