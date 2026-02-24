@@ -1,67 +1,115 @@
 --[[
-    GITHUB: ButtonController_V5_Final.lua
-    Função: Botão Arrastável com Memória, Estética Premium e Animações de Painel.
+    GITHUB: ButtonController_Ultimate_V5.lua
+    Função: Botão interativo Premium, Arrastável, Salvamento de Posição e Animação de Abertura.
+    Sistema: UX Avançado com Elastic Tweens e Persistência de Dados.
 ]]
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- [CONFIGURAÇÃO DE SALVAMENTO LOCAL]
-local SAVE_FILE_NAME = "AdminPanel_ButtonPos.txt"
+-- [CONFIGURAÇÕES DE ESTILO]
+local CORES = {
+    Fundo = Color3.fromRGB(15, 15, 18),
+    Borda = Color3.fromRGB(70, 70, 75),
+    Ativo = Color3.fromRGB(255, 255, 255),
+    Brilho = Color3.fromRGB(255, 255, 255)
+}
 
-local function SavePosition(pos)
-    -- No Roblox, usamos writefile apenas em Executors. Se não suportado, ele apenas ignora.
-    if writefile then
-        local data = {X_Scale = pos.X.Scale, X_Offset = pos.X.Offset, Y_Scale = pos.Y.Scale, Y_Offset = pos.Y.Offset}
-        writefile(SAVE_FILE_NAME, HttpService:JSONEncode(data))
-    end
+-- [LIMPEZA DE DUPLICATAS]
+if playerGui:FindFirstChild("MainButton_ScreenGui") then
+    playerGui.MainButton_ScreenGui:Destroy()
 end
 
-local function LoadPosition()
-    if isfile and isfile(SAVE_FILE_NAME) then
-        local success, data = pcall(function() return HttpService:JSONDecode(readfile(SAVE_FILE_NAME)) end)
-        if success then
-            return UDim2.new(data.X_Scale, data.X_Offset, data.Y_Scale, data.Y_Offset)
-        end
-    end
-    return UDim2.new(0.05, 0, 0.4, 0) -- Posição padrão
-end
-
--- [LIMPEZA]
-if playerGui:FindFirstChild("MainButton_ScreenGui") then playerGui.MainButton_ScreenGui:Destroy() end
-
+-- [CRIAÇÃO DA INTERFACE]
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MainButton_ScreenGui"
 screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 100 -- Garante que o botão fique acima de tudo
 screenGui.Parent = playerGui
 
--- [BOTÃO ESTILIZADO]
 local openBtn = Instance.new("TextButton")
 openBtn.Name = "ToggleMenu"
 openBtn.Size = UDim2.new(0, 55, 0, 55)
-openBtn.Position = LoadPosition()
-openBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
-openBtn.Text = "★" -- Ícone estiloso
-openBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-openBtn.Font = Enum.Font.GothamBold
-openBtn.TextSize = 24
+openBtn.BackgroundColor3 = CORES.Fundo
+openBtn.BackgroundTransparency = 0.1
+openBtn.Text = "" -- Usaremos uma Label separada para melhor controle
 openBtn.AutoButtonColor = false
 openBtn.Parent = screenGui
 
-local corner = Instance.new("UICorner", openBtn)
-corner.CornerRadius = UDim.new(0, 15)
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 15)
+btnCorner.Parent = openBtn
 
-local stroke = Instance.new("UIStroke", openBtn)
-stroke.Color = Color3.fromRGB(60, 60, 65)
-stroke.Thickness = 2
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = CORES.Borda
+btnStroke.Thickness = 2
+btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnStroke.Parent = openBtn
 
--- [LÓGICA DE ARRASTAR OTIMIZADA]
-local dragging, dragStart, startPos
+local btnIcon = Instance.new("TextLabel")
+btnIcon.Size = UDim2.new(1, 0, 1, 0)
+btnIcon.BackgroundTransparency = 1
+btnIcon.Text = "M" -- Ícone estilizado
+btnIcon.TextColor3 = CORES.Ativo
+btnIcon.Font = Enum.Font.GothamBold
+btnIcon.TextSize = 22
+btnIcon.Parent = openBtn
+
+-- [EFEITO DE REFLEXO INTERNO]
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 150, 150)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+gradient.Rotation = 45
+gradient.Parent = btnStroke
+
+--------------------------------------------------------------------
+-- [SISTEMA DE SALVAMENTO DE POSIÇÃO]
+--------------------------------------------------------------------
+local function SavePosition()
+    local pos = {
+        X_Scale = openBtn.Position.X.Scale,
+        X_Offset = openBtn.Position.X.Offset,
+        Y_Scale = openBtn.Position.Y.Scale,
+        Y_Offset = openBtn.Position.Y.Offset
+    }
+    -- No Roblox Client, usamos SetAttribute para persistência rápida na sessão atual
+    -- Para salvar entre dias diferentes em servidores diferentes, seria necessário DataStore (Server-side)
+    player:SetAttribute("MenuButtonPos", HttpService:JSONEncode(pos))
+end
+
+local function LoadPosition()
+    local saved = player:GetAttribute("MenuButtonPos")
+    if saved then
+        local pos = HttpService:JSONDecode(saved)
+        openBtn.Position = UDim2.new(pos.X_Scale, pos.X_Offset, pos.Y_Scale, pos.Y_Offset)
+    else
+        openBtn.Position = UDim2.new(0.05, 0, 0.4, 0) -- Padrão
+    end
+end
+
+LoadPosition()
+
+--------------------------------------------------------------------
+-- [LÓGICA DE ARRASTAR (SMOOTH DRAGGING)]
+--------------------------------------------------------------------
+local dragging, dragInput, dragStart, startPos
+
+local function UpdateDrag(input)
+    local delta = input.Position - dragStart
+    local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    
+    -- Interpolação suave para o movimento de arrastar (Lerp)
+    TweenService:Create(openBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+end
 
 openBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -69,69 +117,86 @@ openBtn.InputBegan:Connect(function(input)
         dragStart = input.Position
         startPos = openBtn.Position
         
-        -- Feedback visual ao clicar
-        TweenService:Create(openBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 50, 0, 50)}):Play()
+        -- Efeito visual de clique
+        TweenService:Create(openBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 50, 0, 50), BackgroundColor3 = Color3.fromRGB(40, 40, 45)}):Play()
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                SavePosition()
+                TweenService:Create(openBtn, TweenInfo.new(0.3, Enum.EasingStyle.Elastic), {Size = UDim2.new(0, 55, 0, 55), BackgroundColor3 = CORES.Fundo}):Play()
+            end
+        end)
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        local newPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        openBtn.Position = newPos
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
     end
 end)
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        if dragging then
-            dragging = false
-            SavePosition(openBtn.Position) -- Salva quando soltar
-            TweenService:Create(openBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 55, 0, 55)}):Play()
-        end
+RunService.RenderStepped:Connect(function()
+    if dragging and dragInput then
+        UpdateDrag(dragInput)
     end
 end)
 
--- [ANIMAÇÃO DE ABRIR/FECHAR PAINEL]
-local isAnimating = false
-openBtn.MouseButton1Click:Connect(function()
-    if isAnimating then return end
-    
+--------------------------------------------------------------------
+-- [ANIMAÇÃO DE ABRIR/FECHAR O PAINEL]
+--------------------------------------------------------------------
+local panelAtivo = false
+
+local function TogglePanel()
     local panelGui = playerGui:FindFirstChild("MainPanel_ScreenGui")
-    if panelGui and panelGui:FindFirstChild("MainFrame") then
-        local frame = panelGui.MainFrame
-        isAnimating = true
+    if not panelGui then return end
+    
+    local mainFrame = panelGui:FindFirstChild("MainFrame")
+    if not mainFrame then return end
+    
+    panelAtivo = not panelAtivo
+    
+    if panelAtivo then
+        -- ANIMAÇÃO DE ABERTURA (EFEITO POP-UP ELASTIC)
+        mainFrame.Visible = true
+        mainFrame.Size = UDim2.new(0, 0, 0, 0) -- Começa do zero
+        mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        mainFrame.BackgroundTransparency = 1
         
-        if not frame.Visible then
-            -- ABRIR
-            frame.Visible = true
-            frame.Size = UDim2.new(0, 0, 0, 0) -- Começa pequeno
-            frame.BackgroundTransparency = 1
-            
-            local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-            TweenService:Create(frame, tweenInfo, {Size = UDim2.new(0, 650, 0, 420), BackgroundTransparency = 0.05}):Play()
-            
-            task.wait(0.6)
-            isAnimating = false
-        else
-            -- FECHAR
-            local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-            local anim = TweenService:Create(frame, tweenInfo, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1})
-            anim:Play()
-            
-            anim.Completed:Connect(function()
-                frame.Visible = false
-                isAnimating = false
-            end)
-        end
+        TweenService:Create(mainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 650, 0, 420),
+            Position = UDim2.new(0.5, -325, 0.5, -210),
+            BackgroundTransparency = 0.05
+        }):Play()
+        
+        -- Rotaciona levemente o ícone do botão
+        TweenService:Create(btnIcon, TweenInfo.new(0.4), {Rotation = 90, TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+    else
+        -- ANIMAÇÃO DE FECHAMENTO (SUAVE)
+        local closeTween = TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 500, 0, 300),
+            Position = UDim2.new(0.5, -250, 0.55, -150),
+            BackgroundTransparency = 1
+        })
+        
+        closeTween:Play()
+        closeTween.Completed:Connect(function()
+            if not panelAtivo then mainFrame.Visible = false end
+        end)
+        
+        TweenService:Create(btnIcon, TweenInfo.new(0.4), {Rotation = 0, TextColor3 = CORES.Ativo}):Play()
     end
-end)
+end
 
--- Efeito de Hover (Mouse em cima)
+openBtn.MouseButton1Click:Connect(TogglePanel)
+
+-- [EFEITOS DE HOVER]
 openBtn.MouseEnter:Connect(function()
-    TweenService:Create(stroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(255, 255, 255)}):Play()
+    TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = CORES.Ativo, Thickness = 3}):Play()
 end)
 
 openBtn.MouseLeave:Connect(function()
-    TweenService:Create(stroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(60, 60, 65)}):Play()
+    TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = CORES.Borda, Thickness = 2}):Play()
 end)
+
+print("ButtonController V5.2 carregado com Persistência e Tweens Elásticos.")
