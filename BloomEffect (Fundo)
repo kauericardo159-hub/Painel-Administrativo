@@ -1,0 +1,30 @@
+--[[
+    Efeito de Bloom Suave para Fundo
+]]
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+
+-- Criar o efeito se não existir
+local bloom = Lighting:FindFirstChild("PanelBloom") or Instance.new("BloomEffect")
+bloom.Name = "PanelBloom"
+bloom.Enabled = false
+bloom.Intensity = 0 -- Brilho das luzes
+bloom.Size = 10 -- Espalhamento do brilho
+bloom.Threshold = 0.8 -- O que deve brilhar (0.8 = apenas luzes fortes)
+bloom.Parent = Lighting
+
+local function AplicarBloom(abrir)
+    local meta = abrir and {Intensity = 0.4, Size = 15} or {Intensity = 0, Size = 0}
+    local info = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    
+    bloom.Enabled = true
+    TweenService:Create(bloom, info, meta):Play()
+    
+    if not abrir then
+        task.wait(0.5)
+        bloom.Enabled = false
+    end
+end
+
+-- Exemplo de uso: AplicarBloom(true) ao abrir o painel
+
