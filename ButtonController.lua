@@ -97,7 +97,7 @@ local function LoadPosition()
 end
 
 LoadPosition() 
-]]
+
 --------------------------------------------------------------------
 -- [LÓGICA DE ARRASTAR (SMOOTH DRAGGING)]
 --------------------------------------------------------------------
@@ -141,7 +141,7 @@ RunService.RenderStepped:Connect(function()
         UpdateDrag(dragInput)
     end
 end)
-
+]]
 --------------------------------------------------------------------
 -- [ANIMAÇÃO DE ABRIR/FECHAR O PAINEL]
 --------------------------------------------------------------------
