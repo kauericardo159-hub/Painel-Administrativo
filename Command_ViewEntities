@@ -1,6 +1,6 @@
 --[[
-    GITHUB: Command_ViewEntities_V4.lua
-    Função: ESP Independente para Players e Bots com Switches Animados e Design Moderno.
+    GITHUB: Command_ViewEntities_V5_Tabs.lua
+    Função: ESP Independente adaptado para o Sistema de Abas V5.5.
 ]]
 
 local Players = game:GetService("Players")
@@ -16,39 +16,42 @@ local ESP_PLAYERS_ATIVO = false
 local ESP_BOTS_ATIVO = false
 local NOME_COMANDO = "View Entity System"
 
--- [LOCALIZAÇÃO]
+-- [NOVA LOCALIZAÇÃO (SISTEMA DE ABAS)]
 local panelGui = playerGui:WaitForChild("MainPanel_ScreenGui")
 local mainFrame = panelGui:WaitForChild("MainFrame")
-local listFrame = mainFrame:WaitForChild("CommandList")
+local pagesFolder = mainFrame.ContentArea.Pages
+local targetPage = pagesFolder:WaitForChild("VISUAISPage") -- Envia para a aba de Visuais
 
-if listFrame:FindFirstChild(NOME_COMANDO) then listFrame[NOME_COMANDO]:Destroy() end
+-- [LIMPEZA]
+if targetPage:FindFirstChild(NOME_COMANDO) then targetPage[NOME_COMANDO]:Destroy() end
 
 -- [CONTAINER PRINCIPAL]
 local container = Instance.new("Frame")
 container.Name = NOME_COMANDO
-container.Size = UDim2.new(0.94, 0, 0, 80)
+container.Size = UDim2.new(0.95, 0, 0, 85) -- Ajustado para a nova largura
 container.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-container.Parent = listFrame
+container.BackgroundTransparency = 0.2
+container.Parent = targetPage
 
-Instance.new("UICorner", container).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", container).CornerRadius = UDim.new(0, 12)
 local strokeMain = Instance.new("UIStroke", container)
 strokeMain.Color = Color3.fromRGB(45, 45, 50)
 strokeMain.Thickness = 2
 
--- Título Central
+-- Título Centralizado
 local mainTitle = Instance.new("TextLabel")
-mainTitle.Size = UDim2.new(1, 0, 0, 25)
+mainTitle.Size = UDim2.new(1, 0, 0, 30)
 mainTitle.BackgroundTransparency = 1
-mainTitle.Text = "VIEW SYSTEM"
+mainTitle.Text = "SISTEMA DE RENDERIZAÇÃO (ESP)"
 mainTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 mainTitle.Font = Enum.Font.GothamBold
-mainTitle.TextSize = 12
+mainTitle.TextSize = 13
 mainTitle.Parent = container
 
 -- [FUNÇÃO: CRIAR SWITCH ESTILIZADO]
 local function CreateSwitch(nome, pos, icon)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0.45, 0, 0, 45)
+    frame.Size = UDim2.new(0.46, 0, 0, 45)
     frame.Position = pos
     frame.BackgroundTransparency = 1
     frame.Parent = container
@@ -58,13 +61,13 @@ local function CreateSwitch(nome, pos, icon)
     label.Text = icon .. " " .. nome
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.Font = Enum.Font.GothamMedium
-    label.TextSize = 13
+    label.TextSize = 12
     label.BackgroundTransparency = 1
     label.Parent = frame
 
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 40, 0, 20)
-    bg.Position = UDim2.new(0.5, -20, 0.5, 0)
+    bg.Position = UDim2.new(0.5, -20, 0.5, 2)
     bg.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
     bg.Parent = frame
     Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
@@ -86,14 +89,16 @@ local function CreateSwitch(nome, pos, icon)
     return bg, circle, btn
 end
 
-local playerBg, playerCircle, playerBtn = CreateSwitch("PLAYER", UDim2.new(0.03, 0, 0.35, 0), "👤")
-local botBg, botCircle, botBtn = CreateSwitch("BOT", UDim2.new(0.52, 0, 0.35, 0), "🤖")
+local playerBg, playerCircle, playerBtn = CreateSwitch("PLAYERS", UDim2.new(0.02, 0, 0.35, 0), "👤")
+local botBg, botCircle, botBtn = CreateSwitch("BOTS", UDim2.new(0.52, 0, 0.35, 0), "🤖")
 
--- [SISTEMA DE NOTIFICAÇÃO ESTILIZADO]
+--------------------------------------------------------------------
+-- [LÓGICA E NOTIFICAÇÃO]
+--------------------------------------------------------------------
 local function Notify(msg, cor)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(0, 260, 0, 50)
-    card.Position = UDim2.new(1, 20, 0.85, 0) -- Lado direito fora
+    card.Position = UDim2.new(1, 20, 0.85, 0)
     card.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
     card.Parent = panelGui
     
@@ -116,7 +121,6 @@ local function Notify(msg, cor)
     game:GetService("Debris"):AddItem(card, 0.6)
 end
 
--- [LÓGICA DE ANIMAÇÃO]
 local function ToggleVisual(ativo, bg, circle)
     if ativo then
         TweenService:Create(circle, TweenInfo.new(0.3), {Position = UDim2.new(0.6, 0, 0.5, -7), BackgroundColor3 = Color3.fromRGB(80, 255, 80)}):Play()
@@ -129,18 +133,21 @@ end
 
 -- [LÓGICA ESP]
 local espFolder = Instance.new("Folder", workspace)
-espFolder.Name = "V4_ESP_Storage"
+espFolder.Name = "V5_ESP_Storage"
 
 local function UpdateESP()
     espFolder:ClearAllChildren()
     if not ESP_PLAYERS_ATIVO and not ESP_BOTS_ATIVO then return end
 
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
     for _, target in ipairs(workspace:GetDescendants()) do
         local hum = target:FindFirstChildOfClass("Humanoid")
         local root = target:FindFirstChild("HumanoidRootPart")
         
-        if hum and root and target ~= player.Character and hum.Health > 0 then
-            local dist = (player.Character.HumanoidRootPart.Position - root.Position).Magnitude
+        if hum and root and target ~= char and hum.Health > 0 then
+            local dist = (char.HumanoidRootPart.Position - root.Position).Magnitude
             if dist > DISTANCIA_MAXIMA then continue end
 
             local isPlr = Players:GetPlayerFromCharacter(target)
@@ -166,25 +173,23 @@ local function UpdateESP()
             l.TextColor3 = color
             l.Font = Enum.Font.GothamBold
             l.TextSize = 13
-            l.Text = string.format("%s: %s\n📏 %dM | ❤ %d", icon, target.Name, dist, hum.Health)
+            l.Text = string.format("%s: %s\n📏 %dM | ❤ %d", icon, target.Name, math.floor(dist), hum.Health)
         end
     end
 end
 
--- Loop
 task.spawn(function()
     while task.wait(0.5) do UpdateESP() end
 end)
 
--- Cliques
 playerBtn.MouseButton1Click:Connect(function()
     ESP_PLAYERS_ATIVO = not ESP_PLAYERS_ATIVO
     ToggleVisual(ESP_PLAYERS_ATIVO, playerBg, playerCircle)
-    Notify(ESP_PLAYERS_ATIVO and "ESP PLAYERS: ATIVO" or "ESP PLAYERS: INATIVO", ESP_PLAYERS_ATIVO and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80))
+    Notify(ESP_PLAYERS_ATIVO and "PLAYERS ESP: ATIVO" or "PLAYERS ESP: INATIVO", ESP_PLAYERS_ATIVO and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80))
 end)
 
 botBtn.MouseButton1Click:Connect(function()
     ESP_BOTS_ATIVO = not ESP_BOTS_ATIVO
     ToggleVisual(ESP_BOTS_ATIVO, botBg, botCircle)
-    Notify(ESP_BOTS_ATIVO and "ESP BOTS: ATIVO" or "ESP BOTS: INATIVO", ESP_BOTS_ATIVO and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80))
+    Notify(ESP_BOTS_ATIVO and "BOTS ESP: ATIVO" or "BOTS ESP: INATIVO", ESP_BOTS_ATIVO and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80))
 end)
