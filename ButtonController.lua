@@ -74,7 +74,7 @@ gradient.Parent = btnStroke
 --------------------------------------------------------------------
 -- [SISTEMA DE SALVAMENTO DE POSIÇÃO]
 --------------------------------------------------------------------
-local function SavePosition()
+--[[ local function SavePosition()
     local pos = {
         X_Scale = openBtn.Position.X.Scale,
         X_Offset = openBtn.Position.X.Offset,
@@ -96,8 +96,8 @@ local function LoadPosition()
     end
 end
 
-LoadPosition()
-
+LoadPosition() 
+]]
 --------------------------------------------------------------------
 -- [LÓGICA DE ARRASTAR (SMOOTH DRAGGING)]
 --------------------------------------------------------------------
