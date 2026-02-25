@@ -10,9 +10,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 -- INTERFACE DO PAINEL
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/PanelInterface.lua"))()
 
--- LISTA DE OPÇÕES
--- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Sidebar_Options"))()
-
 -- LISTA DE COMANDOS & FUNÇÕES
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ListManager.lua"))()
 
