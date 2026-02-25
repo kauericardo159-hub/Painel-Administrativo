@@ -1,0 +1,51 @@
+
+-- Script 1: Adicionando na aba "Comandos"
+
+-- Aguarda a API do painel existir (caso este script carregue muito rápido)
+repeat task.wait(0.1) until _G.PainelV7_API
+
+-- Conecta funções na Aba "Comandos"
+_G.PainelV7_API.AdicionarComando("Comandos", "Ativar Fly", function()
+    print("Fly ativado com sucesso!")
+    -- Coloque a lógica do Fly aqui
+end)
+
+_G.PainelV7_API.AdicionarComando("Comandos", "Velocidade Maxima", function()
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    print("Velocidade alterada!")
+end)
+
+-- Script 2: Adicionando na aba "Visuais"
+
+repeat task.wait(0.1) until _G.PainelV7_API
+
+-- Conecta funções na Aba "Visuais"
+_G.PainelV7_API.AdicionarComando("Visuais", "Mostrar Jogadores (ESP)", function()
+    print("ESP Ativado! Agora você vê através das paredes.")
+    -- Lógica de Highlight/ESP aqui
+end)
+
+_G.PainelV7_API.AdicionarComando("Visuais", "Mudar Clima para Noite", function()
+    game.Lighting.ClockTime = 0
+    print("Ficou de noite.")
+end)
+
+
+-- Script 3: Adicionando na aba "Configurações"
+
+
+repeat task.wait(0.1) until _G.PainelV7_API
+
+-- Conecta funções na Aba "Configurações"
+_G.PainelV7_API.AdicionarComando("Configurações", "Salvar Preferências", function()
+    print("Configurações salvas no arquivo!")
+    -- Lógica de writefile() ou DataStore aqui
+end)
+
+_G.PainelV7_API.AdicionarComando("Configurações", "Destruir Interface", function()
+    local gui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("PainelV7_ScreenGui")
+    if gui then
+        gui:Destroy()
+        print("Interface removida da tela.")
+    end
+end)
