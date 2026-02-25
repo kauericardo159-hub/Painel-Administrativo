@@ -1,7 +1,6 @@
 --[[
-    GITHUB: ButtonController_Ultimate_V5.lua
-    Função: Botão interativo Premium, Arrastável, Salvamento de Posição e Animação de Abertura.
-    Sistema: UX Avançado com Elastic Tweens e Persistência de Dados.
+    GITHUB: ButtonController_Ultimate_V7.lua
+    Função: Botão Premium com Salvamento e Nova Animação de Deslize (Sobe/Desce).
 ]]
 
 local Players = game:GetService("Players")
@@ -30,7 +29,7 @@ end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MainButton_ScreenGui"
 screenGui.ResetOnSpawn = false
-screenGui.DisplayOrder = 100 -- Garante que o botão fique acima de tudo
+screenGui.DisplayOrder = 100
 screenGui.Parent = playerGui
 
 local openBtn = Instance.new("TextButton")
@@ -38,7 +37,7 @@ openBtn.Name = "ToggleMenu"
 openBtn.Size = UDim2.new(0, 55, 0, 55)
 openBtn.BackgroundColor3 = CORES.Fundo
 openBtn.BackgroundTransparency = 0.1
-openBtn.Text = "" -- Usaremos uma Label separada para melhor controle
+openBtn.Text = ""
 openBtn.AutoButtonColor = false
 openBtn.Parent = screenGui
 
@@ -55,13 +54,12 @@ btnStroke.Parent = openBtn
 local btnIcon = Instance.new("TextLabel")
 btnIcon.Size = UDim2.new(1, 0, 1, 0)
 btnIcon.BackgroundTransparency = 1
-btnIcon.Text = "M" -- Ícone estilizado
+btnIcon.Text = "M"
 btnIcon.TextColor3 = CORES.Ativo
 btnIcon.Font = Enum.Font.GothamBold
 btnIcon.TextSize = 22
 btnIcon.Parent = openBtn
 
--- [EFEITO DE REFLEXO INTERNO]
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -70,19 +68,17 @@ gradient.Color = ColorSequence.new({
 })
 gradient.Rotation = 45
 gradient.Parent = btnStroke
-
+--[[
 --------------------------------------------------------------------
 -- [SISTEMA DE SALVAMENTO DE POSIÇÃO]
 --------------------------------------------------------------------
---[[ local function SavePosition()
+local function SavePosition()
     local pos = {
         X_Scale = openBtn.Position.X.Scale,
         X_Offset = openBtn.Position.X.Offset,
         Y_Scale = openBtn.Position.Y.Scale,
         Y_Offset = openBtn.Position.Y.Offset
     }
-    -- No Roblox Client, usamos SetAttribute para persistência rápida na sessão atual
-    -- Para salvar entre dias diferentes em servidores diferentes, seria necessário DataStore (Server-side)
     player:SetAttribute("MenuButtonPos", HttpService:JSONEncode(pos))
 end
 
@@ -92,22 +88,20 @@ local function LoadPosition()
         local pos = HttpService:JSONDecode(saved)
         openBtn.Position = UDim2.new(pos.X_Scale, pos.X_Offset, pos.Y_Scale, pos.Y_Offset)
     else
-        openBtn.Position = UDim2.new(0.05, 0, 0.4, 0) -- Padrão
+        openBtn.Position = UDim2.new(0.05, 0, 0.4, 0)
     end
 end
 
-LoadPosition() 
-
+LoadPosition()
+]]
 --------------------------------------------------------------------
--- [LÓGICA DE ARRASTAR (SMOOTH DRAGGING)]
+-- [LÓGICA DE ARRASTAR]
 --------------------------------------------------------------------
 local dragging, dragInput, dragStart, startPos
 
 local function UpdateDrag(input)
     local delta = input.Position - dragStart
     local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    
-    -- Interpolação suave para o movimento de arrastar (Lerp)
     TweenService:Create(openBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = targetPos}):Play()
 end
 
@@ -117,7 +111,6 @@ openBtn.InputBegan:Connect(function(input)
         dragStart = input.Position
         startPos = openBtn.Position
         
-        -- Efeito visual de clique
         TweenService:Create(openBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 50, 0, 50), BackgroundColor3 = Color3.fromRGB(40, 40, 45)}):Play()
         
         input.Changed:Connect(function()
@@ -141,9 +134,9 @@ RunService.RenderStepped:Connect(function()
         UpdateDrag(dragInput)
     end
 end)
-]]
+
 --------------------------------------------------------------------
--- [ANIMAÇÃO DE ABRIR/FECHAR O PAINEL]
+-- [ANIMAÇÃO DE ABRIR/FECHAR - NOVA LÓGICA SOBE/DESCE]
 --------------------------------------------------------------------
 local panelAtivo = false
 
@@ -157,25 +150,22 @@ local function TogglePanel()
     panelAtivo = not panelAtivo
     
     if panelAtivo then
-        -- ANIMAÇÃO DE ABERTURA (EFEITO POP-UP ELASTIC)
+        -- ANIMAÇÃO DE ABERTURA: SOBE PARA O CENTRO
         mainFrame.Visible = true
-        mainFrame.Size = UDim2.new(0, 0, 0, 0) -- Começa do zero
-        mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        -- Começa abaixo da tela
+        mainFrame.Position = UDim2.new(0.5, -350, 1.2, 0) 
         mainFrame.BackgroundTransparency = 1
         
-        TweenService:Create(mainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 650, 0, 420),
-            Position = UDim2.new(0.5, -325, 0.5, -210),
+        TweenService:Create(mainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, -350, 0.5, -240), -- Posição central do V7
             BackgroundTransparency = 0.05
         }):Play()
         
-        -- Rotaciona levemente o ícone do botão
         TweenService:Create(btnIcon, TweenInfo.new(0.4), {Rotation = 90, TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
     else
-        -- ANIMAÇÃO DE FECHAMENTO (SUAVE)
-        local closeTween = TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-            Size = UDim2.new(0, 500, 0, 300),
-            Position = UDim2.new(0.5, -250, 0.55, -150),
+        -- ANIMAÇÃO DE FECHAMENTO: DESCE PARA FORA
+        local closeTween = TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+            Position = UDim2.new(0.5, -350, 1.2, 0), -- Desce até sair
             BackgroundTransparency = 1
         })
         
@@ -199,4 +189,4 @@ openBtn.MouseLeave:Connect(function()
     TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = CORES.Borda, Thickness = 2}):Play()
 end)
 
-print("ButtonController V5.2 carregado com Persistência e Tweens Elásticos.")
+print("ButtonController V7 carregado com animação Sobe/Desce.")
