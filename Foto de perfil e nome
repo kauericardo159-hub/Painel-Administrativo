@@ -1,28 +1,28 @@
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
 -- 1. LOCALIZAÇÃO E LIMPEZA
 local playerGui = player:WaitForChild("PlayerGui")
-local screenGui = playerGui:WaitForChild("MeuPainelAnimado", 5) or playerGui:WaitForChild("InterfaceMenu", 5)
-local painel = screenGui:WaitForChild("Painel")
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
+local painel = coreGui:WaitForChild("Painel")
 
 if painel:FindFirstChild("UserProfileArea") then
     painel.UserProfileArea:Destroy()
 end
 
--- 2. CONTAINER PRINCIPAL (Tamanho Reduzido)
+-- 2. CONTAINER DO PERFIL (Posicionado no Topo Esquerdo)
 local profileArea = Instance.new("Frame")
 profileArea.Name = "UserProfileArea"
-profileArea.Size = UDim2.new(0, 250, 0, 80) -- Diminuído
-profileArea.Position = UDim2.new(0, 15, 1, -15)
-profileArea.AnchorPoint = Vector2.new(0, 1)
+profileArea.Size = UDim2.new(0, 280, 0, 70)
+profileArea.Position = UDim2.new(0, 15, 0, 15) -- Canto superior esquerdo
 profileArea.BackgroundTransparency = 1
 profileArea.Parent = painel
 
--- 3. FOTO DE PERFIL (Com contorno Duplo)
+-- 3. FOTO DE PERFIL ESTILIZADA
 local profileImage = Instance.new("ImageLabel")
 profileImage.Name = "UserImage"
-profileImage.Size = UDim2.new(0, 65, 0, 65) -- Diminuído
+profileImage.Size = UDim2.new(0, 60, 0, 60)
 profileImage.Position = UDim2.new(0, 0, 0.5, 0)
 profileImage.AnchorPoint = Vector2.new(0, 0.5)
 profileImage.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -33,54 +33,66 @@ local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(1, 0)
 uiCorner.Parent = profileImage
 
--- Stroke da Foto
-local fStrokeBranco = Instance.new("UIStroke")
-fStrokeBranco.Thickness = 2
-fStrokeBranco.Color = Color3.new(1, 1, 1)
-fStrokeBranco.Parent = profileImage
+-- Bordas da Foto (Branco com brilho)
+local fStroke = Instance.new("UIStroke")
+fStroke.Thickness = 2.5
+fStroke.Color = Color3.new(1, 1, 1)
+fStroke.Parent = profileImage
 
-local fStrokeCinza = Instance.new("UIStroke")
-fStrokeCinza.Thickness = 4
-fStrokeCinza.Color = Color3.fromRGB(80, 80, 80) -- Cinza em volta
-fStrokeCinza.Transparency = 0.3
-fStrokeCinza.Parent = profileImage
-
--- 4. FUNÇÃO PARA LABELS ESTILIZADAS (Fonte Preta, Stroke Branco/Cinza)
-local function CreateStyledLabel(name, pos, text, size)
+-- 4. FUNÇÃO PARA LABELS PREMIUM (Com Gradiente e Animação)
+local function CreatePremiumLabel(name, pos, text, size, isBold)
     local label = Instance.new("TextLabel")
     label.Name = name
-    label.Size = UDim2.new(0, 150, 0, 22)
-    label.Position = pos
-    label.BackgroundTransparency = 1 -- Fundo invisível para focar na fonte
-    label.TextColor3 = Color3.new(0, 0, 0) -- FONTE PRETA
+    label.Size = UDim2.new(0, 200, 0, 20)
+    label.Position = pos + UDim2.new(0, 10, 0, 0) -- Offset para animação
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1, 1, 1)
     label.Text = text
-    label.Font = Enum.Font.GothamBold -- FONTE ESTILOSA
+    label.Font = isBold and Enum.Font.GothamBold or Enum.Font.Gotham
     label.TextSize = size
     label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextTransparency = 1 -- Inicia invisível
     label.Parent = profileArea
     
-    -- Stroke Branco na Fonte
-    local strokeB = Instance.new("UIStroke")
-    strokeB.Thickness = 2
-    strokeB.Color = Color3.new(1, 1, 1) -- BRANCO
-    strokeB.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
-    strokeB.Parent = label
-    
-    -- Stroke Cinza em volta (Efeito de contorno externo)
-    local strokeC = Instance.new("UIStroke")
-    strokeC.Thickness = 3.5
-    strokeC.Color = Color3.fromRGB(100, 100, 100) -- CINZA
-    strokeC.Transparency = 0.5
-    strokeC.Parent = label
+    -- UIStroke na fonte para destaque
+    local textStroke = Instance.new("UIStroke")
+    textStroke.Thickness = 1.5
+    textStroke.Color = Color3.new(0, 0, 0)
+    textStroke.Transparency = 0.5
+    textStroke.Parent = label
+
+    -- Gradiente no Texto
+    local textGradient = Instance.new("UIGradient")
+    textGradient.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(180, 180, 180))
+    textGradient.Rotation = 90
+    textGradient.Parent = label
 
     return label
 end
 
--- 5. CRIAÇÃO DOS TEXTOS
--- Nome Display
-CreateStyledLabel("NameLabel", UDim2.new(0, 75, 0.3, 0), player.DisplayName, 15)
+local nameLabel = CreatePremiumLabel("NameLabel", UDim2.new(0, 70, 0.3, 0), player.DisplayName, 18, true)
+local userLabel = CreatePremiumLabel("UserLabel", UDim2.new(0, 70, 0.6, 5), "@" .. player.Name, 13, false)
 
--- @Username
-CreateStyledLabel("UserLabel", UDim2.new(0, 75, 0.6, 2), "@" .. player.Name, 12)
+-- 5. ANIMAÇÃO DE ENTRADA
+local function animateProfile()
+    local info = TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    
+    -- A foto surge aumentando
+    profileImage.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(profileImage, info, {Size = UDim2.new(0, 60, 0, 60)}):Play()
+    
+    -- Os nomes deslizam para a direita e aparecem
+    task.wait(0.2)
+    TweenService:Create(nameLabel, info, {Position = UDim2.new(0, 70, 0.3, 0), TextTransparency = 0}):Play()
+    task.wait(0.1)
+    TweenService:Create(userLabel, info, {Position = UDim2.new(0, 70, 0.6, 5), TextTransparency = 0.3}):Play()
+end
 
-print("Perfil atualizado: Cores e tamanhos ajustados.")
+-- Dispara a animação quando o painel se torna visível
+painel:GetPropertyChangedSignal("Visible"):Connect(function()
+    if painel.Visible then
+        animateProfile()
+    end
+end)
+
+print("Perfil Premium com Animação carregado no Topo!")
