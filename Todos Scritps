@@ -1,21 +1,37 @@
 --[[ 
-===============================
- Scripts de Funcionamento
-===============================
+===========================================================
+        CARREGAMENTO DO PAINEL ADMINISTRATIVO V3
+===========================================================
 ]]
 
--- BOTÃO PRINCIPAL
+-- 1. INTERFACE DO PAINEL (O "Coração" do sistema)
+-- Precisa carregar primeiro para que os outros saibam onde se inserir.
+print("Carregando Interface...")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/PanelInterface.lua"))()
+task.wait(0.2)
+
+-- 2. LISTA DE COMANDOS & FUNÇÕES
+-- Cria o container central dentro do painel já existente.
+print("Carregando Lista de Comandos...")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ListManager.lua"))()
+task.wait(0.1)
+
+-- 3. NOME & PERFIL
+-- Insere a foto e o nome no topo do painel.
+print("Carregando Perfil do Usuário...")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Foto%20de%20perfil%20e%20nome"))()
+task.wait(0.1)
+
+-- 4. BOTÃO PRINCIPAL (O Controle)
+-- Carrega por último para garantir que ele encontre o painel e consiga animá-lo.
+print("Carregando Controlador do Botão...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ButtonController.lua"))()
 
--- INTERFACE DO PAINEL
-loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/PanelInterface.lua"))()
+print("========================================")
+print("   SISTEMA CARREGADO COM SUCESSO!   ")
+print("========================================")
 
--- LISTA DE COMANDOS & FUNÇÕES
-loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ListManager.lua"))()
-
--- NOME & PERFIL
-loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Foto%20de%20perfil%20e%20nome"))()
-
+--[[
 -- ===============================
 -- Lista de Comandos
 -- ===============================
@@ -25,3 +41,4 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 
 -- COMANDO: VIEW ITENS
 -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewItems"))()
+]]
