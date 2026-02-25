@@ -1,61 +1,85 @@
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
--- 1. LOCALIZAÇÃO DO PAINEL PAI
+-- 1. LOCALIZAÇÃO E LIMPEZA
 local playerGui = player:WaitForChild("PlayerGui")
-local screenGui = playerGui:WaitForChild("MeuPainelAnimado", 5) or playerGui:WaitForChild("InterfaceMenu", 5)
-local painel = screenGui:WaitForChild("Painel")
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
+local painel = coreGui:WaitForChild("Painel")
 
--- 2. LIMPEZA AUTOMÁTICA
 if painel:FindFirstChild("ListaOpcoesContainer") then
     painel.ListaOpcoesContainer:Destroy()
 end
 
--- 3. CONTAINER DA LISTA (Abaixado e posicionado à direita)
+-- 2. CONTAINER CENTRALIZADO (ScrollingFrame)
 local listaContainer = Instance.new("ScrollingFrame")
 listaContainer.Name = "ListaOpcoesContainer"
--- Tamanho ajustado
-listaContainer.Size = UDim2.new(0, 380, 0, 280) 
--- Position alterada: 0.6 no Y para descer mais no painel
-listaContainer.Position = UDim2.new(1, -20, 0.6, 0) 
-listaContainer.AnchorPoint = Vector2.new(1, 0.5)
-listaContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-listaContainer.BackgroundTransparency = 0.3
+-- Tamanho ajustado para ser o foco central do painel
+listaContainer.Size = UDim2.new(0, 500, 0, 240) 
+listaContainer.Position = UDim2.new(0.5, 0, 0.6, 0) -- Centralizado horizontalmente e levemente abaixo do perfil
+listaContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+listaContainer.BackgroundTransparency = 1
 listaContainer.BorderSizePixel = 0
-listaContainer.ScrollBarThickness = 3
+listaContainer.ScrollBarThickness = 2
+listaContainer.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
 listaContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+listaContainer.ClipsDescendants = true
 listaContainer.Parent = painel
 
--- 4. BORDAS DUPLAS GROSSAS
--- Borda interna Branca
-local strokeBranco = Instance.new("UIStroke")
-strokeBranco.Thickness = 3.5
-strokeBranco.Color = Color3.new(1, 1, 1)
-strokeBranco.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-strokeBranco.Parent = listaContainer
+-- 3. BORDAS ESTILIZADAS DA LISTA (Opcional, para delimitar a área)
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Thickness = 1.5
+uiStroke.Color = Color3.new(1, 1, 1)
+uiStroke.Transparency = 0.8
+uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+uiStroke.Parent = listaContainer
 
--- Borda externa Cinza
-local strokeCinza = Instance.new("UIStroke")
-strokeCinza.Thickness = 6
-strokeCinza.Color = Color3.fromRGB(100, 100, 100)
-strokeCinza.Transparency = 0.4
-strokeCinza.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-strokeCinza.Parent = listaContainer
-
--- 5. CONFIGURAÇÃO DE LAYOUT (Organização Automática)
+-- 4. ORGANIZAÇÃO AUTOMÁTICA
 local layout = Instance.new("UIListLayout")
 layout.Parent = listaContainer
 layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Padding = UDim.new(0, 10) -- Espaçamento entre os futuros botões
+layout.Padding = UDim.new(0, 10)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 12)
+padding.PaddingTop = UDim.new(0, 15)
+padding.PaddingBottom = UDim.new(0, 15)
 padding.Parent = listaContainer
 
--- 6. ATUALIZAÇÃO AUTOMÁTICA DO SCROLL
+-- 5. ANIMAÇÃO DE ENTRADA DOS ITENS
+-- Esta função pode ser chamada sempre que adicionar um botão à lista
+local function animateListItems()
+    local itens = listaContainer:GetChildren()
+    local delayTime = 0
+    
+    for _, item in pairs(itens) do
+        if item:IsA("GuiObject") then
+            item.GroupTransparency = 1 -- Requer CanvasGroup no item para fade perfeito, ou anime a transparência do objeto
+            local originalPos = item.Position
+            item.Position = originalPos + UDim2.new(0, 0, 0, 20)
+            
+            task.delay(delayTime, function()
+                TweenService:Create(item, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+                    Position = originalPos
+                }):Play()
+            end)
+            delayTime = delayTime + 0.1
+        end
+    end
+end
+
+-- 6. AJUSTE DINÂMICO E CONEXÃO
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    listaContainer.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 25)
+    listaContainer.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 30)
 end)
 
-print("Lista reposicionada com sucesso!")
+-- Sincroniza a animação com a visibilidade do painel
+painel:GetPropertyChangedSignal("Visible"):Connect(function()
+    if painel.Visible then
+        listaContainer.GroupTransparency = 1
+        TweenService:Create(listaContainer, TweenInfo.new(0.8), {GroupTransparency = 0}):Play()
+        animateListItems()
+    end
+end)
+
+print("Lista de Opções Centralizada e Estilizada!")
