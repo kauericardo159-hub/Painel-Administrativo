@@ -1,40 +1,33 @@
 --[[
-    GITHUB: PanelInterface_V7_Layout.lua
-    Versão: 7.0 (Dashboard Premium - Clean Version)
-    Função: Layout estrutural V7 sem gerenciamento automático de lista.
+    PAINEL V7.0 - ESTRUTURA BASE (LAYOUT PREMIUM)
+    Design: Bordas Brancas (UIStroke) + UIGradient
+    Organização: Cabeçalho, Sidebar (Opções) e Content (Comandos)
 ]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- [CONFIGURAÇÕES DE ESTILO V7]
+-- [CONFIGURAÇÕES DE CORES E ESTILO]
 local CORES = {
-    Fundo = Color3.fromRGB(12, 12, 14),
-    FundoSecundario = Color3.fromRGB(18, 18, 20),
-    Borda = Color3.fromRGB(60, 60, 65),
-    TextoPrincipal = Color3.fromRGB(255, 255, 255),
-    TextoSecundario = Color3.fromRGB(150, 150, 155)
+    Fundo = Color3.fromRGB(15, 15, 15),       -- Grafite Escuro
+    FundoSecundario = Color3.fromRGB(25, 25, 25), -- Cinza para containers internos
+    Borda = Color3.fromRGB(255, 255, 255),    -- Branco solicitado (UIStroke)
+    GradienteInicio = Color3.fromRGB(45, 45, 45),
+    GradienteFim = Color3.fromRGB(15, 15, 15),
+    Texto = Color3.fromRGB(255, 255, 255)
 }
 
--- [SISTEMA DE EFEITOS]
-local oldBloom = Lighting:FindFirstChild("PanelBloomEffect")
-if oldBloom then oldBloom:Destroy() end
-local bloom = Instance.new("BloomEffect", Lighting)
-bloom.Name = "PanelBloomEffect"
-bloom.Intensity = 0.4
-bloom.Threshold = 0.8
-
--- [LIMPEZA]
-if playerGui:FindFirstChild("MainPanel_ScreenGui") then
-    playerGui.MainPanel_ScreenGui:Destroy()
+-- [LIMPEZA DE INTERFACE ANTIGA]
+if playerGui:FindFirstChild("MainPanel_V7") then
+    playerGui.MainPanel_V7:Destroy()
 end
 
+-- [CRIAÇÃO DA SCREEN GUI]
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MainPanel_ScreenGui"
+screenGui.Name = "MainPanel_V7"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = playerGui
@@ -47,175 +40,126 @@ mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 700, 0, 480)
 mainFrame.Position = UDim2.new(0.5, -350, 0.5, -240)
 mainFrame.BackgroundColor3 = CORES.Fundo
-mainFrame.BackgroundTransparency = 0.05
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
+-- Borda Branca Principal
 local mainStroke = Instance.new("UIStroke", mainFrame)
 mainStroke.Color = CORES.Borda
 mainStroke.Thickness = 2
+mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
+
+-- Gradiente para Profundidade
+local mainGradient = Instance.new("UIGradient", mainFrame)
+mainGradient.Color = ColorSequence.new(CORES.GradienteInicio, CORES.GradienteFim)
+mainGradient.Rotation = 45
 
 -- ==========================================
--- 2. CABEÇALHO (Perfil & Título)
+-- 2. CABEÇALHO (Foto, Nome e Título)
 -- ==========================================
-local profilePic = Instance.new("ImageLabel", mainFrame)
-profilePic.Name = "ProfilePic"
-profilePic.Size = UDim2.new(0, 55, 0, 55)
-profilePic.Position = UDim2.new(0, 20, 0, 20)
-profilePic.BackgroundColor3 = CORES.FundoSecundario
-Instance.new("UICorner", profilePic).CornerRadius = UDim.new(1, 0)
-Instance.new("UIStroke", profilePic).Color = CORES.Borda
 
-local content, isReady = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-if isReady then profilePic.Image = content end
+-- Container Foto de Perfil
+local profileFrame = Instance.new("Frame", mainFrame)
+profileFrame.Name = "ProfileFrame"
+profileFrame.Size = UDim2.new(0, 60, 0, 60)
+profileFrame.Position = UDim2.new(0, 20, 0, 20)
+profileFrame.BackgroundColor3 = CORES.FundoSecundario
+Instance.new("UICorner", profileFrame).CornerRadius = UDim.new(1, 0)
+Instance.new("UIStroke", profileFrame).Color = CORES.Borda
 
-local playerName = Instance.new("TextLabel", mainFrame)
-playerName.Name = "NamePlayer"
-playerName.Size = UDim2.new(0, 200, 0, 25)
-playerName.Position = UDim2.new(0, 85, 0, 25)
-playerName.BackgroundTransparency = 1
-playerName.Text = player.DisplayName
-playerName.TextColor3 = CORES.TextoPrincipal
-playerName.Font = Enum.Font.GothamBold
-playerName.TextSize = 18
-playerName.TextXAlignment = Enum.TextXAlignment.Left
+local profileImg = Instance.new("ImageLabel", profileFrame)
+profileImg.Size = UDim2.new(0.9, 0, 0.9, 0)
+profileImg.Position = UDim2.new(0.05, 0, 0.05, 0)
+profileImg.BackgroundTransparency = 1
+profileImg.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+Instance.new("UICorner", profileImg).CornerRadius = UDim.new(1, 0)
 
-local versionLabel = Instance.new("TextLabel", mainFrame)
-versionLabel.Name = "V7.0"
-versionLabel.Size = UDim2.new(0, 100, 0, 15)
-versionLabel.Position = UDim2.new(0, 85, 0, 50)
-versionLabel.BackgroundTransparency = 1
-versionLabel.Text = "V7.0"
-versionLabel.TextColor3 = CORES.TextoSecundario
-versionLabel.Font = Enum.Font.GothamMedium
-versionLabel.TextSize = 12
-versionLabel.TextXAlignment = Enum.TextXAlignment.Left
+-- Nome do Jogador e Versão
+local nameLabel = Instance.new("TextLabel", mainFrame)
+nameLabel.Name = "PlayerInfo"
+nameLabel.Size = UDim2.new(0, 150, 0, 40)
+nameLabel.Position = UDim2.new(0, 90, 0, 20)
+nameLabel.BackgroundTransparency = 1
+nameLabel.Text = player.DisplayName .. "\n<font color='#aaaaaa'>V7.0</font>"
+nameLabel.TextColor3 = CORES.Texto
+nameLabel.Font = Enum.Font.GothamBold
+nameLabel.TextSize = 16
+nameLabel.RichText = true
+nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-local titleFrame = Instance.new("Frame", mainFrame)
-titleFrame.Name = "TitleFrame"
-titleFrame.Size = UDim2.new(0, 350, 0, 45)
-titleFrame.Position = UDim2.new(0.45, 0, 0, 25)
-titleFrame.BackgroundColor3 = CORES.FundoSecundario
-Instance.new("UICorner", titleFrame).CornerRadius = UDim.new(0, 8)
-local titleStroke = Instance.new("UIStroke", titleFrame)
+-- Container do Título (Ao lado do nome)
+local titleBox = Instance.new("Frame", mainFrame)
+titleBox.Name = "TitleBox"
+titleBox.Size = UDim2.new(0, 350, 0, 50)
+titleBox.Position = UDim2.new(1, -370, 0, 25)
+titleBox.BackgroundColor3 = CORES.FundoSecundario
+Instance.new("UICorner", titleBox).CornerRadius = UDim.new(0, 8)
+local titleStroke = Instance.new("UIStroke", titleBox)
 titleStroke.Color = CORES.Borda
-titleStroke.Thickness = 2
+titleStroke.Thickness = 1.5
 
-local titleText = Instance.new("TextLabel", titleFrame)
-titleText.Name = "TitleText"
-titleText.Size = UDim2.new(1, 0, 1, 0)
-titleText.BackgroundTransparency = 1
-titleText.Text = "MENU PRINCIPAL"
-titleText.TextColor3 = CORES.TextoPrincipal
-titleText.Font = Enum.Font.GothamBold
-titleText.TextSize = 16
+local titleLabel = Instance.new("TextLabel", titleBox)
+titleLabel.Size = UDim2.new(1, 0, 1, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "MENU DE OPERAÇÕES"
+titleLabel.TextColor3 = CORES.Texto
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 18
 
 -- ==========================================
--- 3. SIDEBAR (Opções)
+-- 3. SIDEBAR (Área de Opções)
 -- ==========================================
-local sidebarFrame = Instance.new("Frame", mainFrame)
-sidebarFrame.Name = "Sidebar"
-sidebarFrame.Size = UDim2.new(0, 200, 0, 360)
-sidebarFrame.Position = UDim2.new(0, 20, 0, 100)
-sidebarFrame.BackgroundColor3 = CORES.FundoSecundario
-sidebarFrame.BackgroundTransparency = 0.5
-Instance.new("UICorner", sidebarFrame).CornerRadius = UDim.new(0, 8)
-local sideStroke = Instance.new("UIStroke", sidebarFrame)
+local sidebar = Instance.new("Frame", mainFrame)
+sidebar.Name = "Sidebar"
+sidebar.Size = UDim2.new(0, 210, 0, 350)
+sidebar.Position = UDim2.new(0, 20, 0, 100)
+sidebar.BackgroundColor3 = CORES.FundoSecundario
+sidebar.BackgroundTransparency = 0.4
+Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
+
+local sideStroke = Instance.new("UIStroke", sidebar)
 sideStroke.Color = CORES.Borda
-sideStroke.Thickness = 2
+sideStroke.Thickness = 1.5
 
-local sideTitle = Instance.new("TextLabel", sidebarFrame)
+local sideTitle = Instance.new("TextLabel", sidebar)
 sideTitle.Size = UDim2.new(1, 0, 0, 30)
-sideTitle.Position = UDim2.new(0, 0, 0, 5)
-sideTitle.BackgroundTransparency = 1
-sideTitle.Text = "Opções"
-sideTitle.TextColor3 = CORES.TextoPrincipal
+sideTitle.Text = "OPÇÕES"
+sideTitle.TextColor3 = CORES.Texto
 sideTitle.Font = Enum.Font.GothamBold
 sideTitle.TextSize = 14
+sideTitle.BackgroundTransparency = 1
 
-local tabContainer = Instance.new("Frame", sidebarFrame)
-tabContainer.Name = "TabContainer"
-tabContainer.Size = UDim2.new(1, 0, 1, -40)
-tabContainer.Position = UDim2.new(0, 0, 0, 40)
-tabContainer.BackgroundTransparency = 1
-
-local tabLayout = Instance.new("UIListLayout", tabContainer)
-tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabLayout.Padding = UDim.new(0, 8)
-tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+-- Espaço reservado para os botões do script de Opções
+local optionsContainer = Instance.new("Frame", sidebar)
+optionsContainer.Name = "OptionsContainer"
+optionsContainer.Size = UDim2.new(1, -10, 1, -40)
+optionsContainer.Position = UDim2.new(0, 5, 0, 35)
+optionsContainer.BackgroundTransparency = 1
 
 -- ==========================================
--- 4. ÁREA DE CONTEÚDO (Sem Lista Automática)
+-- 4. ÁREA DE CONTEÚDO (Para ListManager)
 -- ==========================================
-local contentFrame = Instance.new("Frame", mainFrame)
-contentFrame.Name = "ContentArea"
-contentFrame.Size = UDim2.new(0, 435, 0, 360)
-contentFrame.Position = UDim2.new(0, 240, 0, 100)
-contentFrame.BackgroundColor3 = CORES.FundoSecundario
-contentFrame.BackgroundTransparency = 0.5
-Instance.new("UICorner", contentFrame).CornerRadius = UDim.new(0, 8)
-local contentStroke = Instance.new("UIStroke", contentFrame)
+local contentArea = Instance.new("Frame", mainFrame)
+contentArea.Name = "ContentArea"
+contentArea.Size = UDim2.new(0, 430, 0, 350)
+contentArea.Position = UDim2.new(0, 250, 0, 100)
+contentArea.BackgroundColor3 = CORES.FundoSecundario
+contentArea.BackgroundTransparency = 0.4
+Instance.new("UICorner", contentArea).CornerRadius = UDim.new(0, 8)
+
+local contentStroke = Instance.new("UIStroke", contentArea)
 contentStroke.Color = CORES.Borda
-contentStroke.Thickness = 2
+contentStroke.Thickness = 1.5
 
-local contentTitle = Instance.new("TextLabel", contentFrame)
-contentTitle.Name = "ContentTitle"
-contentTitle.Size = UDim2.new(1, 0, 0, 30)
-contentTitle.Position = UDim2.new(0, 0, 0, 5)
-contentTitle.BackgroundTransparency = 1
-contentTitle.Text = "Comandos & Funções"
-contentTitle.TextColor3 = CORES.TextoPrincipal
-contentTitle.Font = Enum.Font.GothamBold
-contentTitle.TextSize = 14
-
-local pagesFolder = Instance.new("Folder", contentFrame)
+-- Container onde o ListManager irá atuar
+local pagesFolder = Instance.new("Folder", contentArea)
 pagesFolder.Name = "Pages"
 
--- ==========================================
--- 5. LÓGICA DE ABAS (PURA ESTRUTURA)
--- ==========================================
-local function CreateTab(name, icon, isDefault)
-    local tabBtn = Instance.new("TextButton", tabContainer)
-    tabBtn.Name = name .. "Tab"
-    tabBtn.Size = UDim2.new(0.9, 0, 0, 35)
-    tabBtn.BackgroundColor3 = isDefault and Color3.fromRGB(40, 40, 45) or CORES.Fundo
-    tabBtn.BackgroundTransparency = isDefault and 0 or 1
-    tabBtn.Text = icon .. "  " .. name
-    tabBtn.TextColor3 = isDefault and CORES.TextoPrincipal or CORES.TextoSecundario
-    tabBtn.Font = Enum.Font.GothamMedium
-    tabBtn.TextSize = 13
-    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
-    local bs = Instance.new("UIStroke", tabBtn)
-    bs.Color = CORES.Borda
-    bs.Transparency = isDefault and 0 or 1
+-- [EFEITO DE ABERTURA]
+mainFrame.ClipsDescendants = true
+mainFrame.Size = UDim2.new(0, 700, 0, 0)
+TweenService:Create(mainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 700, 0, 480)}):Play()
 
-    local page = Instance.new("Frame", pagesFolder)
-    page.Name = name .. "Page"
-    page.Size = UDim2.new(1, -10, 1, -45) 
-    page.Position = UDim2.new(0, 5, 0, 40)
-    page.BackgroundTransparency = 1
-    page.Visible = isDefault
-
-    tabBtn.MouseButton1Click:Connect(function()
-        titleText.Text = string.upper(name)
-        for _, p in ipairs(pagesFolder:GetChildren()) do p.Visible = false end
-        for _, b in ipairs(tabContainer:GetChildren()) do 
-            if b:IsA("TextButton") then
-                TweenService:Create(b, TweenInfo.new(0.2), {BackgroundTransparency = 1, TextColor3 = CORES.TextoSecundario}):Play()
-                b.UIStroke.Transparency = 1
-            end
-        end
-        page.Visible = true
-        TweenService:Create(tabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0, TextColor3 = CORES.TextoPrincipal}):Play()
-        tabBtn.UIStroke.Transparency = 0
-    end)
-    return page
-end
-
--- CRIAÇÃO DAS ABAS
-CreateTab("Comandos", "⚡", true)
-CreateTab("Visuais", "👁️", false)
-CreateTab("Configurações", "⚙️", false)
-
-print("Painel V7 Clean (Sem Listas) carregado.")
+print("Painel V7 Base Carregado. Aguardando Scripts de Opções e ListManager.")
