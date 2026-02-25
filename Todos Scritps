@@ -32,13 +32,13 @@ print("   SISTEMA CARREGADO COM SUCESSO!   ")
 print("========================================")
 
 --[[
--- ===============================
--- Lista de Comandos
--- ===============================
+===============================
+       Lista de Funções
+===============================
 
--- COMANDO: VIEW PLAYERS & BOTS
+-- MiniPainel: VIEW PLAYERS & BOTS
 -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewEntities"))()
 
--- COMANDO: VIEW ITENS
+-- MiniPainel: VIEW ITENS
 -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewItems"))()
 ]]
