@@ -1,61 +1,121 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local lighting = game:GetService("Lighting")
+local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- 1. CONFIGURAÇÃO DO BOTÃO
-local screenGui = playerGui:WaitForChild("MeuPainelPremium")
-local painel = screenGui:WaitForChild("Painel")
+-- 1. LIMPEZA E CONFIGURAÇÃO DE EFEITOS
+local menuName = "InterfaceMenu_V3"
+local oldMenu = playerGui:FindFirstChild(menuName)
+if oldMenu then oldMenu:Destroy() end
 
-local btn = Instance.new("TextButton")
-btn.Name = "ToggleBtn"
-btn.Size = UDim2.new(0, 140, 0, 45)
-btn.Position = UDim2.new(0, 50, 0.9, 0) -- Fica na parte inferior esquerda
-btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-btn.Text = "ABRIR PAINEL"
-btn.TextColor3 = Color3.new(1, 1, 1)
-btn.Font = Enum.Font.GothamBold
-btn.TextSize = 14
-btn.Parent = screenGui
+-- Criar ou Resetar o Blur no Lighting
+local blurEffect = Lighting:FindFirstChild("MenuBlur")
+if not blurEffect then
+    blurEffect = Instance.new("BlurEffect")
+    blurEffect.Name = "MenuBlur"
+    blurEffect.Size = 0
+    blurEffect.Parent = Lighting
+end
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 8)
-btnCorner.Parent = btn
+-- 2. CRIAÇÃO DA INTERFACE DO BOTÃO
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = menuName
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
 
-local btnStroke = Instance.new("UIStroke")
-btnStroke.Color = Color3.new(1, 1, 1)
-btnStroke.Thickness = 2
-btnStroke.Parent = btn
+local mainButton = Instance.new("TextButton")
+mainButton.Name = "ToggleButton"
+mainButton.Size = UDim2.new(0, 140, 0, 45)
+mainButton.Position = UDim2.new(0, 25, 0.5, -22) -- Lateral esquerda
+mainButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+mainButton.BackgroundTransparency = 0.1
+mainButton.Text = "ABRIR"
+mainButton.TextColor3 = Color3.new(1, 1, 1)
+mainButton.Font = Enum.Font.GothamBold
+mainButton.TextSize = 14
+mainButton.AutoButtonColor = false -- Desativado para usarmos animação customizada
+mainButton.Parent = screenGui
 
--- Gradiente no Botão
-local btnGrad = Instance.new("UIGradient")
-btnGrad.Color = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(10, 10, 10))
-btnGrad.Rotation = 90
-btnGrad.Parent = btn
+-- Estilização do Botão
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = mainButton
 
--- 2. LÓGICA DE TRANSIÇÃO
-local blur = Instance.new("BlurEffect", lighting)
-blur.Size = 0
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(200, 200, 200)
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Parent = mainButton
 
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(150, 150, 150))
+gradient.Rotation = 90
+gradient.Parent = mainButton
+
+-- 3. LÓGICA DE ANIMAÇÃO E CONTROLO
 local isOpen = false
-local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-btn.MouseButton1Click:Connect(function()
-	isOpen = not isOpen
-	
-	if isOpen then
-		painel.Visible = true
-		TweenService:Create(painel, tweenInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
-		TweenService:Create(blur, TweenInfo.new(0.5), {Size = 20}):Play()
-		btn.Text = "FECHAR"
-	else
-		local closeTween = TweenService:Create(painel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Position = UDim2.new(0.5, 0, 1.5, 0)})
-		closeTween:Play()
-		TweenService:Create(blur, TweenInfo.new(0.5), {Size = 0}):Play()
-		btn.Text = "ABRIR PAINEL"
-		closeTween.Completed:Connect(function()
-			if not isOpen then painel.Visible = false end
-		end)
-	end
+local function toggleUI()
+    -- Localiza o Painel Premium (usando o nome do script anterior)
+    local coreGui = playerGui:FindFirstChild("SistemaPainel_V3")
+    local painel = coreGui and coreGui:FindFirstChild("Painel")
+    
+    if not painel then
+        warn("Erro: O Painel Premium não foi encontrado no PlayerGui.")
+        return
+    end
+
+    isOpen = not isOpen
+
+    if isOpen then
+        -- AÇÃO: ABRIR (Painel Sobe)
+        painel.Visible = true
+        mainButton.Text = "FECHAR"
+        
+        -- Animar Painel (Sobe do fundo para o centro)
+        painel.Position = UDim2.new(0.5, 0, 1.5, 0) -- Garante que começa em baixo
+        TweenService:Create(painel, tweenInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
+        
+        -- Animar Blur e Botão
+        TweenService:Create(blurEffect, tweenInfo, {Size = 24}):Play()
+        TweenService:Create(mainButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(40, 10, 10)}):Play()
+        TweenService:Create(stroke, tweenInfo, {Color = Color3.fromRGB(255, 50, 50)}):Play()
+    else
+        -- AÇÃO: FECHAR (Painel Desce)
+        mainButton.Text = "ABRIR"
+        
+        local closeTween = TweenService:Create(painel, tweenInfo, {Position = UDim2.new(0.5, 0, 1.5, 0)})
+        closeTween:Play()
+        
+        -- Resetar Blur e Botão
+        TweenService:Create(blurEffect, tweenInfo, {Size = 0}):Play()
+        TweenService:Create(mainButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(15, 15, 15)}):Play()
+        TweenService:Create(stroke, tweenInfo, {Color = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        closeTween.Completed:Connect(function()
+            if not isOpen then painel.Visible = false end
+        end)
+    end
+end
+
+-- 4. EFEITOS DE HOVER (Passar o Mouse)
+mainButton.MouseEnter:Connect(function()
+    TweenService:Create(mainButton, TweenInfo.new(0.3), {BackgroundTransparency = 0.3, TextSize = 16}):Play()
 end)
+
+mainButton.MouseLeave:Connect(function()
+    TweenService:Create(mainButton, TweenInfo.new(0.3), {BackgroundTransparency = 0.1, TextSize = 14}):Play()
+end)
+
+mainButton.MouseButton1Down:Connect(function()
+    TweenService:Create(mainButton, TweenInfo.new(0.1), {Size = UDim2.new(0, 130, 0, 40)}):Play()
+end)
+
+mainButton.MouseButton1Up:Connect(function()
+    TweenService:Create(mainButton, TweenInfo.new(0.2), {Size = UDim2.new(0, 140, 0, 45)}):Play()
+    toggleUI()
+end)
+
+print("Botão Premium com Sistema de Animação Sobe/Desce Carregado!")
