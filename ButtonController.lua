@@ -93,7 +93,7 @@ local function LoadPosition()
 end
 
 LoadPosition()
-]]
+
 --------------------------------------------------------------------
 -- [LÓGICA DE ARRASTAR]
 --------------------------------------------------------------------
@@ -134,7 +134,7 @@ RunService.RenderStepped:Connect(function()
         UpdateDrag(dragInput)
     end
 end)
-
+]]
 --------------------------------------------------------------------
 -- [ANIMAÇÃO DE ABRIR/FECHAR - NOVA LÓGICA SOBE/DESCE]
 --------------------------------------------------------------------
