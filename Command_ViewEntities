@@ -1,6 +1,7 @@
 --[[
-    GITHUB: Command_ViewEntities_V5_Tabs.lua
-    Função: ESP Independente adaptado para o Sistema de Abas V5.5.
+    GITHUB: Command_ViewEntities_V7.lua
+    Função: ESP Independente adaptado para o Painel V7 (Dashboard).
+    Estilo: Fontes Sci-Fi, Switches Modernos e Bordas Cinzas.
 ]]
 
 local Players = game:GetService("Players")
@@ -16,11 +17,11 @@ local ESP_PLAYERS_ATIVO = false
 local ESP_BOTS_ATIVO = false
 local NOME_COMANDO = "View Entity System"
 
--- [NOVA LOCALIZAÇÃO (SISTEMA DE ABAS)]
+-- [LOCALIZAÇÃO V7]
 local panelGui = playerGui:WaitForChild("MainPanel_ScreenGui")
 local mainFrame = panelGui:WaitForChild("MainFrame")
 local pagesFolder = mainFrame.ContentArea.Pages
-local targetPage = pagesFolder:WaitForChild("VISUAISPage") -- Envia para a aba de Visuais
+local targetPage = pagesFolder:WaitForChild("VisuaisPage") -- Agora vai para a aba "Visuais"
 
 -- [LIMPEZA]
 if targetPage:FindFirstChild(NOME_COMANDO) then targetPage[NOME_COMANDO]:Destroy() end
@@ -28,30 +29,30 @@ if targetPage:FindFirstChild(NOME_COMANDO) then targetPage[NOME_COMANDO]:Destroy
 -- [CONTAINER PRINCIPAL]
 local container = Instance.new("Frame")
 container.Name = NOME_COMANDO
-container.Size = UDim2.new(0.95, 0, 0, 85) -- Ajustado para a nova largura
-container.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-container.BackgroundTransparency = 0.2
+container.Size = UDim2.new(0.96, 0, 0, 95) -- Ajustado para o novo grid
+container.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+container.BackgroundTransparency = 0.4
 container.Parent = targetPage
 
-Instance.new("UICorner", container).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", container).CornerRadius = UDim.new(0, 10)
 local strokeMain = Instance.new("UIStroke", container)
-strokeMain.Color = Color3.fromRGB(45, 45, 50)
-strokeMain.Thickness = 2
+strokeMain.Color = Color3.fromRGB(60, 60, 65) -- Borda Cinza V7
+strokeMain.Thickness = 1.5
 
--- Título Centralizado
+-- Título Estilizado (Fonte Michroma)
 local mainTitle = Instance.new("TextLabel")
-mainTitle.Size = UDim2.new(1, 0, 0, 30)
+mainTitle.Size = UDim2.new(1, 0, 0, 35)
 mainTitle.BackgroundTransparency = 1
-mainTitle.Text = "SISTEMA DE RENDERIZAÇÃO (ESP)"
+mainTitle.Text = "RENDERIZAÇÃO DE ENTIDADES"
 mainTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-mainTitle.Font = Enum.Font.GothamBold
-mainTitle.TextSize = 13
+mainTitle.Font = Enum.Font.Michroma
+mainTitle.TextSize = 12
 mainTitle.Parent = container
 
--- [FUNÇÃO: CRIAR SWITCH ESTILIZADO]
+-- [FUNÇÃO: CRIAR SWITCH V7]
 local function CreateSwitch(nome, pos, icon)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0.46, 0, 0, 45)
+    frame.Size = UDim2.new(0.48, 0, 0, 50)
     frame.Position = pos
     frame.BackgroundTransparency = 1
     frame.Parent = container
@@ -59,24 +60,26 @@ local function CreateSwitch(nome, pos, icon)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
     label.Text = icon .. " " .. nome
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.Font = Enum.Font.GothamMedium
-    label.TextSize = 12
+    label.TextColor3 = Color3.fromRGB(180, 180, 185)
+    label.Font = Enum.Font.JetBrainsMono -- Fonte Hacker/Code
+    label.TextSize = 11
     label.BackgroundTransparency = 1
     label.Parent = frame
 
     local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(0, 40, 0, 20)
-    bg.Position = UDim2.new(0.5, -20, 0.5, 2)
-    bg.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    bg.Size = UDim2.new(0, 42, 0, 22)
+    bg.Position = UDim2.new(0.5, -21, 0.5, 5)
+    bg.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
     bg.Parent = frame
     Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
-    Instance.new("UIStroke", bg).Color = Color3.fromRGB(255, 255, 255)
+    local s = Instance.new("UIStroke", bg)
+    s.Color = Color3.fromRGB(80, 80, 85)
+    s.Thickness = 1
 
     local circle = Instance.new("Frame")
-    circle.Size = UDim2.new(0, 14, 0, 14)
-    circle.Position = UDim2.new(0.1, 0, 0.5, -7)
-    circle.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+    circle.Size = UDim2.new(0, 16, 0, 16)
+    circle.Position = UDim2.new(0.1, 0, 0.5, -8)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 100, 100) -- Vermelho desativado
     circle.Parent = bg
     Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
 
@@ -89,56 +92,53 @@ local function CreateSwitch(nome, pos, icon)
     return bg, circle, btn
 end
 
-local playerBg, playerCircle, playerBtn = CreateSwitch("PLAYERS", UDim2.new(0.02, 0, 0.35, 0), "👤")
-local botBg, botCircle, botBtn = CreateSwitch("BOTS", UDim2.new(0.52, 0, 0.35, 0), "🤖")
+local playerBg, playerCircle, playerBtn = CreateSwitch("PLAYERS", UDim2.new(0.01, 0, 0.3, 0), "👤")
+local botBg, botCircle, botBtn = CreateSwitch("BOTS", UDim2.new(0.51, 0, 0.3, 0), "🤖")
 
 --------------------------------------------------------------------
--- [LÓGICA E NOTIFICAÇÃO]
+-- [NOTIFICAÇÃO E LOGICA VISUAL]
 --------------------------------------------------------------------
 local function Notify(msg, cor)
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(0, 260, 0, 50)
-    card.Position = UDim2.new(1, 20, 0.85, 0)
-    card.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    card.Size = UDim2.new(0, 250, 0, 45)
+    card.Position = UDim2.new(1, 20, 0.9, 0)
+    card.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     card.Parent = panelGui
-    
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
     local s = Instance.new("UIStroke", card)
-    s.Color = cor s.Thickness = 2
+    s.Color = cor s.Thickness = 1.5
 
-    local txt = Instance.new("TextLabel")
+    local txt = Instance.new("TextLabel", card)
     txt.Size = UDim2.new(1, 0, 1, 0)
     txt.Text = msg
     txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-    txt.Font = Enum.Font.GothamBold
-    txt.TextSize = 13
+    txt.Font = Enum.Font.JetBrainsMono
+    txt.TextSize = 12
     txt.BackgroundTransparency = 1
-    txt.Parent = card
 
-    card:TweenPosition(UDim2.new(1, -280, 0.85, 0), "Out", "Quart", 0.5)
-    task.wait(3)
-    card:TweenPosition(UDim2.new(1, 20, 0.85, 0), "In", "Quart", 0.5)
-    game:GetService("Debris"):AddItem(card, 0.6)
+    card:TweenPosition(UDim2.new(1, -270, 0.9, 0), "Out", "Quart", 0.4)
+    task.wait(2.5)
+    card:TweenPosition(UDim2.new(1, 20, 0.9, 0), "In", "Quart", 0.4)
+    game:GetService("Debris"):AddItem(card, 0.5)
 end
 
 local function ToggleVisual(ativo, bg, circle)
     if ativo then
-        TweenService:Create(circle, TweenInfo.new(0.3), {Position = UDim2.new(0.6, 0, 0.5, -7), BackgroundColor3 = Color3.fromRGB(80, 255, 80)}):Play()
-        TweenService:Create(bg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 60, 30)}):Play()
+        TweenService:Create(circle, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = UDim2.new(0.55, 0, 0.5, -8), BackgroundColor3 = Color3.fromRGB(100, 255, 100)}):Play()
+        TweenService:Create(bg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(20, 40, 20)}):Play()
     else
-        TweenService:Create(circle, TweenInfo.new(0.3), {Position = UDim2.new(0.1, 0, 0.5, -7), BackgroundColor3 = Color3.fromRGB(255, 80, 80)}):Play()
-        TweenService:Create(bg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 50, 55)}):Play()
+        TweenService:Create(circle, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = UDim2.new(0.1, 0, 0.5, -8), BackgroundColor3 = Color3.fromRGB(255, 100, 100)}):Play()
+        TweenService:Create(bg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(40, 40, 45)}):Play()
     end
 end
 
 -- [LÓGICA ESP]
 local espFolder = Instance.new("Folder", workspace)
-espFolder.Name = "V5_ESP_Storage"
+espFolder.Name = "V7_ESP_System"
 
 local function UpdateESP()
     espFolder:ClearAllChildren()
     if not ESP_PLAYERS_ATIVO and not ESP_BOTS_ATIVO then return end
-
     local char = player.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
@@ -153,13 +153,14 @@ local function UpdateESP()
             local isPlr = Players:GetPlayerFromCharacter(target)
             if (isPlr and not ESP_PLAYERS_ATIVO) or (not isPlr and not ESP_BOTS_ATIVO) then continue end
 
-            local color = isPlr and (isPlr.TeamColor.Color) or Color3.fromRGB(255, 50, 50)
-            local icon = isPlr and "👤" or "🤖"
+            local color = isPlr and (isPlr.TeamColor.Color) or Color3.fromRGB(255, 255, 255)
 
             local hl = Instance.new("Highlight", espFolder)
             hl.Adornee = target
-            hl.FillTransparency = 1
+            hl.FillTransparency = 0.8
+            hl.FillColor = color
             hl.OutlineColor = color
+            hl.OutlineTransparency = 0
 
             local bb = Instance.new("BillboardGui", espFolder)
             bb.Size = UDim2.new(0, 200, 0, 50)
@@ -171,9 +172,10 @@ local function UpdateESP()
             l.Size = UDim2.new(1, 0, 1, 0)
             l.BackgroundTransparency = 1
             l.TextColor3 = color
-            l.Font = Enum.Font.GothamBold
-            l.TextSize = 13
-            l.Text = string.format("%s: %s\n📏 %dM | ❤ %d", icon, target.Name, math.floor(dist), hum.Health)
+            l.Font = Enum.Font.JetBrainsMono
+            l.TextSize = 12
+            l.TextStrokeTransparency = 0.5
+            l.Text = string.format("%s\n[%dM]", target.Name, math.floor(dist))
         end
     end
 end
@@ -185,11 +187,13 @@ end)
 playerBtn.MouseButton1Click:Connect(function()
     ESP_PLAYERS_ATIVO = not ESP_PLAYERS_ATIVO
     ToggleVisual(ESP_PLAYERS_ATIVO, playerBg, playerCircle)
-    Notify(ESP_PLAYERS_ATIVO and "PLAYERS ESP: ATIVO" or "PLAYERS ESP: INATIVO", ESP_PLAYERS_ATIVO and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80))
+    Notify(ESP_PLAYERS_ATIVO and "PLAYERS RENDER: ON" or "PLAYERS RENDER: OFF", ESP_PLAYERS_ATIVO and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100))
 end)
 
 botBtn.MouseButton1Click:Connect(function()
     ESP_BOTS_ATIVO = not ESP_BOTS_ATIVO
     ToggleVisual(ESP_BOTS_ATIVO, botBg, botCircle)
-    Notify(ESP_BOTS_ATIVO and "BOTS ESP: ATIVO" or "BOTS ESP: INATIVO", ESP_BOTS_ATIVO and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80))
+    Notify(ESP_BOTS_ATIVO and "BOTS RENDER: ON" or "BOTS RENDER: OFF", ESP_BOTS_ATIVO and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100))
 end)
+
+print("ViewEntity V7: Mapeado para VISUAISPage.")
