@@ -1,6 +1,8 @@
--- ===============================
--- Scripts de Funcionamento
--- ===============================
+--[[ 
+===============================
+ Scripts de Funcionamento
+===============================
+]]
 
 -- BOTÃO PRINCIPAL
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ButtonController.lua"))()
