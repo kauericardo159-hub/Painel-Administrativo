@@ -1,0 +1,86 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- 1. LOCALIZAÇÃO E LIMPEZA
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:WaitForChild("MeuPainelAnimado", 5) or playerGui:WaitForChild("InterfaceMenu", 5)
+local painel = screenGui:WaitForChild("Painel")
+
+if painel:FindFirstChild("UserProfileArea") then
+    painel.UserProfileArea:Destroy()
+end
+
+-- 2. CONTAINER PRINCIPAL (Tamanho Reduzido)
+local profileArea = Instance.new("Frame")
+profileArea.Name = "UserProfileArea"
+profileArea.Size = UDim2.new(0, 250, 0, 80) -- Diminuído
+profileArea.Position = UDim2.new(0, 15, 1, -15)
+profileArea.AnchorPoint = Vector2.new(0, 1)
+profileArea.BackgroundTransparency = 1
+profileArea.Parent = painel
+
+-- 3. FOTO DE PERFIL (Com contorno Duplo)
+local profileImage = Instance.new("ImageLabel")
+profileImage.Name = "UserImage"
+profileImage.Size = UDim2.new(0, 65, 0, 65) -- Diminuído
+profileImage.Position = UDim2.new(0, 0, 0.5, 0)
+profileImage.AnchorPoint = Vector2.new(0, 0.5)
+profileImage.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+profileImage.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+profileImage.Parent = profileArea
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(1, 0)
+uiCorner.Parent = profileImage
+
+-- Stroke da Foto
+local fStrokeBranco = Instance.new("UIStroke")
+fStrokeBranco.Thickness = 2
+fStrokeBranco.Color = Color3.new(1, 1, 1)
+fStrokeBranco.Parent = profileImage
+
+local fStrokeCinza = Instance.new("UIStroke")
+fStrokeCinza.Thickness = 4
+fStrokeCinza.Color = Color3.fromRGB(80, 80, 80) -- Cinza em volta
+fStrokeCinza.Transparency = 0.3
+fStrokeCinza.Parent = profileImage
+
+-- 4. FUNÇÃO PARA LABELS ESTILIZADAS (Fonte Preta, Stroke Branco/Cinza)
+local function CreateStyledLabel(name, pos, text, size)
+    local label = Instance.new("TextLabel")
+    label.Name = name
+    label.Size = UDim2.new(0, 150, 0, 22)
+    label.Position = pos
+    label.BackgroundTransparency = 1 -- Fundo invisível para focar na fonte
+    label.TextColor3 = Color3.new(0, 0, 0) -- FONTE PRETA
+    label.Text = text
+    label.Font = Enum.Font.GothamBold -- FONTE ESTILOSA
+    label.TextSize = size
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = profileArea
+    
+    -- Stroke Branco na Fonte
+    local strokeB = Instance.new("UIStroke")
+    strokeB.Thickness = 2
+    strokeB.Color = Color3.new(1, 1, 1) -- BRANCO
+    strokeB.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+    strokeB.Parent = label
+    
+    -- Stroke Cinza em volta (Efeito de contorno externo)
+    local strokeC = Instance.new("UIStroke")
+    strokeC.Thickness = 3.5
+    strokeC.Color = Color3.fromRGB(100, 100, 100) -- CINZA
+    strokeC.Transparency = 0.5
+    strokeC.Parent = label
+
+    return label
+end
+
+-- 5. CRIAÇÃO DOS TEXTOS
+-- Nome Display
+CreateStyledLabel("NameLabel", UDim2.new(0, 75, 0.3, 0), player.DisplayName, 15)
+
+-- @Username
+CreateStyledLabel("UserLabel", UDim2.new(0, 75, 0.6, 2), "@" .. player.Name, 12)
+
+print("Perfil atualizado: Cores e tamanhos ajustados.")
