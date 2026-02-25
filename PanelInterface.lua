@@ -1,121 +1,140 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- 1. LIMPEZA DE SISTEMAS ANTIGOS
-local mainName = "SistemaPainelLux"
-if playerGui:FindFirstChild(mainName) then playerGui[mainName]:Destroy() end
+-- 1. SISTEMA DE LIMPEZA (Anti-Duplicação)
+local oldGuis = {"InterfacePrincipal", "LoadingSystem", "MenuBlurEffect"}
+for _, name in ipairs(oldGuis) do
+    local existing = playerGui:FindFirstChild(name) or Lighting:FindFirstChild(name)
+    if existing then existing:Destroy() end
+end
 
--- 2. ESTRUTURA INICIAL
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = mainName
-screenGui.IgnoreGuiInset = true
-screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+-- 2. TELA DE CARREGAMENTO (INTRODUÇÃO)
+local loadingGui = Instance.new("ScreenGui")
+loadingGui.Name = "LoadingSystem"
+loadingGui.Parent = playerGui
 
--- 3. TELA DE CARREGAMENTO (INTRO)
 local loadFrame = Instance.new("Frame")
-loadFrame.Size = UDim2.new(1, 0, 1, 0)
+loadFrame.Size = UDim2.new(0, 300, 0, 100)
+loadFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+loadFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 loadFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-loadFrame.ZIndex = 10
-loadFrame.Parent = screenGui
+loadFrame.Parent = loadingGui
 
-local loadBarBg = Instance.new("Frame")
-loadBarBg.Size = UDim2.new(0, 300, 0, 4)
-loadBarBg.Position = UDim2.new(0.5, 0, 0.5, 40)
-loadBarBg.AnchorPoint = Vector2.new(0.5, 0.5)
-loadBarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-loadBarBg.BorderSizePixel = 0
-loadBarBg.Parent = loadFrame
+local loadBarBack = Instance.new("Frame")
+loadBarBack.Size = UDim2.new(0.8, 0, 0.1, 0)
+loadBarBack.Position = UDim2.new(0.5, 0, 0.7, 0)
+loadBarBack.AnchorPoint = Vector2.new(0.5, 0.5)
+loadBarBack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+loadBarBack.Parent = loadFrame
 
 local loadBarFill = Instance.new("Frame")
 loadBarFill.Size = UDim2.new(0, 0, 1, 0)
 loadBarFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-loadBarFill.BorderSizePixel = 0
-loadBarFill.Parent = loadBarBg
+loadBarFill.Parent = loadBarBack
 
-local loadText = Instance.new("TextLabel")
-loadText.Size = UDim2.new(0, 200, 0, 30)
-loadText.Position = UDim2.new(0.5, 0, 0.5, 0)
-loadText.AnchorPoint = Vector2.new(0.5, 0.5)
-loadText.BackgroundTransparency = 1
-loadText.Text = "INICIALIZANDO SISTEMAS..."
-loadText.TextColor3 = Color3.new(1, 1, 1)
-loadText.Font = Enum.Font.GothamMedium
-loadText.TextSize = 14
-loadText.Parent = loadFrame
+local loadLabel = Instance.new("TextLabel")
+loadLabel.Size = UDim2.new(1, 0, 0.4, 0)
+loadLabel.Text = "CARREGANDO SISTEMAS..."
+loadLabel.TextColor3 = Color3.new(1, 1, 1)
+loadLabel.Font = Enum.Font.GothamBold
+loadLabel.BackgroundTransparency = 1
+loadLabel.Parent = loadFrame
 
--- 4. CRIAÇÃO DO PAINEL PRINCIPAL (MELHORADO)
+-- 3. CRIAÇÃO DO PAINEL PRINCIPAL (MELHORADO)
+local mainGui = Instance.new("ScreenGui")
+mainGui.Name = "InterfacePrincipal"
+mainGui.ResetOnSpawn = false
+mainGui.Parent = playerGui
+
 local painel = Instance.new("Frame")
 painel.Name = "Painel"
-painel.Size = UDim2.new(0, 750, 0, 480) -- Tamanho expandido e imponente
-painel.Position = UDim2.new(0.5, 0, 0.5, 0)
+painel.Size = UDim2.new(0, 750, 0, 450) -- Tamanho otimizado e amplo
+painel.Position = UDim2.new(0.5, 0, 1.5, 0) -- Começa embaixo para animação
 painel.AnchorPoint = Vector2.new(0.5, 0.5)
-painel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-painel.BackgroundTransparency = 0.2 -- Transparência conforme solicitado
+painel.BackgroundColor3 = Color3.new(0, 0, 0)
+painel.BackgroundTransparency = 0.2
+painel.BorderSizePixel = 0
 painel.Visible = false
-painel.ClipsDescendants = true
-painel.Parent = screenGui
+painel.Parent = mainGui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
-corner.Parent = painel
-
--- Gradiente Estiloso no Fundo
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
+-- Gradiente para o Fundo do Painel
+local gradientePainel = Instance.new("UIGradient")
+gradientePainel.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
 })
-gradient.Rotation = 45
-gradient.Parent = painel
+gradientePainel.Rotation = 45
+gradientePainel.Parent = painel
 
--- 5. UISTROKE AVANÇADO (Bordas Animadas)
+-- 4. UISTROKE AVANÇADO (DUPLA CAMADA E ANIMAÇÃO)
 local strokeBranco = Instance.new("UIStroke")
 strokeBranco.Thickness = 3
 strokeBranco.Color = Color3.new(1, 1, 1)
 strokeBranco.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 strokeBranco.Parent = painel
 
-local strokeGrad = Instance.new("UIGradient")
-strokeGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 50)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
-})
-strokeGrad.Parent = strokeBranco
-
 local strokeCinza = Instance.new("UIStroke")
 strokeCinza.Thickness = 6
-strokeCinza.Color = Color3.fromRGB(0, 0, 0)
+strokeCinza.Color = Color3.fromRGB(50, 50, 50)
 strokeCinza.Transparency = 0.4
+strokeCinza.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 strokeCinza.Parent = painel
 
--- 6. LÓGICA DE CARREGAMENTO E ANIMAÇÃO
+-- Animação do Stroke (Efeito Rainbow/Brilho Suave)
 task.spawn(function()
-    -- Simulação de carregamento da barra
-    local tweenLoad = TweenService:Create(loadBarFill, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
-    tweenLoad:Play()
-    
-    task.wait(2.2)
-    
-    -- Fade out da tela de loading
-    TweenService:Create(loadFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(loadText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-    TweenService:Create(loadBarBg, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(loadBarFill, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-    
-    task.wait(0.5)
-    loadFrame:Destroy()
-    
-    -- Animação infinita do UIStroke (Rotação do Brilho)
-    task.spawn(function()
-        while true do
-            strokeGrad.Rotation = strokeGrad.Rotation + 2
-            task.wait(0.02)
-        end
-    end)
+    local t = 0
+    while painel.Parent do
+        t = t + 0.01
+        local color = Color3.fromHSV(0, 0, (math.sin(t * 2) + 1) / 2 * 0.5 + 0.5)
+        strokeBranco.Color = color -- Oscila entre cinza claro e branco
+        task.wait(0.03)
+    end
 end)
 
-print("Painel de Luxo com Sequência de Boot carregado!")
+-- 5. BOTÃO DE CONTROLE ESTILIZADO
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(0, 150, 0, 45)
+btn.Position = UDim2.new(0, 20, 0.5, 0)
+btn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+btn.Text = "INICIAR"
+btn.TextColor3 = Color3.new(1, 1, 1)
+btn.Font = Enum.Font.GothamBold
+btn.Parent = mainGui
+
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = Color3.new(1, 1, 1)
+btnStroke.Thickness = 2
+btnStroke.Parent = btn
+
+-- 6. LÓGICA DE CARREGAMENTO E TRANSIÇÃO
+local blur = Instance.new("BlurEffect")
+blur.Size = 0
+blur.Parent = Lighting
+
+local function executeLoading()
+    loadBarFill:TweenSize(UDim2.new(1, 0, 1, 0), "Out", "Linear", 2)
+    task.wait(2.1)
+    loadingGui:Destroy()
+    btn.Visible = true
+end
+
+local isOpen = false
+btn.MouseButton1Click:Connect(function()
+    isOpen = not isOpen
+    local targetPos = isOpen and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0.5, 0, 1.5, 0)
+    local targetBlur = isOpen and 18 or 0
+    
+    if isOpen then painel.Visible = true end
+    
+    TweenService:Create(painel, TweenInfo.new(0.6, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
+    TweenService:Create(blur, TweenInfo.new(0.6), {Size = targetBlur}):Play()
+    
+    btn.Text = isOpen and "FECHAR" or "ABRIR"
+end)
+
+-- Inicia o processo
+btn.Visible = false
+executeLoading()
