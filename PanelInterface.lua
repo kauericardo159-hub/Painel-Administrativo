@@ -1,66 +1,66 @@
---[[
-    SCRIPT: Painel Automático Pro
-    DESCRIÇÃO: Cria um painel transparente com borda dupla e design limpo.
-]]
-
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- 1. Criação da ScreenGui Principal
+-- 1. SISTEMA DE SUBSTITUIÇÃO (Limpeza de scripts antigos)
+local screenName = "PainelCustomizado_Sistema"
+for _, child in pairs(playerGui:GetChildren()) do
+    if child.Name == screenName then
+        child:Destroy()
+    end
+end
+
+-- 2. ESTRUTURA PRINCIPAL
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "PainelSistemaGui"
+screenGui.Name = screenName
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- 2. Criação do Frame Principal (Painel)
-local painelPrincipal = Instance.new("Frame")
-painelPrincipal.Name = "PainelPrincipal"
-painelPrincipal.Size = UDim2.new(0, 400, 0, 250) -- Tamanho do painel
-painelPrincipal.Position = UDim2.new(0.5, 0, 0.5, 0) -- Centralizado
-painelPrincipal.AnchorPoint = Vector2.new(0.5, 0.5)
-painelPrincipal.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Preto
-painelPrincipal.BackgroundTransparency = 0.3 -- Transparência solicitada
-painelPrincipal.BorderSizePixel = 0
-painelPrincipal.Parent = screenGui
+-- Painel (Largura esticada conforme solicitado)
+local painel = Instance.new("Frame")
+painel.Name = "Painel"
+-- Aumentei de 500 para 650 na largura (X)
+painel.Size = UDim2.new(0, 650, 0, 400) 
+painel.Position = UDim2.new(0.5, 0, 0.5, 0)
+painel.AnchorPoint = Vector2.new(0.5, 0.5)
+painel.BackgroundColor3 = Color3.new(0, 0, 0)
+painel.BackgroundTransparency = 0.2
+painel.BorderSizePixel = 0
+painel.Visible = false -- Controlado pelo botão
+painel.Parent = screenGui
 
--- 3. Adicionando Arredondamento (Opcional, mas fica lindo)
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 8)
-uiCorner.Parent = painelPrincipal
+-- 3. BORDAS (UIStroke)
+-- Stroke 1: Efeito Cinza/Branco Animado (Externo)
+local strokePrincipal = Instance.new("UIStroke")
+strokePrincipal.Thickness = 2.5
+strokePrincipal.Color = Color3.fromRGB(120, 120, 120)
+strokePrincipal.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+strokePrincipal.Parent = painel
 
--- 4. Borda INTERNA (Branca)
-local bordaBranca = Instance.new("UIStroke")
-bordaBranca.Name = "BordaInterna"
-bordaBranca.Color = Color3.fromRGB(255, 255, 255) -- Branco
-bordaBranca.Thickness = 2
-bordaBranca.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-bordaBranca.Parent = painelPrincipal
+-- Stroke 2: Camada Preta 0.2 (Interna para profundidade)
+local strokeInterno = Instance.new("UIStroke")
+strokeInterno.Thickness = 5
+strokeInterno.Color = Color3.new(0, 0, 0)
+strokeInterno.Transparency = 0.2
+strokeInterno.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+strokeInterno.Parent = painel
 
--- 5. Borda EXTERNA (Preta)
--- Nota: Para duas bordas no Roblox, precisamos de um Frame invisível levemente maior atrás.
-local outlineContainer = Instance.new("Frame")
-outlineContainer.Name = "BordaExternaContainer"
-outlineContainer.Size = UDim2.new(1, 4, 1, 4) -- Ligeiramente maior que o painel
-outlineContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
-outlineContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-outlineContainer.BackgroundTransparency = 1
-outlineContainer.ZIndex = painelPrincipal.ZIndex - 1 -- Fica atrás
-outlineContainer.Parent = painelPrincipal
+-- 4. ANIMAÇÃO DE COR (Cinza <-> Branco)
+local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+local anim = TweenService:Create(strokePrincipal, tweenInfo, {
+    Color = Color3.fromRGB(255, 255, 255)
+})
+anim:Play()
 
-local bordaPreta = Instance.new("UIStroke")
-bordaPreta.Name = "BordaExterna"
-bordaPreta.Color = Color3.fromRGB(0, 0, 0) -- Preto
-bordaPreta.Thickness = 2
-bordaPreta.Parent = outlineContainer
+-- 5. INTEGRAÇÃO AUTOMÁTICA
+-- Tenta encontrar a GUI do botão para se auto-organizar
+task.spawn(function()
+    local btnGui = playerGui:WaitForChild("InterfaceMenu", 3)
+    if btnGui then
+        painel.Parent = btnGui
+        screenGui:Destroy()
+    end
+end)
 
--- Adiciona UICorner na borda externa para acompanhar o painel
-local uiCornerExtra = uiCorner:Clone()
-uiCornerExtra.Parent = outlineContainer
-
----
-
--- Função para organizar o fechamento (Inicia invisível se quiser)
--- painelPrincipal.Visible = true 
-
-print("✅ Painel criado com sucesso pelo Script!")
+print("Painel Largo e Animado carregado!")
