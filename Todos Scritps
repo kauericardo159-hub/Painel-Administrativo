@@ -1,0 +1,23 @@
+-- BOTÃO PRINCIPAL
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ButtonController.lua"))()
+
+-- INTERFACE DO PAINEL
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/PanelInterface.lua"))()
+
+--[[
+-- GERENCIADOR DA LISTA
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ListManager.lua"))()
+]]
+-- COMANDO: VIEW PLAYERS & BOTS
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewEntities"))()
+
+-- COMANDO: VIEW ITENS
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewItems"))()
+
+-- Efeitos Painel
+
+-- BloomEffect
+-- loadstring(game:HttpGet(""))()
+
+-- Efeitos fundo Painel
+-- loadstring(game:HttpGet(""))()
