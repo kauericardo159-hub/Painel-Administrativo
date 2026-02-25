@@ -3,109 +3,119 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- 1. LIMPEZA ANTI-DUPLICAÇÃO
-local screenName = "SistemaAvancado_Painel"
-if playerGui:FindFirstChild(screenName) then playerGui[screenName]:Destroy() end
+-- 1. LIMPEZA DE SISTEMAS ANTIGOS
+local mainName = "SistemaPainelLux"
+if playerGui:FindFirstChild(mainName) then playerGui[mainName]:Destroy() end
 
--- 2. CRIAÇÃO DA ESTRUTURA
+-- 2. ESTRUTURA INICIAL
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = screenName
+screenGui.Name = mainName
+screenGui.IgnoreGuiInset = true
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Painel Principal (Tamanho Melhorado e Esticado)
+-- 3. TELA DE CARREGAMENTO (INTRO)
+local loadFrame = Instance.new("Frame")
+loadFrame.Size = UDim2.new(1, 0, 1, 0)
+loadFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+loadFrame.ZIndex = 10
+loadFrame.Parent = screenGui
+
+local loadBarBg = Instance.new("Frame")
+loadBarBg.Size = UDim2.new(0, 300, 0, 4)
+loadBarBg.Position = UDim2.new(0.5, 0, 0.5, 40)
+loadBarBg.AnchorPoint = Vector2.new(0.5, 0.5)
+loadBarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+loadBarBg.BorderSizePixel = 0
+loadBarBg.Parent = loadFrame
+
+local loadBarFill = Instance.new("Frame")
+loadBarFill.Size = UDim2.new(0, 0, 1, 0)
+loadBarFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+loadBarFill.BorderSizePixel = 0
+loadBarFill.Parent = loadBarBg
+
+local loadText = Instance.new("TextLabel")
+loadText.Size = UDim2.new(0, 200, 0, 30)
+loadText.Position = UDim2.new(0.5, 0, 0.5, 0)
+loadText.AnchorPoint = Vector2.new(0.5, 0.5)
+loadText.BackgroundTransparency = 1
+loadText.Text = "INICIALIZANDO SISTEMAS..."
+loadText.TextColor3 = Color3.new(1, 1, 1)
+loadText.Font = Enum.Font.GothamMedium
+loadText.TextSize = 14
+loadText.Parent = loadFrame
+
+-- 4. CRIAÇÃO DO PAINEL PRINCIPAL (MELHORADO)
 local painel = Instance.new("Frame")
 painel.Name = "Painel"
-painel.Size = UDim2.new(0, 700, 0, 420) -- Tamanho otimizado
+painel.Size = UDim2.new(0, 750, 0, 480) -- Tamanho expandido e imponente
 painel.Position = UDim2.new(0.5, 0, 0.5, 0)
 painel.AnchorPoint = Vector2.new(0.5, 0.5)
-painel.BackgroundColor3 = Color3.new(1, 1, 1) -- Branco (UIGradient controla a cor)
-painel.BackgroundTransparency = 0.2
-painel.BorderSizePixel = 0
-painel.Visible = false -- Começa invisível para o carregamento
+painel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+painel.BackgroundTransparency = 0.2 -- Transparência conforme solicitado
+painel.Visible = false
+painel.ClipsDescendants = true
 painel.Parent = screenGui
 
-local gradientePainel = Instance.new("UIGradient")
-gradientePainel.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 15)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 35))
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = painel
+
+-- Gradiente Estiloso no Fundo
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
 })
-gradientePainel.Rotation = 45
-gradientePainel.Parent = painel
+gradient.Rotation = 45
+gradient.Parent = painel
 
--- 3. ESTILO DE BORDA (UIStroke Animado com Gradiente)
-local strokePrincipal = Instance.new("UIStroke")
-strokePrincipal.Thickness = 3
-strokePrincipal.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-strokePrincipal.Parent = painel
+-- 5. UISTROKE AVANÇADO (Bordas Animadas)
+local strokeBranco = Instance.new("UIStroke")
+strokeBranco.Thickness = 3
+strokeBranco.Color = Color3.new(1, 1, 1)
+strokeBranco.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+strokeBranco.Parent = painel
 
-local gradienteStroke = Instance.new("UIGradient")
-gradienteStroke.Color = ColorSequence.new({
+local strokeGrad = Instance.new("UIGradient")
+strokeGrad.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 50)),
     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
 })
-gradienteStroke.Parent = strokePrincipal
+strokeGrad.Parent = strokeBranco
 
--- Animação infinita do Gradiente na Borda
+local strokeCinza = Instance.new("UIStroke")
+strokeCinza.Thickness = 6
+strokeCinza.Color = Color3.fromRGB(0, 0, 0)
+strokeCinza.Transparency = 0.4
+strokeCinza.Parent = painel
+
+-- 6. LÓGICA DE CARREGAMENTO E ANIMAÇÃO
 task.spawn(function()
-    while true do
-        gradienteStroke.Offset = Vector2.new(-1, 0)
-        local t = TweenService:Create(gradienteStroke, TweenInfo.new(2, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
-        t:Play()
-        t.Completed:Wait()
-    end
+    -- Simulação de carregamento da barra
+    local tweenLoad = TweenService:Create(loadBarFill, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
+    tweenLoad:Play()
+    
+    task.wait(2.2)
+    
+    -- Fade out da tela de loading
+    TweenService:Create(loadFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(loadText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+    TweenService:Create(loadBarBg, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(loadBarFill, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+    
+    task.wait(0.5)
+    loadFrame:Destroy()
+    
+    -- Animação infinita do UIStroke (Rotação do Brilho)
+    task.spawn(function()
+        while true do
+            strokeGrad.Rotation = strokeGrad.Rotation + 2
+            task.wait(0.02)
+        end
+    end)
 end)
 
--- 4. TELA DE CARREGAMENTO (Loading Screen)
-local loadingFrame = Instance.new("Frame")
-loadingFrame.Size = UDim2.new(0, 300, 0, 100)
-loadingFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-loadingFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-loadingFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-loadingFrame.BorderSizePixel = 0
-loadingFrame.Parent = screenGui
-
-local loadLabel = Instance.new("TextLabel")
-loadLabel.Text = "CARREGANDO SISTEMAS..."
-loadLabel.Size = UDim2.new(1, 0, 0, 30)
-loadLabel.TextColor3 = Color3.new(1, 1, 1)
-loadLabel.BackgroundTransparency = 1
-loadLabel.Font = Enum.Font.GothamBold
-loadLabel.TextSize = 14
-loadLabel.Parent = loadingFrame
-
-local barBackground = Instance.new("Frame")
-barBackground.Size = UDim2.new(0.8, 0, 0, 10)
-barBackground.Position = UDim2.new(0.5, 0, 0.7, 0)
-barBackground.AnchorPoint = Vector2.new(0.5, 0.5)
-barBackground.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-barBackground.Parent = loadingFrame
-
-local barFill = Instance.new("Frame")
-barFill.Size = UDim2.new(0, 0, 1, 0)
-barFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-barFill.Parent = barBackground
-
--- 5. LÓGICA DE INICIALIZAÇÃO
-task.spawn(function()
-    -- Simulação de carregamento
-    local progressTween = TweenService:Create(barFill, TweenInfo.new(3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
-    progressTween:Play()
-    progressTween.Completed:Wait()
-    
-    -- Finaliza Loading e mostra Painel
-    loadingFrame:Destroy()
-    painel.Visible = true
-    
-    -- Som de sucesso ou efeito de escala ao abrir
-    painel.Size = UDim2.new(0, 0, 0, 0)
-    TweenService:Create(painel, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Size = UDim2.new(0, 700, 0, 420)}):Play()
-end)
-
--- Arredondamento
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = painel
-
-print("Sistema com Loading e Gradiente inicializado!")
+print("Painel de Luxo com Sequência de Boot carregado!")
