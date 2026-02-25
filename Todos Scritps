@@ -1,6 +1,6 @@
-===============================
+-- ===============================
 -- Scripts de Funcionamento
-===============================
+-- ===============================
 
 -- BOTÃO PRINCIPAL
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ButtonController.lua"))()
@@ -14,9 +14,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 -- LISTA DE COMANDOS & FUNÇÕES
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ListManager.lua"))()
 
-===============================
+-- ===============================
 -- Lista de Comandos
-===============================
+-- ===============================
 
 -- COMANDO: VIEW PLAYERS & BOTS
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewEntities"))()
