@@ -1,0 +1,111 @@
+--[[
+    GITHUB: Sidebar_Options_V7.lua
+    Versão: 7.0 (Dashboard Premium)
+    Função: Gerencia os botões de navegação lateral (Opções).
+    Sincronização: Deve ser executado após o Painel_V7_Base.
+]]
+
+local TweenService = game:GetService("TweenService")
+local player = game:GetService("Players").LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- [REFERÊNCIAS]
+local mainPanel = playerGui:WaitForChild("MainPanel_V7")
+local mainFrame = mainPanel:WaitForChild("MainFrame")
+local sidebar = mainFrame:WaitForChild("Sidebar")
+local optionsContainer = sidebar:WaitForChild("OptionsContainer")
+local pagesFolder = mainFrame.ContentArea:WaitForChild("Pages")
+local titleLabel = mainFrame.TitleBox:WaitForChild("TextLabel")
+
+-- [CONFIGURAÇÃO VISUAL]
+local ESTILO = {
+    CorInativo = Color3.fromRGB(180, 180, 185),
+    CorAtivo = Color3.fromRGB(255, 255, 255),
+    BordaAtiva = Color3.fromRGB(255, 255, 255),
+    BordaInativa = Color3.fromRGB(60, 60, 65)
+}
+
+-- [ORGANIZAÇÃO DA LISTA]
+local layout = Instance.new("UIListLayout", optionsContainer)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 8)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- [FUNÇÃO: CRIAR BOTÃO DE ABA]
+local function AddOptionTab(nome, icon, isDefault)
+    -- Botão Base
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Name = nome .. "_Tab"
+    tabBtn.Size = UDim2.new(1, 0, 0, 38)
+    tabBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    tabBtn.BackgroundTransparency = isDefault and 0.2 or 1
+    tabBtn.Text = ""
+    tabBtn.Parent = optionsContainer
+    
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
+    
+    local stroke = Instance.new("UIStroke", tabBtn)
+    stroke.Color = isDefault and ESTILO.BordaAtiva or ESTILO.BordaInativa
+    stroke.Thickness = 1
+    stroke.Transparency = isDefault and 0 or 0.6
+
+    -- Texto e Ícone
+    local label = Instance.new("TextLabel", tabBtn)
+    label.Size = UDim2.new(1, -10, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = icon .. "  " .. nome:upper()
+    label.TextColor3 = isDefault and ESTILO.CorAtivo or ESTILO.CorInativo
+    label.Font = Enum.Font.JetBrainsMono -- Fonte hacker premium
+    label.TextSize = 13
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Referência da Página
+    local page = pagesFolder:FindFirstChild(nome .. "Page") or pagesFolder:FindFirstChild(nome)
+
+    -- Animações
+    tabBtn.MouseEnter:Connect(function()
+        TweenService:Create(tabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0}):Play()
+    end)
+
+    tabBtn.MouseLeave:Connect(function()
+        if not (titleLabel.Text == nome:upper()) then
+            TweenService:Create(tabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.6}):Play()
+        end
+    end)
+
+    tabBtn.MouseButton1Click:Connect(function()
+        -- Atualiza Título Superior
+        titleLabel.Text = nome:upper()
+        
+        -- Resetar outros botões
+        for _, btn in ipairs(optionsContainer:GetChildren()) do
+            if btn:IsA("TextButton") then
+                TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+                TweenService:Create(btn.UIStroke, TweenInfo.new(0.2), {Transparency = 0.6, Color = ESTILO.BordaInativa}):Play()
+                btn.TextLabel.TextColor3 = ESTILO.CorInativo
+            end
+        end
+
+        -- Ativar este botão
+        TweenService:Create(tabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0, Color = ESTILO.BordaAtiva}):Play()
+        label.TextColor3 = ESTILO.CorAtivo
+
+        -- Trocar Página (Sincronizado com ListManager)
+        for _, p in ipairs(pagesFolder:GetChildren()) do
+            p.Visible = false
+        end
+        if page then page.Visible = true end
+    end)
+end
+
+-- [ADICIONANDO AS OPÇÕES PADRÃO]
+AddOptionTab("Comandos", "⚡", true)
+AddOptionTab("Visuais", "👁️", false)
+AddOptionTab("Configurações", "⚙️", false)
+
+print("Sidebar Options V7: Lista de botões carregada com sucesso.")
+
