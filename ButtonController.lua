@@ -1,26 +1,36 @@
 --[[
     GITHUB: ButtonController_Ultimate_V7.lua
-    Função: Botão Premium com Salvamento e Nova Animação de Deslize (Sobe/Desce).
+    Versão: 7.0 (Premium Edition)
+    Função: Botão flutuante com Bloom, UIStroke Animado e Deslize Vertical.
 ]]
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
+local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- [CONFIGURAÇÕES DE ESTILO]
+-- [CONFIGURAÇÕES DE ESTILO V7]
 local CORES = {
     Fundo = Color3.fromRGB(15, 15, 18),
-    Borda = Color3.fromRGB(70, 70, 75),
-    Ativo = Color3.fromRGB(255, 255, 255),
-    Brilho = Color3.fromRGB(255, 255, 255)
+    BordaInativa = Color3.fromRGB(80, 80, 85),
+    BordaAtiva = Color3.fromRGB(255, 255, 255),
+    Texto = Color3.fromRGB(255, 255, 255)
 }
 
--- [LIMPEZA DE DUPLICATAS]
+-- [EFEITO DE BLOOM 0.4]
+local bloom = Lighting:FindFirstChild("ButtonBloom")
+if not bloom then
+    bloom = Instance.new("BloomEffect", Lighting)
+    bloom.Name = "ButtonBloom"
+end
+bloom.Intensity = 0.4
+bloom.Size = 10
+bloom.Threshold = 0.8
+
+-- [LIMPEZA]
 if playerGui:FindFirstChild("MainButton_ScreenGui") then
     playerGui.MainButton_ScreenGui:Destroy()
 end
@@ -32,116 +42,50 @@ screenGui.ResetOnSpawn = false
 screenGui.DisplayOrder = 100
 screenGui.Parent = playerGui
 
+-- Botão Principal
 local openBtn = Instance.new("TextButton")
 openBtn.Name = "ToggleMenu"
-openBtn.Size = UDim2.new(0, 55, 0, 55)
+openBtn.Size = UDim2.new(0, 60, 0, 60)
+openBtn.Position = UDim2.new(0.05, 0, 0.4, 0) -- Posição inicial lateral
 openBtn.BackgroundColor3 = CORES.Fundo
-openBtn.BackgroundTransparency = 0.1
 openBtn.Text = ""
 openBtn.AutoButtonColor = false
 openBtn.Parent = screenGui
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 15)
-btnCorner.Parent = openBtn
+Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 12)
 
-local btnStroke = Instance.new("UIStroke")
-btnStroke.Color = CORES.Borda
+-- UIStroke em volta do BOTÃO (Não na fonte)
+local btnStroke = Instance.new("UIStroke", openBtn)
+btnStroke.Color = CORES.BordaInativa
 btnStroke.Thickness = 2
 btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-btnStroke.Parent = openBtn
 
+-- Ícone Interno
 local btnIcon = Instance.new("TextLabel")
 btnIcon.Size = UDim2.new(1, 0, 1, 0)
 btnIcon.BackgroundTransparency = 1
-btnIcon.Text = "M"
-btnIcon.TextColor3 = CORES.Ativo
-btnIcon.Font = Enum.Font.GothamBold
-btnIcon.TextSize = 22
+btnIcon.Text = "V7"
+btnIcon.TextColor3 = CORES.Texto
+btnIcon.Font = Enum.Font.Jura -- Fonte estilosa combinando com o painel
+btnIcon.TextSize = 20
 btnIcon.Parent = openBtn
 
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
+-- Gradiente para a Borda (UIStroke)
+local strokeGradient = Instance.new("UIGradient", btnStroke)
+strokeGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 150, 150)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 100, 105)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
 })
-gradient.Rotation = 45
-gradient.Parent = btnStroke
---[[
---------------------------------------------------------------------
--- [SISTEMA DE SALVAMENTO DE POSIÇÃO]
---------------------------------------------------------------------
-local function SavePosition()
-    local pos = {
-        X_Scale = openBtn.Position.X.Scale,
-        X_Offset = openBtn.Position.X.Offset,
-        Y_Scale = openBtn.Position.Y.Scale,
-        Y_Offset = openBtn.Position.Y.Offset
-    }
-    player:SetAttribute("MenuButtonPos", HttpService:JSONEncode(pos))
-end
-
-local function LoadPosition()
-    local saved = player:GetAttribute("MenuButtonPos")
-    if saved then
-        local pos = HttpService:JSONDecode(saved)
-        openBtn.Position = UDim2.new(pos.X_Scale, pos.X_Offset, pos.Y_Scale, pos.Y_Offset)
-    else
-        openBtn.Position = UDim2.new(0.05, 0, 0.4, 0)
-    end
-end
-
-LoadPosition()
 
 --------------------------------------------------------------------
--- [LÓGICA DE ARRASTAR]
---------------------------------------------------------------------
-local dragging, dragInput, dragStart, startPos
-
-local function UpdateDrag(input)
-    local delta = input.Position - dragStart
-    local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    TweenService:Create(openBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = targetPos}):Play()
-end
-
-openBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = openBtn.Position
-        
-        TweenService:Create(openBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 50, 0, 50), BackgroundColor3 = Color3.fromRGB(40, 40, 45)}):Play()
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-                SavePosition()
-                TweenService:Create(openBtn, TweenInfo.new(0.3, Enum.EasingStyle.Elastic), {Size = UDim2.new(0, 55, 0, 55), BackgroundColor3 = CORES.Fundo}):Play()
-            end
-        end)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if dragging and dragInput then
-        UpdateDrag(dragInput)
-    end
-end)
-]]
---------------------------------------------------------------------
--- [ANIMAÇÃO DE ABRIR/FECHAR - NOVA LÓGICA SOBE/DESCE]
+-- [ANIMAÇÃO DE ABRIR/FECHAR - SOBE E DESCE]
 --------------------------------------------------------------------
 local panelAtivo = false
 
 local function TogglePanel()
-    local panelGui = playerGui:FindFirstChild("MainPanel_ScreenGui")
+    -- Localiza o Painel V7 (Certifique-se que o nome do ScreenGui do painel é este)
+    local panelGui = playerGui:FindFirstChild("PainelV7_ScreenGui")
     if not panelGui then return end
     
     local mainFrame = panelGui:FindFirstChild("MainFrame")
@@ -150,23 +94,21 @@ local function TogglePanel()
     panelAtivo = not panelAtivo
     
     if panelAtivo then
-        -- ANIMAÇÃO DE ABERTURA: SOBE PARA O CENTRO
+        -- ANIMAÇÃO DE ABERTURA: Vem de baixo para o centro
         mainFrame.Visible = true
-        -- Começa abaixo da tela
-        mainFrame.Position = UDim2.new(0.5, -350, 1.2, 0) 
-        mainFrame.BackgroundTransparency = 1
+        mainFrame.Position = UDim2.new(0.5, -360, 1.5, 0) -- Começa bem abaixo
         
-        TweenService:Create(mainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, -350, 0.5, -240), -- Posição central do V7
-            BackgroundTransparency = 0.05
+        TweenService:Create(mainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, -360, 0.5, -250)
         }):Play()
         
-        TweenService:Create(btnIcon, TweenInfo.new(0.4), {Rotation = 90, TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        -- Animação do Botão
+        TweenService:Create(btnStroke, TweenInfo.new(0.4), {Color = CORES.BordaAtiva, Thickness = 3}):Play()
+        TweenService:Create(openBtn, TweenInfo.new(0.4), {Rotation = 180}):Play()
     else
-        -- ANIMAÇÃO DE FECHAMENTO: DESCE PARA FORA
-        local closeTween = TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-            Position = UDim2.new(0.5, -350, 1.2, 0), -- Desce até sair
-            BackgroundTransparency = 1
+        -- ANIMAÇÃO DE FECHAMENTO: Desce até sumir
+        local closeTween = TweenService:Create(mainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+            Position = UDim2.new(0.5, -360, 1.5, 0)
         })
         
         closeTween:Play()
@@ -174,7 +116,9 @@ local function TogglePanel()
             if not panelAtivo then mainFrame.Visible = false end
         end)
         
-        TweenService:Create(btnIcon, TweenInfo.new(0.4), {Rotation = 0, TextColor3 = CORES.Ativo}):Play()
+        -- Volta o botão ao normal
+        TweenService:Create(btnStroke, TweenInfo.new(0.4), {Color = CORES.BordaInativa, Thickness = 2}):Play()
+        TweenService:Create(openBtn, TweenInfo.new(0.4), {Rotation = 0}):Play()
     end
 end
 
@@ -182,11 +126,15 @@ openBtn.MouseButton1Click:Connect(TogglePanel)
 
 -- [EFEITOS DE HOVER]
 openBtn.MouseEnter:Connect(function()
-    TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = CORES.Ativo, Thickness = 3}):Play()
+    TweenService:Create(btnStroke, TweenInfo.new(0.3), {Thickness = 4, Color = Color3.fromRGB(200, 200, 205)}):Play()
+    TweenService:Create(openBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(25, 25, 30)}):Play()
 end)
 
 openBtn.MouseLeave:Connect(function()
-    TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = CORES.Borda, Thickness = 2}):Play()
+    if not panelAtivo then
+        TweenService:Create(btnStroke, TweenInfo.new(0.3), {Thickness = 2, Color = CORES.BordaInativa}):Play()
+    end
+    TweenService:Create(openBtn, TweenInfo.new(0.3), {BackgroundColor3 = CORES.Fundo}):Play()
 end)
 
-print("ButtonController V7 carregado com animação Sobe/Desce.")
+print("ButtonController V7: Bloom e Animação Sobe/Desce ativos.")
