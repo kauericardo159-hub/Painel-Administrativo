@@ -4,8 +4,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 -- INTERFACE DO PAINEL
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/PanelInterface.lua"))()
 
+-- LISTA DE OPÇÕES
+loadstring(game:HttpGet(""))()
 
--- GERENCIADOR DA LISTA
+-- LISTA DE COMANDOS & FUNÇÕES
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ListManager.lua"))()
 
 -- COMANDO: VIEW PLAYERS & BOTS
@@ -13,11 +15,3 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 
 -- COMANDO: VIEW ITENS
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewItems"))()
-
--- Efeitos Painel
-
--- BloomEffect
--- loadstring(game:HttpGet(""))()
-
--- Efeitos fundo Painel
--- loadstring(game:HttpGet(""))()
