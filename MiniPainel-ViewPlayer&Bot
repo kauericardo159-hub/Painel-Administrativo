@@ -2,109 +2,123 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
--- 1. CONFIGURAÇÃO DE CONEXÃO
--- Substitua 'SISTEMA_LINK_AQUI' pelo seu Raw do GitHub quando criar o sistema lógico
-local SISTEMA_URL = "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/View%20Player%20%26%20Bot" 
+-- 1. CONFIGURAÇÃO DE CONEXÃO OFICIAL
+-- O link solicitado foi integrado para carregar a lógica do sistema automaticamente
+local function carregarSistema()
+    local sucesso, erro = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/View%20Player%20%26%20Bot"))()
+    end)
+    if not sucesso then warn("Falha ao conectar com o sistema de View: " .. tostring(erro)) end
+end
 
--- 2. LOCALIZAÇÃO NA LISTA
+-- 2. LOCALIZAÇÃO E LIMPEZA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
 local painel = coreGui:WaitForChild("Painel")
 local lista = painel:WaitForChild("ListaOpcoesContainer")
 
--- 3. CRIAÇÃO DO MINI-PAINEL (MiniCard)
-local miniPainel = Instance.new("Frame")
-miniPainel.Name = "ViewControlCard"
-miniPainel.Size = UDim2.new(0.9, 0, 0, 100) -- Ajustado para caber na lista
-miniPainel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-miniPainel.BackgroundTransparency = 0.4
-miniPainel.Parent = lista
+if lista:FindFirstChild("ViewControlCard") then
+    lista.ViewControlCard:Destroy()
+end
+
+-- 3. CRIAÇÃO DO CARD (CanvasGroup para animações suaves)
+local card = Instance.new("CanvasGroup")
+card.Name = "ViewControlCard"
+card.Size = UDim2.new(0.92, 0, 0, 110)
+card.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+card.BackgroundTransparency = 0.2
+card.GroupTransparency = 1 -- Para o efeito de fade-in
+card.Parent = lista
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = miniPainel
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = card
 
 local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
-stroke.Color = Color3.fromRGB(255, 255, 255)
-stroke.Transparency = 0.7
-stroke.Parent = miniPainel
+stroke.Thickness = 1.5
+stroke.Color = Color3.new(1, 1, 1)
+stroke.Transparency = 0.8
+stroke.Parent = card
 
--- Título do MiniPainel
+-- Título Estilizado
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
+title.Size = UDim2.new(1, 0, 0, 35)
+title.Position = UDim2.new(0, 0, 0, 5)
 title.BackgroundTransparency = 1
 title.Text = "VIEW PLAYER & BOT"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 14
-title.Parent = miniPainel
+title.TextSize = 13
+title.Parent = card
 
--- 4. FUNÇÃO PARA CRIAR BOTÕES TOGGLE ESTILOSOS
-local function CreateToggle(name, labelText, posX)
-    local container = Instance.new("Frame")
-    container.Name = name .. "Container"
-    container.Size = UDim2.new(0, 120, 0, 50)
-    container.Position = UDim2.new(posX, 0, 0.6, 0)
-    container.AnchorPoint = Vector2.new(0.5, 0.5)
-    container.BackgroundTransparency = 1
-    container.Parent = miniPainel
+-- Linha Divisória
+local line = Instance.new("Frame")
+line.Size = UDim2.new(0.6, 0, 0, 1)
+line.Position = UDim2.new(0.5, 0, 0, 35)
+line.AnchorPoint = Vector2.new(0.5, 0)
+line.BackgroundColor3 = Color3.new(1, 1, 1)
+line.BackgroundTransparency = 0.8
+line.Parent = card
+
+-- 4. FUNÇÃO DE CRIAÇÃO DE SWITCH (Toggle Estilizado)
+local function CreateModernToggle(name, icon, labelText, posX)
+    local holder = Instance.new("Frame")
+    holder.Size = UDim2.new(0, 140, 0, 60)
+    holder.Position = UDim2.new(posX, 0, 0.65, 0)
+    holder.AnchorPoint = Vector2.new(0.5, 0.5)
+    holder.BackgroundTransparency = 1
+    holder.Parent = card
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
-    label.Position = UDim2.new(0, 0, -0.4, 0)
-    label.Text = labelText
-    label.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    label.Text = icon .. " " .. labelText
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
     label.Font = Enum.Font.GothamMedium
     label.TextSize = 12
     label.BackgroundTransparency = 1
-    label.Parent = container
+    label.Parent = holder
 
-    -- Base do Switch
-    local switchBase = Instance.new("TextButton")
-    switchBase.Size = UDim2.new(0, 60, 0, 26)
-    switchBase.Position = UDim2.new(0.5, 0, 0.5, 0)
-    switchBase.AnchorPoint = Vector2.new(0.5, 0.5)
-    switchBase.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Inicia Vermelho
-    switchBase.Text = ""
-    switchBase.AutoButtonColor = false
-    switchBase.Parent = container
+    -- Estrutura do Switch
+    local bg = Instance.new("TextButton")
+    bg.Size = UDim2.new(0, 55, 0, 24)
+    bg.Position = UDim2.new(0.5, 0, 0.7, 0)
+    bg.AnchorPoint = Vector2.new(0.5, 0.5)
+    bg.BackgroundColor3 = Color3.fromRGB(150, 40, 40) -- Vermelho suave
+    bg.Text = ""
+    bg.AutoButtonColor = false
+    bg.Parent = holder
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
 
-    Instance.new("UICorner", switchBase).CornerRadius = UDim.new(1, 0)
-
-    -- Círculo do Switch (O botão que desliza)
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 20, 0, 20)
+    knob.Size = UDim2.new(0, 18, 0, 18)
     knob.Position = UDim2.new(0.1, 0, 0.5, 0)
     knob.AnchorPoint = Vector2.new(0, 0.5)
     knob.BackgroundColor3 = Color3.new(1, 1, 1)
-    knob.Parent = switchBase
-
+    knob.Parent = bg
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    -- Lógica de Animação
+    -- Lógica e Animação
     local active = false
-    switchBase.MouseButton1Click:Connect(function()
+    bg.MouseButton1Click:Connect(function()
         active = not active
-        local targetPos = active and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
-        local targetColor = active and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(150, 0, 0)
+        local tPos = active and UDim2.new(0.9, -18, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
+        local tCol = active and Color3.fromRGB(40, 150, 40) or Color3.fromRGB(150, 40, 40)
 
-        TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
-        TweenService:Create(switchBase, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+        TweenService:Create(knob, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Position = tPos}):Play()
+        TweenService:Create(bg, TweenInfo.new(0.4), {BackgroundColor3 = tCol}):Play()
 
-        -- CHAMADA DO SISTEMA EXTERNO
-        if SISTEMA_URL ~= "SISTEMA_LINK_AQUI" then
-            loadstring(game:HttpGet(SISTEMA_URL .. "?mode=" .. name .. "&state=" .. tostring(active)))()
-        end
+        -- Ativação Global para o Sistema Externo
+        if name == "Player" then _G.ViewPlayerActive = active 
+        else _G.ViewBotActive = active end
     end)
 end
 
--- Criar os dois controles lado a lado
-CreateToggle("PlayerView", "👤 Player", 0.3)
-CreateToggle("BotView", "🤖 Bot", 0.7)
+-- 5. EXECUÇÃO
+CreateModernToggle("Player", "👤", "PLAYER", 0.3)
+CreateModernToggle("Bot", "🤖", "BOT", 0.7)
 
--- 5. ANIMAÇÃO DE ENTRADA NA LISTA
-miniPainel.GroupTransparency = 1
-TweenService:Create(miniPainel, TweenInfo.new(0.6), {GroupTransparency = 0}):Play()
+-- Carregar a lógica do sistema solicitado
+carregarSistema()
 
-print("MiniPainel View carregado com sucesso!")
+-- Animação de Entrada do Card
+TweenService:Create(card, TweenInfo.new(0.8, Enum.EasingStyle.Quart), {GroupTransparency = 0}):Play()
