@@ -2,114 +2,145 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 
--- CONFIGURAÇÕES TÉCNICAS
+-- CONFIGURAÇÕES DE PERFORMANCE
 local MAX_DISTANCE = 300
+local heartBeatCounter = 0
+local UPDATE_FREQUENCY = 1/30 -- Limita a atualização lógica a 30 FPS para poupar CPU
+
+-- ESTADOS GLOBAIS
 _G.ViewPlayerActive = _G.ViewPlayerActive or false
 _G.ViewBotActive = _G.ViewBotActive or false
 
--- Cores solicitadas
-local corAmareloEscuro = "rgb(180, 160, 0)"
-local corVermelhoEscuro = "rgb(150, 0, 0)"
-local corBotRed = "rgb(255, 0, 0)"
+-- CACHE DE LIMPEZA (Garante remoção total ao desativar)
+local activeHighlights = {}
+local activeUIs = {}
 
--- FUNÇÃO PARA LIMPAR ELEMENTOS QUANDO DESATIVADO
-local function clearViewElements(character)
-    if character then
-        local head = character:FindFirstChild("Head")
-        if head and head:FindFirstChild("ViewSystemUI") then
-            head.ViewSystemUI:Destroy()
-        end
-        if character:FindFirstChild("ViewHighlight") then
-            character.ViewHighlight:Destroy()
-        end
+-- FUNÇÃO: LIMPEZA EFICIENTE
+local function fullCleanup(object)
+    if activeHighlights[object] then
+        activeHighlights[object]:Destroy()
+        activeHighlights[object] = nil
+    end
+    if activeUIs[object] then
+        activeUIs[object]:Destroy()
+        activeUIs[object] = nil
     end
 end
 
--- ESTRUTURA DE TEXTO ORGANIZADA
-local function createHeadUI(parent)
+-- FUNÇÃO: CRIAR HEAD UI ORGANIZADA
+local function createHeadUI(head)
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "ViewSystemUI"
-    billboard.Size = UDim2.new(0, 250, 0, 60)
+    billboard.Size = UDim2.new(0, 200, 0, 60)
     billboard.StudsOffset = Vector3.new(0, 3.5, 0)
     billboard.AlwaysOnTop = true
-    billboard.Parent = parent
+    billboard.Parent = head
 
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Name = "NameLabel"
-    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    nameLabel.Size = UDim2.new(1, 0, 0.4, 0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextSize = 16
+    nameLabel.TextSize = 14
     nameLabel.RichText = true
     nameLabel.Parent = billboard
 
     local statsLabel = Instance.new("TextLabel")
     statsLabel.Name = "StatsLabel"
     statsLabel.Size = UDim2.new(1, 0, 0.4, 0)
-    statsLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    statsLabel.Position = UDim2.new(0, 0, 0.4, 0)
     statsLabel.BackgroundTransparency = 1
     statsLabel.Font = Enum.Font.GothamMedium
-    statsLabel.TextSize = 13
+    statsLabel.TextSize = 12
     statsLabel.RichText = true
     statsLabel.Parent = billboard
 
-    return billboard, nameLabel, statsLabel
+    activeUIs[head] = billboard
+    return billboard
 end
 
--- APLICAR HIGHLIGHT (OUTLINE)
+-- FUNÇÃO: APLICAR OUTLINE OTIMIZADO
 local function applyOutline(model, color)
-    local highlight = model:FindFirstChild("ViewHighlight") or Instance.new("Highlight")
-    highlight.Name = "ViewHighlight"
-    highlight.FillTransparency = 1
+    local highlight = activeHighlights[model] or model:FindFirstChild("ViewHighlight")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = "ViewHighlight"
+        highlight.FillTransparency = 1
+        highlight.OutlineTransparency = 0
+        highlight.Parent = model
+        activeHighlights[model] = highlight
+    end
     highlight.OutlineColor = color
-    highlight.OutlineTransparency = 0
-    highlight.Parent = model
+    return highlight
 end
 
--- LOOP DE ATUALIZAÇÃO ÚNICO (RenderStepped Otimizado)
-RunService.RenderStepped:Connect(function()
-    local charLocal = localPlayer.Character
-    local rootLocal = charLocal and charLocal:FindFirstChild("HumanoidRootPart")
+-- LOOP DE ALTA PERFORMANCE
+RunService.Heartbeat:Connect(function(dt)
+    heartBeatCounter = heartBeatCounter + dt
+    if heartBeatCounter < UPDATE_FREQUENCY then return end
+    heartBeatCounter = 0
 
-    -- PROCESSAR TODOS OS MODELOS NO WORKSPACE (Players e NPCs)
-    -- Otimização: Varremos apenas modelos que possuam Humanoid
-    for _, model in pairs(workspace:GetDescendants()) do
-        local humanoid = model:IsA("Model") and model:FindFirstChildOfClass("Humanoid")
-        local head = model:FindFirstChild("Head")
-        
-        if humanoid and head and model ~= charLocal then
-            local isPlayer = Players:GetPlayerFromCharacter(model)
-            local distance = rootLocal and (rootLocal.Position - head.Position).Magnitude or 999
+    local character = localPlayer.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    -- 1. PROCESSAMENTO DE PLAYERS
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= localPlayer then
+            local char = p.Character
+            local head = char and char:FindFirstChild("Head")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
             
-            -- Lógica para PLAYER
-            if isPlayer and _G.ViewPlayerActive and distance <= MAX_DISTANCE then
-                local p = isPlayer
-                local teamColor = p.TeamColor.Color
-                applyOutline(model, teamColor)
-                
-                local gui = head:FindFirstChild("ViewSystemUI") or createHeadUI(head)
-                gui.Enabled = true
-                
-                -- Organizacao: Nome na Cor do Time
-                gui.NameLabel.Text = string.format('<font color="rgb(%d,%d,%d)">👤: %s</font>', teamColor.R*255, teamColor.G*255, teamColor.B*255, p.DisplayName)
-                -- Status: Distancia e Vida
-                gui.StatsLabel.Text = string.format('<font color="%s">📏: %dM.</font> | <font color="%s">❤: %d</font>', corAmareloEscuro, math.floor(distance), corVermelhoEscuro, math.floor(humanoid.Health))
-            
-            -- Lógica para BOT (NPC)
-            elseif not isPlayer and _G.ViewBotActive and distance <= MAX_DISTANCE then
-                applyOutline(model, Color3.fromRGB(255, 0, 0))
-                
-                local gui = head:FindFirstChild("ViewSystemUI") or createHeadUI(head)
-                gui.Enabled = true
-                
-                -- Organizacao: Nome em Vermelho Forte
-                gui.NameLabel.Text = string.format('<font color="%s">🤖: %s</font>', corBotRed, model.Name)
-                -- Status: Distancia e Vida
-                gui.StatsLabel.Text = string.format('<font color="%s">📏: %dM.</font> | <font color="%s">❤: %d</font>', corAmareloEscuro, math.floor(distance), corVermelhoEscuro, math.floor(humanoid.Health))
-            
-            -- LIMPEZA (Se estiver fora da distância ou desativado)
+            if _G.ViewPlayerActive and char and head and hum and hum.Health > 0 then
+                local dist = (root.Position - head.Position).Magnitude
+                if dist <= MAX_DISTANCE then
+                    local teamColor = p.TeamColor.Color
+                    applyOutline(char, teamColor)
+                    
+                    local ui = head:FindFirstChild("ViewSystemUI") or createHeadUI(head)
+                    ui.Enabled = true
+                    ui.NameLabel.Text = string.format('<font color="rgb(%d,%d,%d)">👤: %s</font>', teamColor.R*255, teamColor.G*255, teamColor.B*255, p.DisplayName)
+                    ui.StatsLabel.Text = string.format('<font color="rgb(180,180,0)">📏: %dM.</font> | <font color="rgb(150,0,0)">❤: %d</font>', math.floor(dist), math.floor(hum.Health))
+                else
+                    fullCleanup(char)
+                    if head:FindFirstChild("ViewSystemUI") then head.ViewSystemUI.Enabled = false end
+                end
             else
-                clearViewElements(model)
+                if char then fullCleanup(char) end
+                if head and head:FindFirstChild("ViewSystemUI") then head.ViewSystemUI:Destroy() end
+            end
+        end
+    end
+
+    -- 2. PROCESSAMENTO DE BOTS (Otimizado: Evita GetDescendants)
+    -- Nota: Para bots, é recomendado colocá-los em uma Folder específica no Workspace para performance máxima
+    if _G.ViewBotActive then
+        for _, obj in pairs(workspace:GetChildren()) do -- GetChildren é muito mais rápido que GetDescendants
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            local head = obj:FindFirstChild("Head")
+            
+            if hum and head and not Players:GetPlayerFromCharacter(obj) then
+                local dist = (root.Position - head.Position).Magnitude
+                if dist <= MAX_DISTANCE and hum.Health > 0 then
+                    applyOutline(obj, Color3.fromRGB(255, 0, 0))
+                    
+                    local ui = head:FindFirstChild("ViewSystemUI") or createHeadUI(head)
+                    ui.Enabled = true
+                    ui.NameLabel.Text = '<font color="rgb(255,0,0)">🤖: '..obj.Name..'</font>'
+                    ui.StatsLabel.Text = string.format('<font color="rgb(180,180,0)">📏: %dM.</font> | <font color="rgb(150,0,0)">❤: %d</font>', math.floor(dist), math.floor(hum.Health))
+                else
+                    fullCleanup(obj)
+                    if head:FindFirstChild("ViewSystemUI") then head.ViewSystemUI.Enabled = false end
+                end
+            end
+        end
+    else
+        -- Limpeza em massa de Bots ao desativar
+        for model, _ in pairs(activeHighlights) do
+            if not Players:GetPlayerFromCharacter(model) then
+                fullCleanup(model)
+                local h = model:FindFirstChild("Head")
+                if h and h:FindFirstChild("ViewSystemUI") then h.ViewSystemUI:Destroy() end
             end
         end
     end
