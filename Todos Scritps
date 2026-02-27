@@ -1,6 +1,6 @@
 --[[ 
 ===========================================================
-        CARREGAMENTO DO PAINEL ADMINISTRATIVO V3
+       ⚙ CARREGAMENTO DO PAINEL ADMINISTRATIVO V3 ⚙
 ===========================================================
 ]]
 
@@ -29,7 +29,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 
 --[[
 ===============================
-       Lista de Funções
+     📄  Lista de Funções 📜
 ===============================
 ]]
 
@@ -44,6 +44,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewItems"))()
 
 print("========================================")
-print("   SISTEMA CARREGADO COM SUCESSO! ;3  ")
+print("  🟢 SISTEMA CARREGADO COM SUCESSO! ;3  ")
 print("========================================")
 
