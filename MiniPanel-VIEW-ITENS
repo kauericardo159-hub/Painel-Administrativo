@@ -1,1 +1,118 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
 
+-- 1. LOCALIZAÇÃO NA LISTA
+local playerGui = player:WaitForChild("PlayerGui")
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
+local painel = coreGui:WaitForChild("Painel")
+local lista = painel:WaitForChild("ListaOpcoesContainer")
+
+-- Limpeza de segurança para evitar duplicatas
+if lista:FindFirstChild("ViewItensCard") then
+    lista.ViewItensCard:Destroy()
+end
+
+-- 2. CRIAÇÃO DO MINI-PAINEL
+local miniPainel = Instance.new("Frame")
+miniPainel.Name = "ViewItensCard"
+miniPainel.Size = UDim2.new(0.95, 0, 0, 115)
+miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+miniPainel.BackgroundTransparency = 0.2
+miniPainel.BorderSizePixel = 0
+miniPainel.Parent = lista
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = miniPainel
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1.8
+stroke.Color = Color3.new(1, 1, 1)
+stroke.Transparency = 0.8
+stroke.Parent = miniPainel
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundTransparency = 1
+title.Text = "View Itens"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.Parent = miniPainel
+
+-- Linha divisória
+local line = Instance.new("Frame")
+line.Size = UDim2.new(0.85, 0, 0, 1)
+line.Position = UDim2.new(0.075, 0, 0, 38)
+line.BackgroundColor3 = Color3.new(1, 1, 1)
+line.BackgroundTransparency = 0.7
+line.BorderSizePixel = 0
+line.Parent = miniPainel
+
+-- 3. CONTAINER DO BOTÃO ÚNICO (Centralizado)
+local container = Instance.new("Frame")
+container.Name = "ToggleContainer"
+container.Size = UDim2.new(0, 140, 0, 65)
+container.Position = UDim2.new(0.5, 0, 0.72, 0) -- Centralizado no meio do card
+container.AnchorPoint = Vector2.new(0.5, 0.5)
+container.BackgroundTransparency = 1
+container.Parent = miniPainel
+
+local iconLabel = Instance.new("TextLabel")
+iconLabel.Size = UDim2.new(1, 0, 0, 25)
+iconLabel.Position = UDim2.new(0, 0, -0.1, 0)
+iconLabel.Text = "📦 Itens"
+iconLabel.TextColor3 = Color3.new(1, 1, 1)
+iconLabel.Font = Enum.Font.GothamMedium
+iconLabel.TextSize = 15
+iconLabel.BackgroundTransparency = 1
+iconLabel.Parent = container
+
+-- Switch Base
+local btnBase = Instance.new("TextButton")
+btnBase.Size = UDim2.new(0, 58, 0, 26)
+btnBase.Position = UDim2.new(0.5, 0, 0.65, 0)
+btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
+btnBase.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Inicia Vermelho
+btnBase.Text = ""
+btnBase.AutoButtonColor = false
+btnBase.Parent = container
+
+Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
+
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Thickness = 1.6
+btnStroke.Color = Color3.new(1, 1, 1)
+btnStroke.Transparency = 0.6
+btnStroke.Parent = btnBase
+
+-- Knob (Círculo deslizante)
+local knob = Instance.new("Frame")
+knob.Size = UDim2.new(0, 20, 0, 20)
+knob.Position = UDim2.new(0.1, 0, 0.5, 0)
+knob.AnchorPoint = Vector2.new(0, 0.5)
+knob.BackgroundColor3 = Color3.new(1, 1, 1)
+knob.Parent = btnBase
+Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+-- 4. LÓGICA DE ATIVAÇÃO
+_G.ViewItensActive = _G.ViewItensActive or false
+
+btnBase.MouseButton1Click:Connect(function()
+    _G.ViewItensActive = not _G.ViewItensActive
+    local ativo = _G.ViewItensActive
+    
+    local targetPos = ativo and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
+    local targetColor = ativo and Color3.fromRGB(0, 160, 0) or Color3.fromRGB(150, 0, 0)
+
+    TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
+    TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+end)
+
+-- 5. ANIMAÇÃO DE ENTRADA
+miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
+TweenService:Create(miniPainel, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+
+print("MiniPainel View Itens carregado!")
