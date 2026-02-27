@@ -5,7 +5,7 @@ local player = Players.LocalPlayer
 -- 1. LOCALIZAÇÃO NA LISTA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
-local painel = coreGui:WaitForChild("Panel")
+local painel = coreGui:WaitForChild("Painel")
 local lista = painel:WaitForChild("ListaOpcoesContainer")
 
 -- Limpeza de segurança para evitar duplicatas
@@ -16,37 +16,37 @@ end
 -- 2. CRIAÇÃO DO MINI-PAINEL (Design Aprimorado)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "SpeedControlCard"
-miniPainel.Size = UDim2.new(0.95, 0, 0, 160) -- Levemente maior para acomodar melhor os elementos
-miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- Fundo escuro moderno
+miniPainel.Size = UDim2.new(0.95, 0, 0, 150)
+miniPainel.BackgroundColor3 = Color3.fromRGB(18, 18, 18) -- Mais escuro
 miniPainel.BackgroundTransparency = 0.1
 miniPainel.BorderSizePixel = 0
 miniPainel.Parent = lista
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 14) -- Bordas mais arredondadas
+corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = miniPainel
 
--- Borda elegante sutil
+-- Stroke com efeito sutil
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 2
-stroke.Color = Color3.fromRGB(45, 45, 45)
+stroke.Color = Color3.fromRGB(40, 40, 40)
 stroke.Transparency = 0.5
 stroke.Parent = miniPainel
 
 -- Título
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 40)
+title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
-title.Text = "⚡ Speed Configuration"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "Speed Control"
+title.TextColor3 = Color3.fromRGB(240, 240, 240)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = 16
 title.Parent = miniPainel
 
--- Linha divisória sutil
+-- Linha divisória com degradê sutil
 local line = Instance.new("Frame")
-line.Size = UDim2.new(0.9, 0, 0, 1)
-line.Position = UDim2.new(0.05, 0, 0, 38)
+line.Size = UDim2.new(0.85, 0, 0, 1)
+line.Position = UDim2.new(0.075, 0, 0, 35)
 line.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 line.BorderSizePixel = 0
 line.Parent = miniPainel
@@ -54,57 +54,57 @@ line.Parent = miniPainel
 -- 3. INPUT DE VALOR (TextBox Aprimorada)
 local valueInput = Instance.new("TextBox")
 valueInput.Name = "ValueInput"
-valueInput.Size = UDim2.new(0.42, 0, 0, 50)
-valueInput.Position = UDim2.new(0.05, 0, 0.45, 0)
+valueInput.Size = UDim2.new(0.4, 0, 0, 45)
+valueInput.Position = UDim2.new(0.075, 0, 0, 55)
 valueInput.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 valueInput.BorderSizePixel = 0
-valueInput.Text = "16" -- Velocidade padrão
+valueInput.Text = "16"
 valueInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 valueInput.Font = Enum.Font.GothamBold
-valueInput.TextSize = 22
-valueInput.PlaceholderText = "Vel."
+valueInput.TextSize = 18
+valueInput.PlaceholderText = "16"
 valueInput.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
 valueInput.Parent = miniPainel
 
 local inputCorner = Instance.new("UICorner")
-inputCorner.CornerRadius = UDim.new(0, 10)
+inputCorner.CornerRadius = UDim.new(0, 8)
 inputCorner.Parent = valueInput
 
 local inputStroke = Instance.new("UIStroke")
 inputStroke.Thickness = 1.5
-inputStroke.Color = Color3.fromRGB(70, 70, 70)
+inputStroke.Color = Color3.fromRGB(60, 60, 60)
 inputStroke.Parent = valueInput
 
--- 4. BOTÕES (Aplicar e Resetar Estilosos)
+-- 4. BOTÕES (Aplicar e Resetar Aprimorados)
 local function createButton(name, text, color, posY)
     local btn = Instance.new("TextButton")
     btn.Name = name
-    btn.Size = UDim2.new(0.42, 0, 0, 32)
-    btn.Position = UDim2.new(0.53, 0, posY, 0)
+    btn.Size = UDim2.new(0.4, 0, 0, 28)
+    btn.Position = UDim2.new(0.55, 0, posY, 0)
     btn.BackgroundColor3 = color
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
+    btn.TextSize = 13
     btn.Parent = miniPainel
     btn.AutoButtonColor = true
     
     local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = btn
     
     return btn
 end
 
--- Cores vibrantes modernas
-local applyBtn = createButton("ApplyBtn", "Aplicar", Color3.fromRGB(30, 170, 50), 0.43)
-local resetBtn = createButton("ResetBtn", "Resetar", Color3.fromRGB(170, 30, 30), 0.65)
+-- Cores mais vibrantes
+local applyBtn = createButton("ApplyBtn", "Aplicar", Color3.fromRGB(30, 150, 45), 0.45)
+local resetBtn = createButton("ResetBtn", "Resetar", Color3.fromRGB(150, 30, 30), 0.65)
 
--- 5. LÓGICA DE FUNCIONAMENTO (Conectada ao Sistema)
+-- 5. LÓGICA DE FUNCIONAMENTO (Integrada com a lógica de ação)
 local function runSpeedSystem(action)
     task.spawn(function()
         pcall(function()
-            _G.Action = action -- Define a ação para o script externo
+            _G.Action = action -- Define se é para aplicar ou resetar
             loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Speed"))()
         end)
     end)
@@ -113,7 +113,7 @@ end
 applyBtn.MouseButton1Click:Connect(function()
     local speedValue = tonumber(valueInput.Text)
     if speedValue then
-        runSpeedSystem("Apply") -- Chama o sistema para aplicar
+        runSpeedSystem("Apply")
         print("Aplicando velocidade: " .. speedValue)
     else
         valueInput.Text = "Erro"
@@ -124,10 +124,12 @@ end)
 
 resetBtn.MouseButton1Click:Connect(function()
     valueInput.Text = "16"
-    runSpeedSystem("Reset") -- Chama o sistema para resetar
+    runSpeedSystem("Reset")
     print("Velocidade resetada")
 end)
 
--- 6. ANIMAÇÃO DE ENTRADA (Slide e Pop)
+-- 6. ANIMAÇÃO DE ENTRADA (Smooth)
 miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
-TweenService:Create(miniPainel, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+
+print("MiniPainel Speed Atualizado e Estiloso!")
