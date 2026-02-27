@@ -6,25 +6,25 @@
 
 -- 1. INTERFACE DO PAINEL (O "Coração" do sistema)
 -- Precisa carregar primeiro para que os outros saibam onde se inserir.
-print("Carregando Interface...")
+print("🟢 Carregando Interface...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/PanelInterface.lua"))()
 task.wait(0.2)
 
 -- 2. LISTA DE COMANDOS & FUNÇÕES
 -- Cria o container central dentro do painel já existente.
-print("Carregando Lista de Comandos...")
+print("🟢 Carregando Lista de Comandos...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ListManager.lua"))()
 task.wait(0.1)
 
 -- 3. NOME & PERFIL
 -- Insere a foto e o nome no topo do painel.
-print("Carregando Perfil do Usuário...")
+print("🟢 Carregando Perfil do Usuário...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Foto%20de%20perfil%20e%20nome"))()
 task.wait(0.1)
 
 -- 4. BOTÃO PRINCIPAL (O Controle)
 -- Carrega por último para garantir que ele encontre o painel e consiga animá-lo.
-print("Carregando Controlador do Botão...")
+print("🟢 Carregando Controlador do Botão...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ButtonController.lua"))()
 
 --[[
@@ -32,11 +32,13 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
        Lista de Funções
 ===============================
 ]]
+
 -- MiniPainel: VIEW PLAYERS & BOTS
 -- FUNÇÃO: Ver posição de Player & Bot no Jogo
-print("Carregando Sistema View Player & Bot...")
+print("🟢 Carregando Sistema View Player & Bot...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel-ViewPlayer%26Bot"))()
 
+-- 🔴 INDISPONÍVEL NO MOMENTO, CCORRIGIR PROBLEMAS TÉCNICOS.
 -- MiniPainel: VIEW ITENS
 -- FUNÇÃO: Ver itens pelo mapa.
 -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewItems"))()
