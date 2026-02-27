@@ -117,7 +117,7 @@ end
 
 -- 4. CHAMADA DOS TOGGLES (Cole seus links dentro das aspas)
 CreateToggle("PlayerView", "👤 Player", 0.3, function()
-    loadstring(game:HttpGet(""))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"))()
 end)
 
 CreateToggle("BotView", "🤖 Bot", 0.7, function()
