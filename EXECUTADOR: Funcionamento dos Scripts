@@ -43,10 +43,12 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 print("✅ Carregando Sistema View Itens...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPanel-VIEW-ITENS"))()
 
--- 3. MiniPainel: SPEED
--- FUNÇÃO: Aumentar Velocidade de Player
-print("🔴 Carregando Sistema Speed...")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20Speed"))()
+--[[
+-- 3. MiniPainel: 
+-- FUNÇÃO: 
+print("🔴 Carregando Sistema ...")
+loadstring(game:HttpGet(""))()
+]]
 
 print("========================================")
 print("  SISTEMA CARREGADO COM SUCESSO! ;3  ")
