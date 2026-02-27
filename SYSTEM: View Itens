@@ -1,0 +1,114 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- CONFIGURAÇÕES
+local MAX_DISTANCE = 200
+local UPDATE_FREQUENCY = 1/20 -- 20 FPS para lógica (Extremamente otimizado)
+local heartBeatCounter = 0
+
+-- ESTADO GLOBAL (Conectado ao seu MiniPainel)
+_G.ViewItensActive = _G.ViewItensActive or false
+
+-- CACHE DE LIMPEZA
+local activeHighlights = {}
+local activeUIs = {}
+
+-- FUNÇÃO: LIMPEZA
+local function clearItem(obj)
+    if activeHighlights[obj] then activeHighlights[obj]:Destroy(); activeHighlights[obj] = nil end
+    if activeUIs[obj] then activeUIs[obj]:Destroy(); activeUIs[obj] = nil end
+end
+
+-- FUNÇÃO: CRIAR UI PARA ITEM
+local function createItemUI(parent, name)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ItemViewUI"
+    billboard.Size = UDim2.new(0, 150, 0, 40)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = parent
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.GothamBold
+    label.TextColor3 = Color3.fromRGB(255, 140, 0) -- Laranja
+    label.TextSize = 13
+    label.RichText = true
+    label.Parent = billboard
+
+    activeUIs[parent] = billboard
+    return billboard
+end
+
+-- FUNÇÃO: VALIDAR SE É UM ITEM COLETÁVEL REAL
+local function isValidItem(obj)
+    -- Ignora se não for uma Tool ou um Model com Handle
+    if not (obj:IsA("Tool") or (obj:IsA("Model") and obj:FindFirstChild("Handle"))) then return false end
+    
+    -- IGNORAR SE ESTIVER COM PLAYER OU BOT
+    if obj:FindFirstAncestorOfClass("Speaker") or obj:FindFirstAncestorOfClass("Character") then return false end
+    local root = obj.Parent
+    while root do
+        if root:FindFirstChildOfClass("Humanoid") then return false end
+        root = root.Parent
+    end
+
+    -- IGNORAR PORTAS (Filtro por nome comum)
+    local name = obj.Name:lower()
+    if name:find("door") or name:find("porta") or name:find("gate") then return false end
+
+    return true
+end
+
+-- LOOP PRINCIPAL
+RunService.Heartbeat:Connect(function(dt)
+    heartBeatCounter = heartBeatCounter + dt
+    if heartBeatCounter < UPDATE_FREQUENCY then return end
+    heartBeatCounter = 0
+
+    if not _G.ViewItensActive then
+        -- Limpeza total ao desativar
+        for obj, _ in pairs(activeHighlights) do clearItem(obj) end
+        return
+    end
+
+    local char = localPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    -- SCANNER OTIMIZADO
+    for _, obj in pairs(workspace:GetDescendants()) do
+        -- Verifica apenas Tools ou Models que pareçam itens
+        if obj:IsA("Tool") or (obj:IsA("Model") and obj:FindFirstChild("Handle")) then
+            
+            if isValidItem(obj) then
+                local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
+                if handle then
+                    local dist = (hrp.Position - handle.Position).Magnitude
+                    
+                    if dist <= MAX_DISTANCE then
+                        -- Outline Laranja
+                        local hl = activeHighlights[obj]
+                        if not hl then
+                            hl = Instance.new("Highlight")
+                            hl.Name = "ItemHighlight"
+                            hl.FillTransparency = 1
+                            hl.OutlineColor = Color3.fromRGB(255, 120, 0) -- Laranja
+                            hl.Parent = obj
+                            activeHighlights[obj] = hl
+                        end
+
+                        -- UI Nome e Metros
+                        local ui = activeUIs[handle] or createItemUI(handle, obj.Name)
+                        ui.Enabled = true
+                        ui.TextLabel.Text = string.format("📦 %s\n<font color='rgb(180,180,0)'>📏 %dM.</font>", obj.Name, math.floor(dist))
+                    else
+                        clearItem(obj)
+                    end
+                end
+            end
+        end
+    end
+end)
