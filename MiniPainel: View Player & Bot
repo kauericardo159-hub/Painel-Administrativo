@@ -6,8 +6,8 @@ local player = Players.LocalPlayer
 -- CONFIGURAÇÃO DE LINKS (UPGRADE SEGURO)
 -- Substitua pelos links RAW do seu GitHub
 -- ==========================================================
-local PLAYER_VIEW_SCRIPT = "SEU_LINK_RAW_AQUI"
-local BOT_VIEW_SCRIPT = "SEU_LINK_RAW_AQUI"
+local PLAYER_VIEW_SCRIPT = "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"
+local BOT_VIEW_SCRIPT = "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"
 -- ==========================================================
 
 -- 1. LOCALIZAÇÃO NA LISTA
