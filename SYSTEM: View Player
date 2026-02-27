@@ -3,149 +3,163 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 
 -- ==========================================
--- CONFIGURAÇÕES E ESTADO
+-- SISTEMA DE TOGGLE (LIGA/DESLIGA)
+-- ==========================================
+-- Se o sistema já estiver rodando, ele se desativa e limpa a tela.
+if _G.SystemViewPlayerConnection then
+    _G.SystemViewPlayerConnection:Disconnect()
+    _G.SystemViewPlayerConnection = nil
+    
+    if _G.SystemViewPlayerFolder then
+        _G.SystemViewPlayerFolder:Destroy()
+        _G.SystemViewPlayerFolder = nil
+    end
+    print("[SYSTEM] View Player: DESATIVADO")
+    return -- Interrompe a execução aqui
+end
+
+print("[SYSTEM] View Player: ATIVADO")
+
+-- ==========================================
+-- CONFIGURAÇÕES
 -- ==========================================
 local MAX_DISTANCE = 400
-local FADE_START_DISTANCE = 300 -- Começa a desaparecer a partir desta distância
-local UPDATE_RATE = 1/30 -- 30 FPS para a lógica (Performance)
+local FADE_START = 150 -- Distância onde começa a ficar transparente
 
--- Variável de controle do sistema
-_G.ViewPlayerActive = _G.ViewPlayerActive or false
+-- Cores Fixas (Formato Hexadecimal para RichText)
+local DIST_COLOR = "#C8C800" -- Amarelo um pouco escuro
+local HP_COLOR = "#B40000"   -- Vermelho um pouco escuro
 
--- Tabelas de Cache (Para evitar sobrecarga de memória)
-local activeHighlights = {}
-local activeUIs = {}
+-- Pasta Global para armazenar as UIs de forma otimizada
+_G.SystemViewPlayerFolder = Instance.new("Folder")
+_G.SystemViewPlayerFolder.Name = "ViewPlayerCache"
+_G.SystemViewPlayerFolder.Parent = localPlayer:WaitForChild("PlayerGui")
+
+local playerCache = {}
 
 -- ==========================================
--- FUNÇÕES DE GESTÃO (LIMPEZA/CRIAÇÃO)
+-- FUNÇÕES AUXILIARES
 -- ==========================================
-
-local function clearPlayer(player, char)
-    if activeHighlights[player] then
-        activeHighlights[player]:Destroy()
-        activeHighlights[player] = nil
+local function getTeamColor(player)
+    if player.Team then
+        return player.TeamColor.Color
     end
-    if activeUIs[player] then
-        activeUIs[player]:Destroy()
-        activeUIs[player] = nil
-    end
+    return Color3.fromRGB(255, 255, 255) -- Branco se não tiver time
 end
 
-local function forceCleanup()
-    for player, hl in pairs(activeHighlights) do
-        if hl then hl:Destroy() end
-    end
-    for player, ui in pairs(activeUIs) do
-        if ui then ui:Destroy() end
-    end
-    table.clear(activeHighlights)
-    table.clear(activeUIs)
-end
-
-local function createPlayerUI(head, player)
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "PlayerViewUI"
-    billboard.Size = UDim2.new(0, 200, 0, 60)
-    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
-    billboard.AlwaysOnTop = true
-    billboard.LightInfluence = 0
-    billboard.Parent = head
-
-    -- Container para organizar os textos
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(1, 0, 1, 0)
-    mainFrame.BackgroundTransparency = 1
-    mainFrame.Parent = billboard
-
+-- Cria os visuais apenas uma vez por jogador
+local function createVisuals(player)
+    local data = {}
+    
+    -- Outline (Highlight)
+    local hl = Instance.new("Highlight")
+    hl.Name = "PlayerOutline"
+    hl.FillTransparency = 1 -- Apenas as bordas
+    
+    -- UI acima da cabeça (BillboardGui)
+    local bg = Instance.new("BillboardGui")
+    bg.Name = "PlayerInfo"
+    bg.Size = UDim2.new(0, 200, 0, 45)
+    bg.StudsOffset = Vector3.new(0, 1.5, 0)
+    bg.AlwaysOnTop = true
+    bg.LightInfluence = 0
+    bg.Parent = _G.SystemViewPlayerFolder
+    
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "NameLabel"
     nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Font = Enum.Font.GothamBold
     nameLabel.TextSize = 14
-    nameLabel.RichText = true
     nameLabel.TextStrokeTransparency = 0.5
-    nameLabel.Parent = mainFrame
-
+    nameLabel.RichText = true
+    nameLabel.Parent = bg
+    
     local statsLabel = Instance.new("TextLabel")
-    statsLabel.Name = "StatsLabel"
     statsLabel.Size = UDim2.new(1, 0, 0.5, 0)
     statsLabel.Position = UDim2.new(0, 0, 0.5, 0)
     statsLabel.BackgroundTransparency = 1
     statsLabel.Font = Enum.Font.GothamMedium
-    statsLabel.TextSize = 12
-    statsLabel.RichText = true
+    statsLabel.TextSize = 13
     statsLabel.TextStrokeTransparency = 0.5
-    statsLabel.Parent = mainFrame
-
-    activeUIs[player] = billboard
-    return billboard
+    statsLabel.RichText = true
+    statsLabel.Parent = bg
+    
+    data.Highlight = hl
+    data.UI = bg
+    data.NameLabel = nameLabel
+    data.StatsLabel = statsLabel
+    
+    return data
 end
 
 -- ==========================================
--- LOOP PRINCIPAL DE RENDERIZAÇÃO
+-- LOOP DE RENDERIZAÇÃO (Alta Performance)
 -- ==========================================
-RunService.Heartbeat:Connect(function(dt)
-    if not _G.ViewPlayerActive then
-        if next(activeHighlights) or next(activeUIs) then
-            forceCleanup()
-        end
-        return
-    end
-
-    local character = localPlayer.Character
-    local hrp = character and character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= localPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") then
+_G.SystemViewPlayerConnection = RunService.RenderStepped:Connect(function()
+    local myChar = localPlayer.Character
+    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    
+    if not myHRP then return end
+    
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= localPlayer then
             local char = p.Character
-            local head = char.Head
-            local hum = char.Humanoid
-            local dist = (hrp.Position - head.Position).Magnitude
-
-            if dist <= MAX_DISTANCE and hum.Health > 0 then
-                -- LÓGICA DE FADE (Transparência baseada na distância)
-                local transparency = 0
-                if dist > FADE_START_DISTANCE then
-                    transparency = (dist - FADE_START_DISTANCE) / (MAX_DISTANCE - FADE_START_DISTANCE)
-                end
-
-                -- Atualizar Highlight
-                local teamColor = p.TeamColor.Color
-                local hl = activeHighlights[p]
-                if not hl then
-                    hl = Instance.new("Highlight")
-                    hl.Name = "PlayerHighlight"
-                    hl.FillTransparency = 1
-                    hl.Parent = char
-                    activeHighlights[p] = hl
-                end
-                hl.OutlineColor = teamColor
-                hl.OutlineTransparency = transparency
-
-                -- Atualizar UI
-                local ui = activeUIs[p] or createPlayerUI(head, p)
-                ui.Enabled = true
-                ui.LightInfluence = 0
+            local head = char and char:FindFirstChild("Head")
+            local hum = char and char:FindFirstChild("Humanoid")
+            
+            -- Se o player estiver vivo e com o boneco carregado
+            if char and head and hum and hum.Health > 0 then
+                local dist = (myHRP.Position - head.Position).Magnitude
                 
-                -- Aplicar Fade na UI
-                ui.NameLabel.TextStrokeTransparency = 0.5 + (transparency * 0.5)
-                ui.StatsLabel.TextStrokeTransparency = 0.5 + (transparency * 0.5)
-                ui.NameLabel.TextTransparency = transparency
-                ui.StatsLabel.TextTransparency = transparency
-
-                -- Conteúdo do Texto
-                local r, g, b = math.floor(teamColor.R * 255), math.floor(teamColor.G * 255), math.floor(teamColor.B * 255)
-                ui.NameLabel.Text = string.format('<font color="rgb(%d,%d,%d)">👤: %s</font>', r, g, b, p.DisplayName)
-                
-                -- Cores específicas: Amarelo Escuro e Vermelho Escuro
-                ui.StatsLabel.Text = string.format('<font color="rgb(200,200,0)">📏: %dM.</font> | <font color="rgb(180,0,0)">❤: %d</font>', math.floor(dist), math.floor(hum.Health))
+                if dist <= MAX_DISTANCE then
+                    -- Se o cache do jogador não existir, cria.
+                    if not playerCache[p] then
+                        playerCache[p] = createVisuals(p)
+                    end
+                    
+                    local vis = playerCache[p]
+                    local tColor = getTeamColor(p)
+                    
+                    -- CÁLCULO DE FADE (Desaparecimento Lento)
+                    -- Transparência vai de 0 (visível) até 1 (invisível)
+                    local fade = math.clamp((dist - FADE_START) / (MAX_DISTANCE - FADE_START), 0, 1)
+                    
+                    -- Atualiza Outline
+                    vis.Highlight.Parent = char
+                    vis.Highlight.OutlineColor = tColor
+                    vis.Highlight.OutlineTransparency = fade
+                    
+                    -- Atualiza UI
+                    vis.UI.Adornee = head
+                    vis.UI.Enabled = true
+                    
+                    -- Converte Cor do Time para Hexadecimal para aplicar no RichText
+                    local hexTeam = string.format("#%02X%02X%02X", tColor.R*255, tColor.G*255, tColor.B*255)
+                    
+                    -- Aplica Transparência nos Textos
+                    local strokeFade = 0.5 + (fade * 0.5)
+                    vis.NameLabel.TextStrokeTransparency = strokeFade
+                    vis.StatsLabel.TextStrokeTransparency = strokeFade
+                    vis.NameLabel.TextTransparency = fade
+                    vis.StatsLabel.TextTransparency = fade
+                    
+                    -- Renderiza as Informações Detalhadas
+                    vis.NameLabel.Text = string.format('<font color="%s">👤: %s</font>', hexTeam, p.DisplayName)
+                    vis.StatsLabel.Text = string.format('<font color="%s">📏: %dm.</font> | <font color="%s">❤: %d</font>', DIST_COLOR, math.floor(dist), HP_COLOR, math.floor(hum.Health))
+                else
+                    -- Fora do Limite de Distância: Oculta para poupar FPS
+                    if playerCache[p] then
+                        playerCache[p].Highlight.Parent = nil
+                        playerCache[p].UI.Enabled = false
+                    end
+                end
             else
-                clearPlayer(p, char)
+                -- Jogador Morto ou sem Personagem: Oculta
+                if playerCache[p] then
+                    playerCache[p].Highlight.Parent = nil
+                    playerCache[p].UI.Enabled = false
+                end
             end
-        else
-            clearPlayer(p, p.Character)
         end
     end
 end)
