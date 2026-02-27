@@ -2,17 +2,17 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
--- 1. CONEXÃO COM O SISTEMA LÓGICO
-local function executarSistema()
-    -- Carrega o sistema de View (Outlines e BillboardGuis)
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/View%20Player%20%26%20Bot"))()
-end
-executarSistema() 
+-- ==========================================================
+-- LINKS DOS SISTEMAS LOGICOS (Coloque os links RAW aqui)
+-- ==========================================================
+local PLAYER_VIEW_SCRIPT = "SEU_LINK_RAW_AQUI"
+local BOT_VIEW_SCRIPT = "SEU_LINK_RAW_AQUI"
+-- ==========================================================
 
 -- 2. LOCALIZAÇÃO NA LISTA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
-local painel = coreGui:WaitForChild("Painel")
+local painel = coreGui:WaitForChild("Panel")
 local lista = painel:WaitForChild("ListaOpcoesContainer")
 
 -- Limpeza de segurança
@@ -23,7 +23,7 @@ end
 -- 3. CRIAÇÃO DO MINI-PAINEL (Design Corrigido)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "ViewControlCard"
-miniPainel.Size = UDim2.new(0.95, 0, 0, 115) -- Aumentado levemente para acomodar o espaçamento
+miniPainel.Size = UDim2.new(0.95, 0, 0, 115) 
 miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 miniPainel.BackgroundTransparency = 0.2
 miniPainel.BorderSizePixel = 0
@@ -52,18 +52,17 @@ title.Parent = miniPainel
 -- Linha divisória
 local line = Instance.new("Frame")
 line.Size = UDim2.new(0.85, 0, 0, 1)
-line.Position = UDim2.new(0.075, 0, 0, 38) -- Ajustada posição da linha
+line.Position = UDim2.new(0.075, 0, 0, 38)
 line.BackgroundColor3 = Color3.new(1, 1, 1)
 line.BackgroundTransparency = 0.7
 line.BorderSizePixel = 0
 line.Parent = miniPainel
 
--- 4. FUNÇÃO DE CRIAÇÃO (Com Posicionamento Corrigido)
-local function CreateToggle(name, labelText, posX, globalVar)
+-- 4. FUNÇÃO DE CRIAÇÃO (Upgrade com Loadstring)
+local function CreateToggle(name, labelText, posX, systemLink)
     local container = Instance.new("Frame")
     container.Name = name .. "Container"
     container.Size = UDim2.new(0, 140, 0, 65)
-    -- ABAIXADO: De 0.65 para 0.72 para afastar da linha
     container.Position = UDim2.new(posX, 0, 0.72, 0)
     container.AnchorPoint = Vector2.new(0.5, 0.5)
     container.BackgroundTransparency = 1
@@ -71,7 +70,6 @@ local function CreateToggle(name, labelText, posX, globalVar)
 
     local iconLabel = Instance.new("TextLabel")
     iconLabel.Size = UDim2.new(1, 0, 0, 25)
-    -- AJUSTADO: De -0.3 para -0.1 para descer o ícone/texto
     iconLabel.Position = UDim2.new(0, 0, -0.1, 0)
     iconLabel.Text = labelText
     iconLabel.TextColor3 = Color3.new(1, 1, 1)
@@ -83,9 +81,9 @@ local function CreateToggle(name, labelText, posX, globalVar)
     -- Switch Base
     local btnBase = Instance.new("TextButton")
     btnBase.Size = UDim2.new(0, 58, 0, 26)
-    btnBase.Position = UDim2.new(0.5, 0, 0.65, 0) -- Levemente ajustado
+    btnBase.Position = UDim2.new(0.5, 0, 0.65, 0)
     btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
-    btnBase.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    btnBase.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Inicia Vermelho
     btnBase.Text = ""
     btnBase.AutoButtonColor = false
     btnBase.Parent = container
@@ -107,25 +105,40 @@ local function CreateToggle(name, labelText, posX, globalVar)
     knob.Parent = btnBase
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    -- Lógica
+    -- Lógica de Upgrade (Loadstring no clique)
+    local isLoaded = false
+    local scriptExecutor = nil
+
     btnBase.MouseButton1Click:Connect(function()
-        _G[globalVar] = not _G[globalVar]
-        local ativo = _G[globalVar]
-        
-        local targetPos = ativo and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
-        local targetColor = ativo and Color3.fromRGB(0, 160, 0) or Color3.fromRGB(150, 0, 0)
+        isLoaded = not isLoaded
+        local targetPos = isLoaded and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
+        local targetColor = isLoaded and Color3.fromRGB(0, 160, 0) or Color3.fromRGB(150, 0, 0)
 
         TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
         TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+
+        if isLoaded then
+            -- Ativando: Carrega o script
+            if systemLink ~= "" then
+                pcall(function()
+                    scriptExecutor = loadstring(game:HttpGet(systemLink))()
+                end)
+            end
+        else
+            -- Desativando: Remove o script se possível (necessário que o script lógico tenha função de limpeza)
+            if scriptExecutor and type(scriptExecutor) == "function" then
+                pcall(scriptExecutor) -- Tenta chamar uma função de limpeza retornada pelo script
+            end
+        end
     end)
 end
 
--- Chamada dos Toggles
-CreateToggle("PlayerView", "👤 Player", 0.3, "ViewPlayerActive")
-CreateToggle("BotView", "🤖 Bot", 0.7, "ViewBotActive")
+-- Chamada dos Toggles com seus respectivos links
+CreateToggle("PlayerView", "👤 Player", 0.3, PLAYER_VIEW_SCRIPT)
+CreateToggle("BotView", "🤖 Bot", 0.7, BOT_VIEW_SCRIPT)
 
 -- 5. ANIMAÇÃO DE ENTRADA
 miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-print("MiniPainel Corrigido: Itens agora estão abaixo da linha!")
+print("MiniPainel Player & Bot com Upgrade de Loadstring carregado!")
