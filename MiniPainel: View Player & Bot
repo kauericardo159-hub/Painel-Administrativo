@@ -2,14 +2,6 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
--- ==========================================================
--- CONFIGURAÇÃO DE LINKS (UPGRADE SEGURO)
--- Substitua pelos links RAW do seu GitHub
--- ==========================================================
-local PLAYER_VIEW_SCRIPT = "loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"))()"
-local BOT_VIEW_SCRIPT = "loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"))()"
--- ==========================================================
-
 -- 1. LOCALIZAÇÃO NA LISTA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
@@ -59,8 +51,8 @@ line.BackgroundTransparency = 0.7
 line.BorderSizePixel = 0
 line.Parent = miniPainel
 
--- 3. FUNÇÃO DE CRIAÇÃO (Com Upgrade na Lógica)
-local function CreateToggle(name, labelText, posX, linkScript)
+-- 3. FUNÇÃO DE CRIAÇÃO (Lógica Refeita)
+local function CreateToggle(name, labelText, posX, loadstringFunction)
     local container = Instance.new("Frame")
     container.Name = name .. "Container"
     container.Size = UDim2.new(0, 140, 0, 65)
@@ -106,7 +98,7 @@ local function CreateToggle(name, labelText, posX, linkScript)
     knob.Parent = btnBase
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    -- LÓGICA DE UPGRADE: Executa script externo ao clicar
+    -- LÓGICA DE CLIQUE REFEITA
     local isLoaded = false
     btnBase.MouseButton1Click:Connect(function()
         isLoaded = not isLoaded
@@ -117,26 +109,24 @@ local function CreateToggle(name, labelText, posX, linkScript)
         TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
         TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
 
-        -- EXECUÇÃO DO SCRIPT EXTERNO (Seguro)
-        if linkScript ~= "" then
-            task.spawn(function()
-                local success, err = pcall(function()
-                    loadstring(game:HttpGet(linkScript))()
-                end)
-                if not success then
-                    warn("Erro ao executar script: " .. tostring(err))
-                end
-            end)
+        -- EXECUÇÃO DIRETA DO LOADSTRING
+        if isLoaded then
+            task.spawn(loadstringFunction)
         end
     end)
 end
 
--- Chamada dos Toggles com seus respectivos links
-CreateToggle("PlayerView", "👤 Player", 0.3, PLAYER_VIEW_SCRIPT)
-CreateToggle("BotView", "🤖 Bot", 0.7, BOT_VIEW_SCRIPT)
+-- 4. CHAMADA DOS TOGGLES COM LOADSTRINGS EMBUTIDOS
+CreateToggle("PlayerView", "👤 Player", 0.3, function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"))()
+end)
 
--- 4. ANIMAÇÃO DE ENTRADA (Slide-in)
+CreateToggle("BotView", "🤖 Bot", 0.7, function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"))()
+end)
+
+-- 5. ANIMAÇÃO DE ENTRADA (Slide-in)
 miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-print("MiniPainel View Player & Bot atualizado com Loadstring!")
+print("MiniPainel View Player & Bot Refeito!")
