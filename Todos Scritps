@@ -39,7 +39,7 @@ print("🟢 Carregando Sistema View Player & Bot...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel-ViewPlayer%26Bot"))()
 
 --[[
--- 🔴 INDISPONÍVEL NO MOMENTO, CCORRIGIR PROBLEMAS TÉCNICOS.
+-- 🟠 INDISPONÍVEL NO MOMENTO, CCORRIGIR PROBLEMAS TÉCNICOS.
 -- MiniPainel: VIEW ITENS
 -- FUNÇÃO: Ver itens pelo mapa.
 print("🟢 Carregando Sistema View Itens...")
