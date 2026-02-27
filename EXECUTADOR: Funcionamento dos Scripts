@@ -33,17 +33,15 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 ===============================
 ]]
 
--- 🟠 Fazendo Upgrade para melhorar o System.
--- 1. MiniPainel: VIEW PLAYERS & BOTS
--- FUNÇÃO: Ver posição de Player & Bot no Jogo
-print("🟢 Carregando Sistema View Player & Bot...")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20View%20Player%20%26%20Bot"))()
-
--- 2. MiniPainel: VIEW ITENS
+-- 1. MiniPainel: VIEW ITENS
 -- FUNÇÃO: Ver itens pelo mapa.
 print("🟢 Carregando Sistema View Itens...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPanel-VIEW-ITENS"))()
 
+-- 2. MiniPainel: VIEW PLAYERS & BOTS
+-- FUNÇÃO: Ver posição de Player & Bot no Jogo
+print("🛠 Carregando Sistema Teste View Player & Bot...")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20View%20Player%20%26%20Bot"))()
 
 print("========================================")
 print("  🟢 SISTEMA CARREGADO COM SUCESSO! ;3  ")
