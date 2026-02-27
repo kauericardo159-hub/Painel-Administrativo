@@ -5,17 +5,26 @@ local localPlayer = Players.LocalPlayer
 -- ==========================================
 -- SISTEMA DE TOGGLE (LIGA/DESLIGA)
 -- ==========================================
--- Se o sistema já estiver rodando, ele se desativa e limpa a tela.
 if _G.SystemViewPlayerConnection then
     _G.SystemViewPlayerConnection:Disconnect()
     _G.SystemViewPlayerConnection = nil
+    
+    -- CORREÇÃO: Limpeza profunda do Cache ao desativar
+    if _G.PlayerCacheViewPlayer then
+        for _, visualData in pairs(_G.PlayerCacheViewPlayer) do
+            if visualData.Highlight then visualData.Highlight:Destroy() end
+            if visualData.UI then visualData.UI:Destroy() end
+        end
+        table.clear(_G.PlayerCacheViewPlayer)
+    end
     
     if _G.SystemViewPlayerFolder then
         _G.SystemViewPlayerFolder:Destroy()
         _G.SystemViewPlayerFolder = nil
     end
-    print("[SYSTEM] View Player: DESATIVADO")
-    return -- Interrompe a execução aqui
+    
+    print("[SYSTEM] View Player: DESATIVADO E LIMPO")
+    return
 end
 
 print("[SYSTEM] View Player: ATIVADO")
@@ -24,18 +33,20 @@ print("[SYSTEM] View Player: ATIVADO")
 -- CONFIGURAÇÕES
 -- ==========================================
 local MAX_DISTANCE = 400
-local FADE_START = 150 -- Distância onde começa a ficar transparente
+local FADE_START = 150
 
--- Cores Fixas (Formato Hexadecimal para RichText)
-local DIST_COLOR = "#C8C800" -- Amarelo um pouco escuro
-local HP_COLOR = "#B40000"   -- Vermelho um pouco escuro
+-- Cores Fixas (Formato Hexadecimal)
+local DIST_COLOR = "#C8C800"
+local HP_COLOR = "#B40000"
 
--- Pasta Global para armazenar as UIs de forma otimizada
+-- Pasta Global
 _G.SystemViewPlayerFolder = Instance.new("Folder")
 _G.SystemViewPlayerFolder.Name = "ViewPlayerCache"
 _G.SystemViewPlayerFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 
-local playerCache = {}
+-- Cache Global para facilitar a limpeza
+_G.PlayerCacheViewPlayer = {}
+local localCache = _G.PlayerCacheViewPlayer
 
 -- ==========================================
 -- FUNÇÕES AUXILIARES
@@ -44,19 +55,16 @@ local function getTeamColor(player)
     if player.Team then
         return player.TeamColor.Color
     end
-    return Color3.fromRGB(255, 255, 255) -- Branco se não tiver time
+    return Color3.fromRGB(255, 255, 255)
 end
 
--- Cria os visuais apenas uma vez por jogador
 local function createVisuals(player)
     local data = {}
     
-    -- Outline (Highlight)
     local hl = Instance.new("Highlight")
     hl.Name = "PlayerOutline"
-    hl.FillTransparency = 1 -- Apenas as bordas
+    hl.FillTransparency = 1
     
-    -- UI acima da cabeça (BillboardGui)
     local bg = Instance.new("BillboardGui")
     bg.Name = "PlayerInfo"
     bg.Size = UDim2.new(0, 200, 0, 45)
@@ -93,7 +101,7 @@ local function createVisuals(player)
 end
 
 -- ==========================================
--- LOOP DE RENDERIZAÇÃO (Alta Performance)
+-- LOOP DE RENDERIZAÇÃO
 -- ==========================================
 _G.SystemViewPlayerConnection = RunService.RenderStepped:Connect(function()
     local myChar = localPlayer.Character
@@ -107,58 +115,57 @@ _G.SystemViewPlayerConnection = RunService.RenderStepped:Connect(function()
             local head = char and char:FindFirstChild("Head")
             local hum = char and char:FindFirstChild("Humanoid")
             
-            -- Se o player estiver vivo e com o boneco carregado
             if char and head and hum and hum.Health > 0 then
                 local dist = (myHRP.Position - head.Position).Magnitude
                 
                 if dist <= MAX_DISTANCE then
-                    -- Se o cache do jogador não existir, cria.
-                    if not playerCache[p] then
-                        playerCache[p] = createVisuals(p)
+                    if not localCache[p] then
+                        localCache[p] = createVisuals(p)
                     end
                     
-                    local vis = playerCache[p]
+                    local vis = localCache[p]
                     local tColor = getTeamColor(p)
                     
-                    -- CÁLCULO DE FADE (Desaparecimento Lento)
-                    -- Transparência vai de 0 (visível) até 1 (invisível)
                     local fade = math.clamp((dist - FADE_START) / (MAX_DISTANCE - FADE_START), 0, 1)
                     
-                    -- Atualiza Outline
+                    -- CORREÇÃO: Highlight Parent
                     vis.Highlight.Parent = char
                     vis.Highlight.OutlineColor = tColor
                     vis.Highlight.OutlineTransparency = fade
                     
-                    -- Atualiza UI
                     vis.UI.Adornee = head
                     vis.UI.Enabled = true
                     
-                    -- Converte Cor do Time para Hexadecimal para aplicar no RichText
                     local hexTeam = string.format("#%02X%02X%02X", tColor.R*255, tColor.G*255, tColor.B*255)
                     
-                    -- Aplica Transparência nos Textos
                     local strokeFade = 0.5 + (fade * 0.5)
                     vis.NameLabel.TextStrokeTransparency = strokeFade
                     vis.StatsLabel.TextStrokeTransparency = strokeFade
                     vis.NameLabel.TextTransparency = fade
                     vis.StatsLabel.TextTransparency = fade
                     
-                    -- Renderiza as Informações Detalhadas
                     vis.NameLabel.Text = string.format('<font color="%s">👤: %s</font>', hexTeam, p.DisplayName)
                     vis.StatsLabel.Text = string.format('<font color="%s">📏: %dm.</font> | <font color="%s">❤: %d</font>', DIST_COLOR, math.floor(dist), HP_COLOR, math.floor(hum.Health))
                 else
-                    -- Fora do Limite de Distância: Oculta para poupar FPS
-                    if playerCache[p] then
-                        playerCache[p].Highlight.Parent = nil
-                        playerCache[p].UI.Enabled = false
+                    -- Fora da distância: Oculta visualmente, mas mantém no cache para performance
+                    if localCache[p] then
+                        localCache[p].Highlight.Parent = nil
+                        localCache[p].UI.Enabled = false
                     end
                 end
             else
-                -- Jogador Morto ou sem Personagem: Oculta
-                if playerCache[p] then
-                    playerCache[p].Highlight.Parent = nil
-                    playerCache[p].UI.Enabled = false
+                -- Sem personagem: Oculta
+                if localCache[p] then
+                    localCache[p].Highlight.Parent = nil
+                    localCache[p].UI.Enabled = false
                 end
+            end
+        else
+            -- CORREÇÃO: Limpa cache se o player saiu do servidor
+            if localCache[p] then
+                if localCache[p].Highlight then localCache[p].Highlight:Destroy() end
+                if localCache[p].UI then localCache[p].UI:Destroy() end
+                localCache[p] = nil
             end
         end
     end
