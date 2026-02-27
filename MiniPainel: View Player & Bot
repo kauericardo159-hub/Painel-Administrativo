@@ -121,7 +121,7 @@ CreateToggle("PlayerView", "👤 Player", 0.3, function()
 end)
 
 CreateToggle("BotView", "🤖 Bot", 0.7, function()
-    loadstring(game:HttpGet(""))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"))()
 end)
 
 -- 5. ANIMAÇÃO DE ENTRADA (Slide-in)
