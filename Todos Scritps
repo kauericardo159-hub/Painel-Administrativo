@@ -27,18 +27,21 @@ task.wait(0.1)
 print("Carregando Controlador do Botão...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ButtonController.lua"))()
 
-print("========================================")
-print("   SISTEMA CARREGADO COM SUCESSO!   ")
-print("========================================")
-
 --[[
 ===============================
        Lista de Funções
 ===============================
 ]]
 -- MiniPainel: VIEW PLAYERS & BOTS
+-- FUNÇÃO: Ver posição de Player & Bot no Jogo
+print("Carregando Sistema View Player & Bot...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel-ViewPlayer%26Bot"))()
 
 -- MiniPainel: VIEW ITENS
+-- FUNÇÃO: Ver itens pelo mapa.
 -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Command_ViewItems"))()
+
+print("========================================")
+print("   SISTEMA CARREGADO COM SUCESSO! ;3  ")
+print("========================================")
 
