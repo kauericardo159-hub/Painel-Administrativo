@@ -46,7 +46,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 -- 3. MiniPainel: SPEED
 -- FUNÇÃO: Aumentar Velocidade de Player
 print("🟠 Carregando Sistema Speed...")
-loadstring(game:HttpGet(""))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20Speed"))()
 
 print("========================================")
 print("  SISTEMA CARREGADO COM SUCESSO! ;3  ")
