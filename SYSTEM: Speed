@@ -1,1 +1,57 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- ==========================================
+-- SISTEMA DE TOGGLE E PERSISTÊNCIA
+-- ==========================================
+-- Se o sistema já estiver rodando, ele se desativa.
+if _G.SystemSpeedConnection then
+    _G.SystemSpeedConnection:Disconnect()
+    _G.SystemSpeedConnection = nil
+    
+    -- Restaura a velocidade padrão ao desativar
+    local char = localPlayer.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    if hum then
+        hum.WalkSpeed = 16
+    end
+    print("[SYSTEM] Speed: DESATIVADO")
+    return -- Interrompe a execução
+end
+
+print("[SYSTEM] Speed: ATIVADO")
+
+-- ==========================================
+-- CONFIGURAÇÕES
+-- ==========================================
+-- Busca o valor do TextBox "ValueInput" criado no MiniPainel
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
+local painel = coreGui:WaitForChild("Panel")
+local speedCard = painel:WaitForChild("ListaOpcoesContainer"):WaitForChild("SpeedControlCard")
+local speedInput = speedCard:WaitForChild("ValueInput")
+
+local targetSpeed = tonumber(speedInput.Text) or 16
+
+-- ==========================================
+-- LOOP DE APLICAÇÃO (Alta Performance)
+-- ==========================================
+-- Aplica a velocidade todo frame para evitar que o jogo resete
+_G.SystemSpeedConnection = RunService.Heartbeat:Connect(function()
+    local char = localPlayer.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    
+    if hum then
+        -- Verifica se o valor mudou no input enquanto o sistema está ativo
+        local currentTarget = tonumber(speedInput.Text)
+        if currentTarget and currentTarget ~= targetSpeed then
+            targetSpeed = currentTarget
+        end
+        
+        if hum.WalkSpeed ~= targetSpeed then
+            hum.WalkSpeed = targetSpeed
+        end
+    end
+end)
 
