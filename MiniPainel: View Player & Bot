@@ -2,6 +2,14 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
+-- ==========================================================
+-- CONFIGURAÇÃO DE LINKS (UPGRADE SEGURO)
+-- Substitua pelos links RAW do seu GitHub
+-- ==========================================================
+local PLAYER_VIEW_SCRIPT = "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"
+local BOT_VIEW_SCRIPT = "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"
+-- ==========================================================
+
 -- 1. LOCALIZAÇÃO NA LISTA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
@@ -123,12 +131,12 @@ local function CreateToggle(name, labelText, posX, linkScript)
     end)
 end
 
--- Chamada dos Toggles com seus respectivos links diretos
-CreateToggle("PlayerView", "👤 Player", 0.3, 'loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"))()')
-CreateToggle("BotView", "🤖 Bot", 0.7, 'loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"))()')
+-- Chamada dos Toggles com seus respectivos links
+CreateToggle("PlayerView", "👤 Player", 0.3, PLAYER_VIEW_SCRIPT)
+CreateToggle("BotView", "🤖 Bot", 0.7, BOT_VIEW_SCRIPT)
 
 -- 4. ANIMAÇÃO DE ENTRADA (Slide-in)
 miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-print("MiniPainel View Player & Bot atualizado com Loadstring Direto!")
+print("MiniPainel View Player & Bot atualizado com Loadstring!")
