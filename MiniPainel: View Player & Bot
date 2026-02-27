@@ -13,7 +13,7 @@ if lista:FindFirstChild("ViewControlCard") then
     lista.ViewControlCard:Destroy()
 end
 
--- 2. CRIAÇÃO DO MINI-PAINEL (Design Corrigido)
+-- 2. CRIAÇÃO DO MINI-PAINEL (Design Elegante)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "ViewControlCard"
 miniPainel.Size = UDim2.new(0.95, 0, 0, 115) -- Altura otimizada
@@ -51,7 +51,7 @@ line.BackgroundTransparency = 0.7
 line.BorderSizePixel = 0
 line.Parent = miniPainel
 
--- 3. FUNÇÃO DE CRIAÇÃO (Lógica Refeita)
+-- 3. FUNÇÃO DE CRIAÇÃO DO TOGGLE
 local function CreateToggle(name, labelText, posX, loadstringFunction)
     local container = Instance.new("Frame")
     container.Name = name .. "Container"
@@ -98,35 +98,34 @@ local function CreateToggle(name, labelText, posX, loadstringFunction)
     knob.Parent = btnBase
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    -- LÓGICA DE CLIQUE REFEITA
+    -- LÓGICA DE CLIQUE (Visual + Execução Externa)
     local isLoaded = false
     btnBase.MouseButton1Click:Connect(function()
         isLoaded = not isLoaded
         
+        -- Animação Visual
         local targetPos = isLoaded and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
         local targetColor = isLoaded and Color3.fromRGB(0, 160, 0) or Color3.fromRGB(150, 0, 0)
 
         TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
         TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
 
-        -- EXECUÇÃO DIRETA DO LOADSTRING
-        if isLoaded then
-            task.spawn(loadstringFunction)
-        end
+        -- Executa o link no background sempre que clicar (para Ligar E Desligar)
+        task.spawn(loadstringFunction)
     end)
 end
 
--- 4. CHAMADA DOS TOGGLES COM LOADSTRINGS EMBUTIDOS
+-- 4. CHAMADA DOS TOGGLES (Cole seus links dentro das aspas)
 CreateToggle("PlayerView", "👤 Player", 0.3, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"))()
+    loadstring(game:HttpGet(""))()
 end)
 
 CreateToggle("BotView", "🤖 Bot", 0.7, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"))()
+    loadstring(game:HttpGet(""))()
 end)
 
 -- 5. ANIMAÇÃO DE ENTRADA (Slide-in)
 miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-print("MiniPainel View Player & Bot Refeito!")
+print("MiniPainel View Player & Bot Otimizado com Sucesso!")
