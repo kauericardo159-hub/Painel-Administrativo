@@ -2,61 +2,41 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 
--- ==========================================
--- GERENCIADOR DE ESTADO (Anti-Reset)
--- ==========================================
-
--- Função auxiliar para aplicar a velocidade
+-- Função para aplicar velocidade com segurança
 local function applySpeed(speed)
     local char = localPlayer.Character
     local hum = char and char:FindFirstChild("Humanoid")
-    if hum and hum.WalkSpeed ~= speed then
+    if hum then
         hum.WalkSpeed = speed
     end
 end
 
 -- ==========================================
--- LOOP DE SEGURANÇA (O sistema manda aqui)
+-- GERENCIADOR DE ESTADO (Robusto)
 -- ==========================================
 if not _G.SystemSpeedConnection then
     print("[SYSTEM] Speed: INICIADO")
     
+    -- Usamos uma tabela simples local para guardar o alvo
+    local speedData = {Target = 16}                
+
     _G.SystemSpeedConnection = RunService.Heartbeat:Connect(function()
-        -- Se houver um alvo definido, mantém a velocidade
-        if _G.TargetSpeed then
-            applySpeed(_G.TargetSpeed)
-        end
+        applySpeed(speedData.Target)
     end)
+    
+    -- Criamos uma função global simples para o painel chamar
+    _G.UpdateSpeedTarget = function(newSpeed)
+        speedData.Target = newSpeed
+        print("[SYSTEM] Alvo de velocidade atualizado para: " .. newSpeed)
+        applySpeed(newSpeed)
+    end
     
     -- Limpeza ao sair do jogo
     localPlayer.AncestryChanged:Connect(function()
         if not localPlayer:IsDescendantOf(game) then
             if _G.SystemSpeedConnection then _G.SystemSpeedConnection:Disconnect() end
             _G.SystemSpeedConnection = nil
-            _G.TargetSpeed = nil
+            _G.UpdateSpeedTarget = nil
         end
     end)
-end
-
--- ==========================================
--- RECEBIMENTO DE COMANDOS (Obedece o painel)
--- ==========================================
-if _G.Action == "Apply" then
-    -- O sistema busca o valor no Painel Local
-    local playerGui = localPlayer:WaitForChild("PlayerGui")
-    local coreGui = playerGui:FindFirstChild("SistemaPainel_V3")
-    
-    if coreGui then
-        local speedInput = coreGui:FindFirstChild("Panel", true):FindFirstChild("ValueInput", true)
-        if speedInput then
-            _G.TargetSpeed = tonumber(speedInput.Text) or 16
-            print("[SYSTEM] Speed Aplicado: " .. _G.TargetSpeed)
-            applySpeed(_G.TargetSpeed)
-        end
-    end
-    
-elseif _G.Action == "Reset" then
-    _G.TargetSpeed = 16
-    print("[SYSTEM] Speed Resetado")
-    applySpeed(16)
 end
