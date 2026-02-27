@@ -116,7 +116,7 @@ end)
 resetBtn.MouseButton1Click:Connect(function()
     valueInput.Text = "16"
     -- COLOQUE SEU LINK RAW AQUI
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/seu-usuario/seu-repo/main/SYSTEM%3A%20Speed"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Speed"))()
     print("Velocidade resetada")
 end)
 
