@@ -10,12 +10,12 @@ if _G.SystemViewBotConnection then
     _G.SystemViewBotConnection = nil
     
     -- Limpeza profunda do Cache ao desativar
-    if _G.BotCacheView then
-        for _, visualData in pairs(_G.BotCacheView) do
+    if _G.BotCacheViewBot then
+        for _, visualData in pairs(_G.BotCacheViewBot) do
             if visualData.Highlight then visualData.Highlight:Destroy() end
             if visualData.UI then visualData.UI:Destroy() end
         end
-        table.clear(_G.BotCacheView)
+        table.clear(_G.BotCacheViewBot)
     end
     
     if _G.SystemViewBotFolder then
@@ -34,121 +34,159 @@ print("[SYSTEM] View Bot: ATIVADO")
 -- ==========================================
 local MAX_DISTANCE = 400
 local FADE_START = 150
-local BOT_COLOR = Color3.fromRGB(255, 0, 0) -- Vermelho para Outline e Stroke
+local UPDATE_RATE = 0.1 -- Frequência de atualização da lógica (em segundos)
 
--- Pasta Global para armazenar as UIs
+-- Cores
+local BOT_NAME_COLOR = "#FFFFFF" -- Nome Branco
+local BOT_STROKE_COLOR = Color3.fromRGB(255, 0, 0) -- UIStroke Vermelho
+local OUTLINE_COLOR = Color3.fromRGB(255, 0, 0) -- Outline Vermelho
+local DIST_COLOR = "#C8C800" -- Amarelo um pouco escuro
+local HP_COLOR = "#B40000"   -- Vermelho um pouco escuro
+
+-- Pasta Global
 _G.SystemViewBotFolder = Instance.new("Folder")
 _G.SystemViewBotFolder.Name = "ViewBotCache"
 _G.SystemViewBotFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 
-_G.BotCacheView = {}
-local localCache = _G.BotCacheView
+-- Cache Global para facilitar a limpeza
+_G.BotCacheViewBot = {}
+local botCache = _G.BotCacheViewBot
 
 -- ==========================================
 -- FUNÇÕES AUXILIARES
 -- ==========================================
-
--- Cria os visuais apenas uma vez por bot detectado
-local function createVisuals(botModel)
+local function createVisuals(model)
     local data = {}
     
-    -- Outline (Highlight) Vermelho
+    -- Outline (Highlight) - Cor Vermelha
     local hl = Instance.new("Highlight")
     hl.Name = "BotOutline"
     hl.FillTransparency = 1
-    hl.OutlineColor = BOT_COLOR
-    hl.Parent = botModel
+    hl.OutlineColor = OUTLINE_COLOR
+    hl.OutlineTransparency = 0
     
-    -- UI acima do bot (BillboardGui)
+    -- UI acima da cabeça (BillboardGui)
     local bg = Instance.new("BillboardGui")
     bg.Name = "BotInfo"
     bg.Size = UDim2.new(0, 200, 0, 45)
-    bg.StudsOffset = Vector3.new(0, 3, 0) -- Ajustado para ficar bem acima
+    bg.StudsOffset = Vector3.new(0, 2, 0)
     bg.AlwaysOnTop = true
     bg.LightInfluence = 0
     bg.Parent = _G.SystemViewBotFolder
     
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextSize = 16
+    nameLabel.TextSize = 14
     nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Nome Branco
-    nameLabel.TextStrokeColor3 = BOT_COLOR -- Stroke Vermelho
-    nameLabel.TextStrokeTransparency = 0 -- Stroke Ativo
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.TextStrokeColor3 = BOT_STROKE_COLOR -- UIStroke Vermelho
     nameLabel.RichText = true
     nameLabel.Parent = bg
+    
+    local statsLabel = Instance.new("TextLabel")
+    statsLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    statsLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    statsLabel.BackgroundTransparency = 1
+    statsLabel.Font = Enum.Font.GothamMedium
+    statsLabel.TextSize = 13
+    statsLabel.TextStrokeTransparency = 0.5
+    statsLabel.RichText = true
+    statsLabel.Parent = bg
     
     data.Highlight = hl
     data.UI = bg
     data.NameLabel = nameLabel
+    data.StatsLabel = statsLabel
     
     return data
+end
+
+-- Função para verificar se um modelo é um Bot e não um Player
+local function isBot(model)
+    if not model:IsA("Model") then return false end
+    if Players:GetPlayerFromCharacter(model) then return false end -- Não é player
+    if not model:FindFirstChild("Humanoid") then return false end -- Tem humanoid
+    if model == localPlayer.Character then return false end -- Não é o próprio player
+    return true
 end
 
 -- ==========================================
 -- LOOP DE RENDERIZAÇÃO
 -- ==========================================
-_G.SystemViewBotConnection = RunService.RenderStepped:Connect(function()
+local lastUpdate = 0
+_G.SystemViewBotConnection = RunService.RenderStepped:Connect(function(dt)
     local myChar = localPlayer.Character
     local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
     
     if not myHRP then return end
     
-    -- Varrer o workspace em busca de objetos que parecem bots
+    lastUpdate = lastUpdate + dt
+    if lastUpdate < UPDATE_RATE then return end
+    lastUpdate = 0
+
+    -- Atualiza lista de bots ativos no cache para limpar bots que foram deletados
+    for botModel, visualData in pairs(botCache) do
+        if not botModel.Parent then
+            visualData.Highlight:Destroy()
+            visualData.UI:Destroy()
+            botCache[botModel] = nil
+        end
+    end
+
+    -- Varre o Workspace procurando bots
     for _, obj in ipairs(workspace:GetDescendants()) do
-        -- Ignorar se for o player, se não for um modelo, ou se for algo de UI
-        if obj:IsA("Model") and obj ~= myChar and not obj:IsDescendantOf(Players) then
+        if isBot(obj) then
+            local botModel = obj
+            local head = botModel:FindFirstChild("Head") or botModel:FindFirstChildWhichIsA("BasePart")
+            local hum = botModel:FindFirstChild("Humanoid")
             
-            local hum = obj:FindFirstChildOfClass("Humanoid")
-            local head = obj:FindFirstChild("Head") or obj:FindFirstChild("Torso") or obj:FindFirstChild("UpperTorso")
-            
-            -- Detectar bots com ou sem humanoid, desde que tenham uma "cabeça" ou torso
-            if head and (hum or obj:FindFirstChild("HumanoidRootPart")) then
-                
+            if head and hum and hum.Health > 0 then
                 local dist = (myHRP.Position - head.Position).Magnitude
                 
                 if dist <= MAX_DISTANCE then
-                    if not localCache[obj] then
-                        localCache[obj] = createVisuals(obj)
+                    if not botCache[botModel] then
+                        botCache[botModel] = createVisuals(botModel)
                     end
                     
-                    local vis = localCache[obj]
+                    local vis = botCache[botModel]
+                    
+                    -- Cálculo de Fade
                     local fade = math.clamp((dist - FADE_START) / (MAX_DISTANCE - FADE_START), 0, 1)
                     
-                    -- Atualiza Outline com Fade
+                    -- Atualiza Outline
+                    vis.Highlight.Parent = botModel
                     vis.Highlight.OutlineTransparency = fade
                     
                     -- Atualiza UI
                     vis.UI.Adornee = head
                     vis.UI.Enabled = true
                     
-                    -- Aplica Transparência no Texto e no Stroke
-                    local textFade = fade
-                    local strokeFade = math.clamp(fade, 0, 0.5) -- Stroke um pouco mais visível
+                    -- Aplica Transparência nos Textos
+                    local strokeFade = 0.5 + (fade * 0.5)
+                    vis.NameLabel.TextStrokeTransparency = fade
+                    vis.StatsLabel.TextStrokeTransparency = strokeFade
+                    vis.NameLabel.TextTransparency = fade
+                    vis.StatsLabel.TextTransparency = fade
                     
-                    vis.NameLabel.TextTransparency = textFade
-                    vis.NameLabel.TextStrokeTransparency = strokeFade
-                    
-                    -- Nome do Bot (Pode ser o nome do modelo ou um nome amigável)
-                    vis.NameLabel.Text = string.format('🤖: %s', obj.Name)
+                    -- Renderiza as Informações Detalhadas
+                    vis.NameLabel.Text = string.format('<font color="%s">🤖: %s</font>', BOT_NAME_COLOR, botModel.Name)
+                    vis.StatsLabel.Text = string.format('<font color="%s">📏: %dm.</font> | <font color="%s">❤: %d</font>', DIST_COLOR, math.floor(dist), HP_COLOR, math.floor(hum.Health))
                 else
                     -- Fora da distância
-                    if localCache[obj] then
-                        localCache[obj].Highlight.OutlineTransparency = 1
-                        localCache[obj].UI.Enabled = false
+                    if botCache[botModel] then
+                        botCache[botModel].Highlight.Parent = nil
+                        botCache[botModel].UI.Enabled = false
                     end
                 end
+            else
+                -- Bot Morto
+                if botCache[botModel] then
+                    botCache[botModel].Highlight.Parent = nil
+                    botCache[botModel].UI.Enabled = false
+                end
             end
-        end
-    end
-    
-    -- CORREÇÃO: Limpar cache de bots que foram destruídos no jogo
-    for botModel, visualData in pairs(localCache) do
-        if not botModel.Parent then
-            if visualData.Highlight then visualData.Highlight:Destroy() end
-            if visualData.UI then visualData.UI:Destroy() end
-            localCache[botModel] = nil
         end
     end
 end)
