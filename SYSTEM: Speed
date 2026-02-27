@@ -3,63 +3,52 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 
 -- ==========================================
--- SISTEMA DE PERSISTÊNCIA (Anti-Reset)
+-- GERENCIADOR DE VELOCIDADE (Aplicação Direta)
 -- ==========================================
 
--- Se o sistema já estiver rodando, apenas atualizamos o alvo de velocidade.
--- Se não estiver, iniciamos o loop de segurança.
+-- Removemos o controle de _G.SystemSpeedConnection para que ele 
+-- execute a aplicação diretamente ao ser chamado.
 
--- Função principal de aplicação de velocidade
-local function applySpeed(speed)
+local function applySpeedToCharacter()
     local char = localPlayer.Character
-    local hum = char and char:FindFirstChild("Humanoid")
-    if hum then
-        hum.WalkSpeed = speed
+    if not char then return end
+    
+    local hum = char:FindFirstChild("Humanoid")
+    if not hum then return end
+    
+    -- Busca o valor do TextBox "ValueInput"
+    local playerGui = localPlayer:WaitForChild("PlayerGui")
+    local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
+    
+    if not coreGui then return end
+    
+    local speedInput = coreGui:WaitForChild("Panel"):WaitForChild("ListaOpcoesContainer"):WaitForChild("SpeedControlCard"):WaitForChild("ValueInput")
+    local targetSpeed = tonumber(speedInput.Text) or 16
+    
+    -- Aplica a velocidade se for diferente da atual
+    if hum.WalkSpeed ~= targetSpeed then
+        hum.WalkSpeed = targetSpeed
     end
 end
 
 -- ==========================================
--- GERENCIADOR DE ESTADO (LIGA/DESLIGA)
+-- APLICAÇÃO E PERSISTÊNCIA
 -- ==========================================
 
--- Definimos uma variável global para controlar o loop
-if not _G.SystemSpeedConnection then
-    print("[SYSTEM] Speed: INICIADO")
-    
-    -- Loop de alta performance para forçar a velocidade
-    _G.SystemSpeedConnection = RunService.Heartbeat:Connect(function()
-        if _G.TargetSpeed then
-            applySpeed(_G.TargetSpeed)
-        end
-    end)
-    
-    -- Limpeza ao sair do jogo
-    localPlayer.AncestryChanged:Connect(function()
-        if not localPlayer:IsDescendantOf(game) then
-            if _G.SystemSpeedConnection then _G.SystemSpeedConnection:Disconnect() end
-            _G.TargetSpeed = nil
-        end
+-- 1. Aplica imediatamente ao chamar o script
+applySpeedToCharacter()
+
+-- 2. Garante persistência se o personagem renascer
+localPlayer.CharacterAdded:Connect(function(newCharacter)
+    applySpeedToCharacter()
+end)
+
+-- 3. Loop de segurança (roda apenas uma vez para garantir que o alvo seja mantido)
+if not _G.SpeedLoopRunning then
+    _G.SpeedLoopRunning = true
+    RunService.Heartbeat:Connect(function()
+        applySpeedToCharacter()
     end)
 end
 
--- ==========================================
--- LÓGICA DE APLICAR/RESETAR
--- ==========================================
--- O MiniPainel chamará este script. Precisamos saber se é para aplicar ou resetar.
--- Para isso, usaremos uma variável temporária definida pelo botão do painel.
-
-if _G.Action == "Apply" then
-    -- Busca o valor do TextBox
-    local playerGui = localPlayer:WaitForChild("PlayerGui")
-    local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
-    local speedInput = coreGui:WaitForChild("Panel"):WaitForChild("ListaOpcoesContainer"):WaitForChild("SpeedControlCard"):WaitForChild("ValueInput")
-    
-    _G.TargetSpeed = tonumber(speedInput.Text) or 16
-    print("[SYSTEM] Speed Aplicado: " .. _G.TargetSpeed)
-    applySpeed(_G.TargetSpeed)
-    
-elseif _G.Action == "Reset" then
-    _G.TargetSpeed = 16
-    print("[SYSTEM] Speed Resetado")
-    applySpeed(16)
-end
+print("[SYSTEM] Speed: Aplicação de velocidade ativada.")
