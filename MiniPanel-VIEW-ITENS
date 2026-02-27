@@ -116,3 +116,5 @@ miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
 print("MiniPainel View Itens carregado!")
+
+loadstring(game:HttpGet(""))()
