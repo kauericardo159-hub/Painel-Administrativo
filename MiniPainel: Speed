@@ -13,12 +13,12 @@ if lista:FindFirstChild("SpeedControlCard") then
     lista.SpeedControlCard:Destroy()
 end
 
--- 2. CRIAÇÃO DO MINI-PAINEL (Design da Imagem)
+-- 2. CRIAÇÃO DO MINI-PAINEL (Design Aprimorado)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "SpeedControlCard"
-miniPainel.Size = UDim2.new(0.95, 0, 0, 150) -- Altura ajustada para o conteúdo
-miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-miniPainel.BackgroundTransparency = 0.2
+miniPainel.Size = UDim2.new(0.95, 0, 0, 150)
+miniPainel.BackgroundColor3 = Color3.fromRGB(18, 18, 18) -- Mais escuro
+miniPainel.BackgroundTransparency = 0.1
 miniPainel.BorderSizePixel = 0
 miniPainel.Parent = lista
 
@@ -26,43 +26,44 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = miniPainel
 
+-- Stroke com efeito sutil
 local stroke = Instance.new("UIStroke")
-stroke.Thickness = 1.8
-stroke.Color = Color3.new(1, 1, 1)
-stroke.Transparency = 0.8
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(40, 40, 40)
+stroke.Transparency = 0.5
 stroke.Parent = miniPainel
 
 -- Título
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
-title.Text = "Speed"
-title.TextColor3 = Color3.new(1, 1, 1)
+title.Text = "Speed Control"
+title.TextColor3 = Color3.fromRGB(240, 240, 240)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = 16
 title.Parent = miniPainel
 
--- Linha divisória
+-- Linha divisória com degradê sutil
 local line = Instance.new("Frame")
 line.Size = UDim2.new(0.85, 0, 0, 1)
-line.Position = UDim2.new(0.075, 0, 0, 38)
-line.BackgroundColor3 = Color3.new(1, 1, 1)
-line.BackgroundTransparency = 0.7
+line.Position = UDim2.new(0.075, 0, 0, 35)
+line.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 line.BorderSizePixel = 0
 line.Parent = miniPainel
 
--- 3. INPUT DE VALOR (TextBox)
+-- 3. INPUT DE VALOR (TextBox Aprimorado)
 local valueInput = Instance.new("TextBox")
 valueInput.Name = "ValueInput"
-valueInput.Size = UDim2.new(0.4, 0, 0, 40)
+valueInput.Size = UDim2.new(0.4, 0, 0, 45)
 valueInput.Position = UDim2.new(0.075, 0, 0.45, 0)
-valueInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+valueInput.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 valueInput.BorderSizePixel = 0
-valueInput.Text = "16" -- Velocidade padrão
-valueInput.TextColor3 = Color3.new(1, 1, 1)
-valueInput.Font = Enum.Font.GothamMedium
-valueInput.TextSize = 16
-valueInput.PlaceholderText = "Velocidade"
+valueInput.Text = "16"
+valueInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+valueInput.Font = Enum.Font.GothamBold
+valueInput.TextSize = 18
+valueInput.PlaceholderText = "16"
+valueInput.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
 valueInput.Parent = miniPainel
 
 local inputCorner = Instance.new("UICorner")
@@ -71,22 +72,22 @@ inputCorner.Parent = valueInput
 
 local inputStroke = Instance.new("UIStroke")
 inputStroke.Thickness = 1.5
-inputStroke.Color = Color3.new(1, 1, 1)
-inputStroke.Transparency = 0.5
+inputStroke.Color = Color3.fromRGB(60, 60, 60)
 inputStroke.Parent = valueInput
 
--- 4. BOTÕES (Aplicar e Resetar)
+-- 4. BOTÕES (Aplicar e Resetar Aprimorados)
 local function createButton(name, text, color, posY)
     local btn = Instance.new("TextButton")
     btn.Name = name
-    btn.Size = UDim2.new(0.4, 0, 0, 25)
+    btn.Size = UDim2.new(0.4, 0, 0, 28)
     btn.Position = UDim2.new(0.55, 0, posY, 0)
     btn.BackgroundColor3 = color
     btn.Text = text
-    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
+    btn.TextSize = 13
     btn.Parent = miniPainel
+    btn.AutoButtonColor = true
     
     local btnCorner = Instance.new("UICorner")
     btnCorner.CornerRadius = UDim.new(0, 6)
@@ -95,17 +96,24 @@ local function createButton(name, text, color, posY)
     return btn
 end
 
-local applyBtn = createButton("ApplyBtn", "Aplicar Vel.", Color3.fromRGB(0, 150, 0), 0.45)
-local resetBtn = createButton("ResetBtn", "Resetar Vel.", Color3.fromRGB(150, 0, 0), 0.65)
+-- Cores mais vibrantes
+local applyBtn = createButton("ApplyBtn", "Aplicar", Color3.fromRGB(30, 150, 45), 0.45)
+local resetBtn = createButton("ResetBtn", "Resetar", Color3.fromRGB(150, 30, 30), 0.65)
 
 -- 5. LÓGICA DE FUNCIONAMENTO
+local function runSpeedSystem()
+    task.spawn(function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Speed"))()
+        end)
+    end)
+end
+
 applyBtn.MouseButton1Click:Connect(function()
     local speedValue = tonumber(valueInput.Text)
     if speedValue then
-        -- COLOQUE SEU LINK RAW AQUI
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/seu-usuario/seu-repo/main/SYSTEM%3A%20Speed"))()
+        runSpeedSystem()
         print("Aplicando velocidade: " .. speedValue)
-        -- Dica: O seu script de sistema deve ler o valor do TextBox "ValueInput"
     else
         valueInput.Text = "Erro"
         task.wait(1)
@@ -115,12 +123,10 @@ end)
 
 resetBtn.MouseButton1Click:Connect(function()
     valueInput.Text = "16"
-    -- COLOQUE SEU LINK RAW AQUI
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Speed"))()
+    runSpeedSystem()
     print("Velocidade resetada")
 end)
 
--- 6. ANIMAÇÃO DE ENTRADA
-miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
-TweenService:Create(miniPainel, TweenInfo.new(0.7, Enum.EasingStyle.Quart), {Position = UDim2.new(0, 0, 0, 0)}):Play()
-
+-- 6. ANIMAÇÃO DE ENTRADA (Smooth)
+miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
+TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
