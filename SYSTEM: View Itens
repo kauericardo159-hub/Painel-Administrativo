@@ -2,112 +2,142 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 
--- CONFIGURAÇÕES
-local MAX_DISTANCE = 200
-local UPDATE_FREQUENCY = 1/20 -- 20 FPS para lógica (Extremamente otimizado)
+-- CONFIGURAÇÕES OTIMIZADAS
+local MAX_DISTANCE = 100 -- Limite de distância corrigido para 100
+local UPDATE_FREQUENCY = 1/20 -- 20 atualizações por segundo (equilíbrio entre fluidez e performance)
 local heartBeatCounter = 0
 
--- ESTADO GLOBAL (Conectado ao seu MiniPainel)
+-- ESTADO GLOBAL
 _G.ViewItensActive = _G.ViewItensActive or false
 
--- CACHE DE LIMPEZA
+-- CACHE DE ELEMENTOS (Para limpeza rápida)
 local activeHighlights = {}
 local activeUIs = {}
 
--- FUNÇÃO: LIMPEZA
-local function clearItem(obj)
-    if activeHighlights[obj] then activeHighlights[obj]:Destroy(); activeHighlights[obj] = nil end
-    if activeUIs[obj] then activeUIs[obj]:Destroy(); activeUIs[obj] = nil end
+-- FUNÇÃO: LIMPEZA TOTAL E SEGURA
+local function clearItem(obj, handle)
+    if activeHighlights[obj] then 
+        activeHighlights[obj]:Destroy() 
+        activeHighlights[obj] = nil 
+    end
+    if handle and activeUIs[handle] then 
+        activeUIs[handle]:Destroy() 
+        activeUIs[handle] = nil 
+    end
 end
 
--- FUNÇÃO: CRIAR UI PARA ITEM
-local function createItemUI(parent, name)
+-- FUNÇÃO: LIMPEZA FORÇADA (Quando desativa o sistema)
+local function forceFullCleanup()
+    for obj, hl in pairs(activeHighlights) do
+        if hl then hl:Destroy() end
+    end
+    for handle, ui in pairs(activeUIs) do
+        if ui then ui:Destroy() end
+    end
+    table.clear(activeHighlights)
+    table.clear(activeUIs)
+end
+
+-- FUNÇÃO: CRIAR UI DE ITEM OTIMIZADA
+local function createItemUI(handle, name)
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "ItemViewUI"
     billboard.Size = UDim2.new(0, 150, 0, 40)
     billboard.StudsOffset = Vector3.new(0, 2, 0)
     billboard.AlwaysOnTop = true
-    billboard.Parent = parent
+    billboard.LightInfluence = 0
+    billboard.Parent = handle
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.GothamBold
-    label.TextColor3 = Color3.fromRGB(255, 140, 0) -- Laranja
+    label.TextColor3 = Color3.fromRGB(255, 120, 0) -- Laranja vibrante
     label.TextSize = 13
+    label.TextStrokeTransparency = 0.5
+    label.TextStrokeColor3 = Color3.new(0, 0, 0)
     label.RichText = true
     label.Parent = billboard
 
-    activeUIs[parent] = billboard
+    activeUIs[handle] = billboard
     return billboard
 end
 
--- FUNÇÃO: VALIDAR SE É UM ITEM COLETÁVEL REAL
+-- FUNÇÃO: VALIDAR SE ITEM É COLETÁVEL E VISÍVEL
 local function isValidItem(obj)
-    -- Ignora se não for uma Tool ou um Model com Handle
+    -- Filtro de tipo
     if not (obj:IsA("Tool") or (obj:IsA("Model") and obj:FindFirstChild("Handle"))) then return false end
     
-    -- IGNORAR SE ESTIVER COM PLAYER OU BOT
-    if obj:FindFirstAncestorOfClass("Speaker") or obj:FindFirstAncestorOfClass("Character") then return false end
+    local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
+    if not handle then return false end
+    
+    -- FILTRO DE TRANSPARÊNCIA: Ignora itens transparentes (alpha > 0.5)
+    if handle.Transparency > 0.5 then return false end
+
+    -- FILTRO DE "ESTÁ NA MÃO": Ignora se estiver ancestral a um Humanoid
     local root = obj.Parent
-    while root do
+    while root and root ~= workspace do
         if root:FindFirstChildOfClass("Humanoid") then return false end
         root = root.Parent
     end
 
-    -- IGNORAR PORTAS (Filtro por nome comum)
+    -- FILTRO DE PORTAS (Opcional, baseado no seu pedido anterior)
     local name = obj.Name:lower()
     if name:find("door") or name:find("porta") or name:find("gate") then return false end
 
     return true
 end
 
--- LOOP PRINCIPAL
+-- LOOP PRINCIPAL (Heartbeat é melhor para lógica do que RenderStepped)
 RunService.Heartbeat:Connect(function(dt)
+    if not _G.ViewItensActive then
+        -- Se desativou, limpa tudo de uma vez
+        if next(activeHighlights) or next(activeUIs) then
+            forceFullCleanup()
+        end
+        return
+    end
+
     heartBeatCounter = heartBeatCounter + dt
     if heartBeatCounter < UPDATE_FREQUENCY then return end
     heartBeatCounter = 0
 
-    if not _G.ViewItensActive then
-        -- Limpeza total ao desativar
-        for obj, _ in pairs(activeHighlights) do clearItem(obj) end
-        return
-    end
-
-    local char = localPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local character = localPlayer.Character
+    local hrp = character and character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- SCANNER OTIMIZADO
+    -- SCANNER DE ITENS
     for _, obj in pairs(workspace:GetDescendants()) do
-        -- Verifica apenas Tools ou Models que pareçam itens
         if obj:IsA("Tool") or (obj:IsA("Model") and obj:FindFirstChild("Handle")) then
             
             if isValidItem(obj) then
                 local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
-                if handle then
-                    local dist = (hrp.Position - handle.Position).Magnitude
-                    
-                    if dist <= MAX_DISTANCE then
-                        -- Outline Laranja
-                        local hl = activeHighlights[obj]
-                        if not hl then
-                            hl = Instance.new("Highlight")
-                            hl.Name = "ItemHighlight"
-                            hl.FillTransparency = 1
-                            hl.OutlineColor = Color3.fromRGB(255, 120, 0) -- Laranja
-                            hl.Parent = obj
-                            activeHighlights[obj] = hl
-                        end
-
-                        -- UI Nome e Metros
-                        local ui = activeUIs[handle] or createItemUI(handle, obj.Name)
-                        ui.Enabled = true
-                        ui.TextLabel.Text = string.format("📦 %s\n<font color='rgb(180,180,0)'>📏 %dM.</font>", obj.Name, math.floor(dist))
-                    else
-                        clearItem(obj)
+                local dist = (hrp.Position - handle.Position).Magnitude
+                
+                if dist <= MAX_DISTANCE then
+                    -- Aplica/Atualiza Outline Laranja
+                    local hl = activeHighlights[obj]
+                    if not hl then
+                        hl = Instance.new("Highlight")
+                        hl.Name = "ItemHighlight"
+                        hl.FillTransparency = 1
+                        hl.OutlineColor = Color3.fromRGB(255, 100, 0)
+                        hl.OutlineTransparency = 0
+                        hl.Parent = obj
+                        activeHighlights[obj] = hl
                     end
+
+                    -- Atualiza/Cria UI
+                    local ui = activeUIs[handle] or createItemUI(handle, obj.Name)
+                    ui.Enabled = true
+                    ui.TextLabel.Text = string.format("📦 %s\n<font color='rgb(200,200,0)'>📏 %dM.</font>", obj.Name, math.floor(dist))
+                else
+                    clearItem(obj, handle)
                 end
+            else
+                -- Se não é válido (foi pego ou ficou transparente), limpa
+                local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
+                clearItem(obj, handle)
             end
         end
     end
