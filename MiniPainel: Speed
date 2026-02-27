@@ -5,7 +5,7 @@ local player = Players.LocalPlayer
 -- 1. LOCALIZAÇÃO NA LISTA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
-local painel = coreGui:WaitForChild("Panel") -- Ajustado para "Panel" conforme sistema
+local painel = coreGui:WaitForChild("Panel")
 local lista = painel:WaitForChild("ListaOpcoesContainer")
 
 -- Limpeza de segurança
@@ -24,6 +24,7 @@ miniPainel.Parent = lista
 
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 12)
+miniPainel.CornerRadius = UDim.new(0, 12) -- Correção técnica
 corner.Parent = miniPainel
 
 local stroke = Instance.new("UIStroke")
@@ -96,20 +97,19 @@ end
 local applyBtn = createButton("ApplyBtn", "Aplicar", Color3.fromRGB(30, 150, 45), 0.45)
 local resetBtn = createButton("ResetBtn", "Resetar", Color3.fromRGB(150, 30, 30), 0.65)
 
--- 5. LÓGICA DE ENVIO DE COMANDOS (Obedece)
-local function sendCommand(action)
-    task.spawn(function()
-        pcall(function()
-            _G.Action = action -- Define o comando para o sistema
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Speed"))()
-        end)
-    end)
-end
-
+-- 5. LÓGICA DE ENVIO DIRETO (Robusta)
 applyBtn.MouseButton1Click:Connect(function()
     local speedValue = tonumber(valueInput.Text)
     if speedValue then
-        sendCommand("Apply") -- Manda aplicar
+        -- Carrega o sistema se não estiver carregado
+        if not _G.UpdateSpeedTarget then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Speed"))()
+            task.wait(0.2) -- Aguarda carregar
+        end
+        -- Chama a função diretamente
+        if _G.UpdateSpeedTarget then
+            _G.UpdateSpeedTarget(speedValue)
+        end
     else
         valueInput.Text = "Erro"
         task.wait(1)
@@ -119,7 +119,14 @@ end)
 
 resetBtn.MouseButton1Click:Connect(function()
     valueInput.Text = "16"
-    sendCommand("Reset") -- Manda resetar
+    if _G.UpdateSpeedTarget then
+        _G.UpdateSpeedTarget(16)
+    else
+        -- Caso o sistema não tenha sido iniciado ainda
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Speed"))()
+        task.wait(0.2)
+        if _G.UpdateSpeedTarget then _G.UpdateSpeedTarget(16) end
+    end
 end)
 
 -- 6. ANIMAÇÃO DE ENTRADA
