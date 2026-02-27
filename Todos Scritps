@@ -33,6 +33,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 ===============================
 ]]
 
+-- 🟠 Fazendo Upgrade para melhorar o System.
 -- 1. MiniPainel: VIEW PLAYERS & BOTS
 -- FUNÇÃO: Ver posição de Player & Bot no Jogo
 print("🟢 Carregando Sistema View Player & Bot...")
