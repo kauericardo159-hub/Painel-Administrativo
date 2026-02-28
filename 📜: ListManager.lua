@@ -4,7 +4,7 @@ local player = Players.LocalPlayer
 
 --[[ 
 ===========================================================
-       ⚙ GERENCIADOR DA LISTA DE OPÇÕES V4 (ESTILIZADO) ⚙
+       ⚙ GERENCIADOR DA LISTA DE OPÇÕES V6 ⚙
 ===========================================================
 ]]
 
@@ -18,93 +18,108 @@ if painel:FindFirstChild("ListaOpcoesContainer") then
     painel.ListaOpcoesContainer:Destroy()
 end
 
--- 2. CONTAINER CENTRALIZADO (ScrollingFrame)
+-- 2. CONTAINER REPOSICIONADO À DIREITA (ScrollingFrame)
 local listaContainer = Instance.new("ScrollingFrame")
 listaContainer.Name = "ListaOpcoesContainer"
 
--- TAMANHO: Esticado (80% da largura, 75% da altura)
-listaContainer.Size = UDim2.new(0.8, 0, 0.75, 0) 
+-- TAMANHO: Ocupa quase toda a parte direita (ex: 45% largura, 90% altura)
+listaContainer.Size = UDim2.new(0.45, 0, 0.9, 0) 
 
--- POSIÇÃO: Centralizado no painel
-listaContainer.Position = UDim2.new(0.5, 0, 0.55, 0) 
-listaContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+-- POSIÇÃO: Alinhado à direita
+listaContainer.Position = UDim2.new(0.97, 0, 0.5, 0) 
+listaContainer.AnchorPoint = Vector2.new(1, 0.5)
 
 listaContainer.BackgroundTransparency = 1 -- Fundo transparente
 listaContainer.BorderSizePixel = 0
-listaContainer.ScrollBarThickness = 8
--- ScrollBar laranja para combinar
-listaContainer.ScrollBarImageColor3 = Color3.fromRGB(255, 100, 0)
+listaContainer.ScrollBarThickness = 6
+-- ScrollBar branca para combinar com a borda do painel
+listaContainer.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
 listaContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
 listaContainer.ClipsDescendants = true
 listaContainer.ZIndex = painel.ZIndex + 2 -- Garante que fique NA FRENTE
 listaContainer.Parent = painel
 
--- 3. UICORNER & UISTROKE ESTILIZADOS
+-- 3. ESTILIZAÇÃO: UICORNER & DOUBLE STROKE (Cinza + Preto)
 local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(0, 15)
 uiCorner.Parent = listaContainer
 
--- UIStroke LARANJA com Gradient
-local uiStroke = Instance.new("UIStroke")
-uiStroke.Thickness = 3
-uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-uiStroke.Transparency = 0.2
-uiStroke.Parent = listaContainer
+-- ✅ UIStroke CINZA (Borda principal)
+local uiStrokeCinza = Instance.new("UIStroke")
+uiStrokeCinza.Thickness = 3
+uiStrokeCinza.Color = Color3.fromRGB(150, 150, 150) -- Cinza
+uiStrokeCinza.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+uiStrokeCinza.Transparency = 0.5
+uiStrokeCinza.Parent = listaContainer
 
-local strokeGradient = Instance.new("UIGradient")
--- Gradiente Laranja Vibrante
-strokeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 150, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 100, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 0))
-})
-strokeGradient.Rotation = 45
-strokeGradient.Parent = uiStroke
+-- ✅ UIStroke PRETO (Animação de "brilho interno")
+local uiStrokePreto = Instance.new("UIStroke")
+uiStrokePreto.Thickness = 6
+uiStrokePreto.Color = Color3.fromRGB(0, 0, 0) -- Preto
+uiStrokePreto.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+uiStrokePreto.Transparency = 1 -- Inicia invisível
+uiStrokePreto.Parent = listaContainer
 
--- 4. ORGANIZAÇÃO AUTOMÁTICA DOS ITENS (Corrigindo o bug de layout)
+-- 4. ANIMAÇÃO DIFERENTE NO UISTROKE PRETO
+task.spawn(function()
+    while listaContainer.Parent do
+        -- Animação de pulsar da transparência do stroke preto
+        local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+        
+        local fadeOut = TweenService:Create(uiStrokePreto, tweenInfo, {Transparency = 1})
+        local fadeIn = TweenService:Create(uiStrokePreto, tweenInfo, {Transparency = 0.7})
+        
+        fadeIn:Play()
+        fadeIn.Completed:Wait()
+        fadeOut:Play()
+        fadeOut.Completed:Wait()
+    end
+end)
+
+-- 5. ORGANIZAÇÃO AUTOMÁTICA DOS ITENS (UIListLayout)
 local layout = Instance.new("UIListLayout")
 layout.Parent = listaContainer
 layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Padding = UDim.new(0, 15) -- Espaçamento entre botões
+layout.Padding = UDim.new(0, 10) -- Espaçamento entre botões
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 layout.VerticalAlignment = Enum.VerticalAlignment.Top
 
--- Padding Interno para os botões não ficarem colados na borda
+-- Padding Interno
 local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 20)
-padding.PaddingBottom = UDim.new(0, 20)
+padding.PaddingTop = UDim.new(0, 15)
+padding.PaddingBottom = UDim.new(0, 15)
 padding.PaddingLeft = UDim.new(0, 10)
 padding.PaddingRight = UDim.new(0, 10)
 padding.Parent = listaContainer
 
--- 5. LÓGICA DE ANIMAÇÃO DE ENTRADA (Slide + Fade)
+-- 6. LÓGICA DE ANIMAÇÃO DE ENTRADA (Slide + Fade)
 local function animateListItems()
     for _, item in pairs(listaContainer:GetChildren()) do
         if item:IsA("GuiObject") and not item:IsA("UIPadding") and not item:IsA("UIListLayout") then
             local originalPos = item.Position
-            -- Começa deslocado para baixo e invisível
-            item.Position = originalPos + UDim2.new(0, 0, 0, 30)
+            -- Começa deslocado para a direita e invisível
+            item.Position = originalPos + UDim2.new(0, 30, 0, 0)
             item.BackgroundTransparency = 1 
             
-            TweenService:Create(item, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            TweenService:Create(item, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                 Position = originalPos,
-                BackgroundTransparency = 0.3 -- Ajuste conforme o design dos botões
+                BackgroundTransparency = 0.5 
             }):Play()
         end
     end
 end
 
--- 6. AJUSTE DINÂMICO DO CANVAS (Corrige o scroll não funcionar)
+-- 7. AJUSTE DINÂMICO DO CANVAS
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    listaContainer.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 40)
+    listaContainer.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 30)
 end)
 
 -- Sincronização com a abertura do painel
 painel:GetPropertyChangedSignal("Visible"):Connect(function()
     if painel.Visible then
-        task.wait(0.1) -- Delay pequeno para garantir que o painel abriu
+        task.wait(0.1) 
         animateListItems()
     end
 end)
 
-print("✅ Lista V4 Recriada e Estilizada!")
+print("✅ Lista V6 (Direita + Borda Animada) Recriada!")
