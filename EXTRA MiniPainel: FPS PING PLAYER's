@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
 --[[ 
@@ -8,15 +9,17 @@ local player = Players.LocalPlayer
 ===========================================================
 ]]
 
--- 1. LOCALIZAÇÃO NA LISTA EXTRA
+-- 1. LOCALIZAÇÃO E EVENTOS
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3")
 local painel = coreGui:WaitForChild("Panel")
 local extraLista = painel:WaitForChild("ExtraListContainer")
+local remoteEvent = ReplicatedStorage:WaitForChild("UpdateFPSMonitorStatus")
 
 local functionName = "FPSPingCard"
-local saveKey = "FPSPingStatus" -- Nome da configuração salva
-local monitorGuiName = "FPSPingMonitorUI" 
+local monitorGuiName = "FPSPingMonitorUI"
+-- Aguarda o status ser carregado pelo servidor
+local statusValue = player:WaitForChild("FPSMonitorStatus") 
 
 -- Limpeza de duplicatas
 if extraLista:FindFirstChild(functionName) then
@@ -44,7 +47,7 @@ strokeAzul.Color = Color3.fromRGB(0, 50, 150)
 strokeAzul.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 strokeAzul.Parent = miniPainel
 
--- ✅ UIStroke PRETO ANIMADO (Efeito de brilho)
+-- ✅ UIStroke PRETO ANIMADO
 local strokePreto = Instance.new("UIStroke")
 strokePreto.Thickness = 4
 strokePreto.Color = Color3.fromRGB(0, 0, 0)
@@ -77,17 +80,8 @@ title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = miniPainel
 
--- 5. LÓGICA DE SALVAMENTO PERSISTENTE (GetSetting)
-local isActive = false
-local success, savedValue = pcall(function()
-    return player:GetSetting(saveKey)
-end)
-
-if success and savedValue ~= nil then
-    isActive = savedValue
-else
-    isActive = false
-end
+-- 5. LÓGICA DE CLIQUE E ESTADO (Sincronizado)
+local isActive = statusValue.Value -- Começa com o valor carregado do servidor
 
 -- Botão (Switch)
 local btnBase = Instance.new("TextButton")
@@ -101,10 +95,12 @@ btnBase.Parent = miniPainel
 
 Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
 
+-- Stroke do Botão
 local btnStroke = Instance.new("UIStroke")
 btnStroke.Thickness = 2
 btnStroke.Parent = btnBase
 
+-- Knob (Círculo)
 local knob = Instance.new("Frame")
 knob.Size = UDim2.new(0, 19, 0, 19)
 knob.AnchorPoint = Vector2.new(0, 0.5)
@@ -135,25 +131,28 @@ local function UpdateVisual(instant)
     end
 end
 
--- Inicializa visual baseado no estado salvo
+-- Inicializa visual baseado no servidor
 UpdateVisual(true)
 
--- 6. LÓGICA DE CLIQUE, LOADSTRING E SALVAMENTO (SetSetting)
+-- Se o sistema já estiver ativo ao carregar, carrega o loadstring
+if isActive then
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
+end
+
+-- 6. LÓGICA DE CLIQUE
 btnBase.MouseButton1Click:Connect(function()
     isActive = not isActive
-    
-    -- ✅ SALVA O ESTADO NO COMPUTADOR DO JOGADOR
-    pcall(function()
-        player:SetSetting(saveKey, isActive)
-    end)
-    
     UpdateVisual(false)
+    
+    -- Avisa o servidor da mudança
+    remoteEvent:FireServer(isActive)
     
     if isActive then
         print("Ativando Monitor FPS...")
         loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
     else
         print("Desativando Monitor FPS...")
+        
         local existingMonitor = playerGui:FindFirstChild(monitorGuiName)
         if existingMonitor then
             existingMonitor:Destroy()
@@ -161,14 +160,7 @@ btnBase.MouseButton1Click:Connect(function()
     end
 end)
 
--- ✅ 7. VERIFICAÇÃO INICIAL AO ABRIR O PAINEL
-if isActive then
-    -- Se estava salvo como ativado, carrega o sistema automaticamente
-    print("Carregando sistema salvo: Ativado")
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
-end
-
--- 8. ANIMAÇÃO DE ENTRADA DO CARD
+-- 7. ANIMAÇÃO DE ENTRADA
 miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
