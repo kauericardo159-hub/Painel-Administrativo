@@ -2,107 +2,82 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
--- 1. LOCALIZAÇÃO DO PAINEL
+--[[ 
+===========================================================
+       ⚙ GERENCIADOR DE PERFIL V6 (ESTILIZADO) ⚙
+===========================================================
+]]
+
+-- 1. LOCALIZAÇÃO E LIMPEZA
 local playerGui = player:WaitForChild("PlayerGui")
-local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
-local painel = coreGui:WaitForChild("Panel") -- Ajustado para "Panel" conforme sistema
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3")
+local painel = coreGui:WaitForChild("Panel")
 
--- 2. CONTAINER DO PERFIL (Posicionado no Topo Esquerdo)
-local profileArea = painel:FindFirstChild("UserProfileArea")
-if not profileArea then
-    profileArea = Instance.new("Frame")
-    profileArea.Name = "UserProfileArea"
-    profileArea.Size = UDim2.new(0, 280, 0, 70)
-    profileArea.Position = UDim2.new(0, 15, 0, 15)
-    profileArea.BackgroundTransparency = 1
-    profileArea.Parent = painel
+-- Limpa perfil anterior se existir
+if painel:FindFirstChild("ProfileContainer") then
+    painel.ProfileContainer:Destroy()
 end
 
--- 3. FOTO DE PERFIL ESTILIZADA
-local profileImage = profileArea:FindFirstChild("UserImage")
-if not profileImage then
-    profileImage = Instance.new("ImageLabel")
-    profileImage.Name = "UserImage"
-    profileImage.Size = UDim2.new(0, 60, 0, 60)
-    profileImage.Position = UDim2.new(0, 0, 0.5, 0)
-    profileImage.AnchorPoint = Vector2.new(0, 0.5)
-    profileImage.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    profileImage.Parent = profileArea
+-- 2. CONTAINER DO PERFIL (Topo Esquerdo)
+local profileContainer = Instance.new("Frame")
+profileContainer.Name = "ProfileContainer"
+profileContainer.Size = UDim2.new(0, 300, 0, 80) -- Tamanho compacto para o topo
+profileContainer.Position = UDim2.new(0, 20, 0, 20)
+profileContainer.BackgroundTransparency = 1
+profileContainer.ZIndex = painel.ZIndex + 2
+profileContainer.Parent = painel
 
-    local uiCorner = Instance.new("UICorner")
-    uiCorner.CornerRadius = UDim.new(1, 0)
-    uiCorner.Parent = profileImage
+-- 3. FOTO DE PERFIL (Imagem Arredondada)
+local avatarImage = Instance.new("ImageLabel")
+avatarImage.Name = "AvatarImage"
+avatarImage.Size = UDim2.new(0, 60, 0, 60)
+avatarImage.Position = UDim2.new(0, 10, 0.5, 0)
+avatarImage.AnchorPoint = Vector2.new(0, 0.5)
+avatarImage.BackgroundTransparency = 1
+avatarImage.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+avatarImage.ZIndex = profileContainer.ZIndex + 1
+avatarImage.Parent = profileContainer
 
-    -- Bordas da Foto (Branco com brilho)
-    local fStroke = Instance.new("UIStroke")
-    fStroke.Thickness = 2.5
-    fStroke.Color = Color3.new(1, 1, 1)
-    fStroke.Parent = profileImage
+-- UICorner na Foto
+local avatarCorner = Instance.new("UICorner")
+avatarCorner.CornerRadius = UDim.new(1, 0) -- Círculo
+avatarCorner.Parent = avatarImage
+
+-- UIStroke na Foto (Borda Branca)
+local avatarStroke = Instance.new("UIStroke")
+avatarStroke.Thickness = 2
+avatarStroke.Color = Color3.fromRGB(255, 255, 255)
+avatarStroke.Parent = avatarImage
+
+-- 4. NOME DO USUÁRIO (Texto Estilizado)
+local usernameLabel = Instance.new("TextLabel")
+usernameLabel.Name = "UsernameLabel"
+usernameLabel.Size = UDim2.new(1, -90, 1, 0)
+usernameLabel.Position = UDim2.new(0, 80, 0, 0)
+usernameLabel.BackgroundTransparency = 1
+usernameLabel.Text = player.DisplayName
+usernameLabel.Font = Enum.Font.GothamBold
+usernameLabel.TextSize = 22
+usernameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+usernameLabel.ZIndex = profileContainer.ZIndex + 1
+usernameLabel.Parent = profileContainer
+
+-- 5. ANIMAÇÃO DE ENTRADA (Slide suave)
+local function animateProfile()
+    profileContainer.Position = UDim2.new(0, -320, 0, 20) -- Começa fora da tela
+    
+    TweenService:Create(profileContainer, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 20, 0, 20)
+    }):Play()
 end
 
--- 4. FUNÇÃO PARA LABELS PREMIUM (Com Gradiente e Animação)
-local function CreatePremiumLabel(name, pos, text, size, isBold)
-    local label = profileArea:FindFirstChild(name)
-    if not label then
-        label = Instance.new("TextLabel")
-        label.Name = name
-        label.Size = UDim2.new(0, 200, 0, 20)
-        label.BackgroundTransparency = 1
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = profileArea
-        
-        -- UIStroke na fonte para destaque
-        local textStroke = Instance.new("UIStroke")
-        textStroke.Thickness = 1.5
-        textStroke.Color = Color3.new(0, 0, 0)
-        textStroke.Transparency = 0.5
-        textStroke.Parent = label
-
-        -- UIGradient Estiloso (Dourado/Branco para destaque)
-        local textGradient = Instance.new("UIGradient")
-        textGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
-        })
-        textGradient.Rotation = 90
-        textGradient.Parent = label
-    end
-    
-    label.Position = pos
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.Text = text
-    label.Font = isBold and Enum.Font.GothamBold or Enum.Font.Gotham
-    label.TextSize = size
-    
-    return label
-end
-
--- 5. ATUALIZAÇÃO E ANIMAÇÃO
-local function updateAndAnimateProfile()
-    -- ATUALIZAÇÃO: Busca foto, nome e display name atuais
-    profileImage.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
-    local nameLabel = CreatePremiumLabel("NameLabel", UDim2.new(0, 70, 0.3, 0), player.DisplayName, 18, true)
-    local userLabel = CreatePremiumLabel("UserLabel", UDim2.new(0, 70, 0.6, 5), "@" .. player.Name, 13, false)
-    
-    local info = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    
-    -- Animação
-    nameLabel.TextTransparency = 1
-    userLabel.TextTransparency = 1
-    profileImage.ImageTransparency = 1
-    
-    TweenService:Create(profileImage, info, {ImageTransparency = 0}):Play()
-    TweenService:Create(nameLabel, info, {TextTransparency = 0}):Play()
-    TweenService:Create(userLabel, info, {TextTransparency = 0.2}):Play()
-end
-
--- Dispara a atualização quando o painel se torna visível
+-- Sincronização com a abertura do painel
 painel:GetPropertyChangedSignal("Visible"):Connect(function()
     if painel.Visible then
-        updateAndAnimateProfile()
+        task.wait(0.2) 
+        animateProfile()
     end
 end)
 
--- Executa uma vez ao carregar
-updateAndAnimateProfile()
-print("Perfil Premium Atualizado e Estiloso!")
+print("✅ Perfil V6 Carregado!")
