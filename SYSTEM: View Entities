@@ -5,14 +5,14 @@ local localPlayer = Players.LocalPlayer
 -- ==========================================
 -- SISTEMA DE TOGGLE (LIGA/DESLIGA)
 -- ==========================================
-if _G.SystemViewEntitiesConnection then
-    _G.SystemViewEntitiesConnection:Disconnect()
-    _G.SystemViewEntitiesConnection = nil
+local function ClearSystem()
+    if _G.SystemViewEntitiesRenderConn then _G.SystemViewEntitiesRenderConn:Disconnect() _G.SystemViewEntitiesRenderConn = nil end
+    if _G.SystemViewEntitiesAddedConn then _G.SystemViewEntitiesAddedConn:Disconnect() _G.SystemViewEntitiesAddedConn = nil end
     
     if _G.EntitiesCache then
-        for _, visualData in pairs(_G.EntitiesCache) do
-            if visualData.Highlight then visualData.Highlight:Destroy() end
-            if visualData.UI then visualData.UI:Destroy() end
+        for _, vis in pairs(_G.EntitiesCache) do
+            if vis.Highlight then vis.Highlight:Destroy() end
+            if vis.UI then vis.UI:Destroy() end
         end
         table.clear(_G.EntitiesCache)
     end
@@ -21,7 +21,10 @@ if _G.SystemViewEntitiesConnection then
         _G.SystemEntitiesFolder:Destroy()
         _G.SystemEntitiesFolder = nil
     end
-    
+end
+
+if _G.SystemViewEntitiesRenderConn or _G.SystemViewEntitiesAddedConn then
+    ClearSystem()
     print("[SYSTEM] View Entities: DESATIVADO")
     return
 end
@@ -29,11 +32,8 @@ end
 print("[SYSTEM] View Entities: ATIVADO")
 
 -- ==========================================
--- CONFIGURAÇÕES RESTRITAS
+-- CONFIGURAÇÕES E LISTA DE MONSTROS
 -- ==========================================
-local MAX_DISTANCE = 1000 -- Limite solicitado
-local SCAN_INTERVAL = 0.5 -- Varre o mapa a cada 0.5s (Economiza muito FPS)
-
 _G.SystemEntitiesFolder = Instance.new("Folder")
 _G.SystemEntitiesFolder.Name = "EntitiesVisuals"
 _G.SystemEntitiesFolder.Parent = localPlayer:WaitForChild("PlayerGui")
@@ -41,25 +41,49 @@ _G.SystemEntitiesFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 _G.EntitiesCache = {}
 local entityCache = _G.EntitiesCache
 
--- Lista exata de entidades de ataque (Doors & Rooms)
-local ATTACK_ENTITIES = {
-    ["RushNew"] = true, ["Ambush"] = true, ["SeekMoving"] = true, 
-    ["Figure"] = true, ["A60"] = true, ["A120"] = true, 
-    ["A90"] = true, ["Halt"] = true, ["Pandemonium"] = true
+-- Lista de nomes e fragmentos de nomes das entidades ativas (Hotel, Rooms, Mines, Modifiers)
+local ENTITY_KEYWORDS = {
+    "rushmoving", "ambushmoving", "seekmoving", "figure", -- Hotel Padrão
+    "a-60", "a60", "a-90", "a90", "a-120", "a120", -- The Rooms
+    "grumble", "giggler", "gloombat", -- Floor 2 (The Mines)
+    "pandemonium", "blitz", "lookman", "haste", "dread" -- Modificadores e Extras
 }
 
 -- ==========================================
--- FUNÇÕES DE CRIAÇÃO
+-- LÓGICA DE DETECÇÃO IMEDIATA
 -- ==========================================
-local function createEntityVisual(model)
+local function isEntity(obj)
+    if not obj then return false end
+    -- Evita marcar sons, salas ou ragdolls mortos
+    if obj:IsA("Sound") or string.find(string.lower(obj.Name), "ragdoll") or string.find(string.lower(obj.Name), "room") then 
+        return false 
+    end
+    
+    -- Tem que ser Model ou BasePart para ter posição física
+    if not obj:IsA("Model") and not obj:IsA("BasePart") then return false end
+
+    local name = string.lower(obj.Name)
+    for _, kw in ipairs(ENTITY_KEYWORDS) do
+        if string.find(name, kw) then
+            return true
+        end
+    end
+    return false
+end
+
+-- ==========================================
+-- FUNÇÕES DE CRIAÇÃO VISUAL
+-- ==========================================
+local function createEntityVisual(obj)
     local data = {}
     
     local hl = Instance.new("Highlight")
     hl.Name = "EntityESP"
-    hl.FillTransparency = 1 -- Apenas Outline para não poluir
-    hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+    hl.FillTransparency = 0.5
+    hl.FillColor = Color3.fromRGB(255, 0, 0)
+    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
     hl.OutlineTransparency = 0
-    hl.Parent = model
+    hl.Parent = obj
     
     local bg = Instance.new("BillboardGui")
     bg.Name = "EntityInfo"
@@ -74,62 +98,69 @@ local function createEntityVisual(model)
     textLabel.TextSize = 16
     textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
     textLabel.TextStrokeTransparency = 0
+    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     textLabel.RichText = true
     textLabel.Parent = bg
     
     data.Highlight = hl
     data.UI = bg
     data.Label = textLabel
+    data.Obj = obj
     return data
 end
 
--- ==========================================
--- LOOP DE PERFORMANCE
--- ==========================================
-local lastScan = 0
+-- Função que tenta adicionar a entidade ao sistema
+local function tryAddEntity(obj)
+    if isEntity(obj) and not entityCache[obj] then
+        entityCache[obj] = createEntityVisual(obj)
+    end
+end
 
-_G.SystemViewEntitiesConnection = RunService.RenderStepped:Connect(function()
+-- ==========================================
+-- INICIALIZAÇÃO E EVENTOS EM TEMPO REAL
+-- ==========================================
+
+-- 1. Varredura inicial (Pega o Figure ou entidades que já estão no mapa)
+for _, obj in ipairs(workspace:GetDescendants()) do
+    tryAddEntity(obj)
+end
+
+-- 2. DETECÇÃO INSTANTÂNEA (A mágica acontece aqui)
+-- Sempre que o jogo invocar algo no mapa, ele verifica em milissegundos.
+_G.SystemViewEntitiesAddedConn = workspace.DescendantAdded:Connect(function(obj)
+    tryAddEntity(obj)
+end)
+
+-- ==========================================
+-- LOOP DE ATUALIZAÇÃO DE POSIÇÃO E DISTÂNCIA
+-- ==========================================
+_G.SystemViewEntitiesRenderConn = RunService.RenderStepped:Connect(function()
     local char = localPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    
     if not hrp then return end
 
-    -- 1. VARREDURA OTIMIZADA (Não roda todo frame)
-    if tick() - lastScan > SCAN_INTERVAL then
-        lastScan = tick()
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if ATTACK_ENTITIES[obj.Name] and obj:IsA("Model") then
-                local root = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-                if root then
-                    local dist = (hrp.Position - root.Position).Magnitude
-                    if dist <= MAX_DISTANCE then
-                        if not entityCache[obj] then
-                            entityCache[obj] = createEntityVisual(obj)
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    -- 2. ATUALIZAÇÃO DE UI (Roda todo frame para suavidade)
     for obj, vis in pairs(entityCache) do
         if obj and obj.Parent then
-            local root = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+            -- Tenta achar o centro da entidade
+            local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+            
             if root then
                 local dist = (hrp.Position - root.Position).Magnitude
-                if dist <= MAX_DISTANCE then
-                    vis.UI.Adornee = root
-                    vis.UI.Enabled = true
-                    vis.Highlight.Enabled = true
-                    vis.Label.Text = string.format("⚠️ %s ⚠️\n%dm.", obj.Name:upper(), math.floor(dist))
-                else
-                    vis.UI.Enabled = false
-                    vis.Highlight.Enabled = false
+                
+                vis.UI.Adornee = root
+                vis.UI.Enabled = true
+                vis.Label.Text = string.format("⚠️ %s ⚠️\n<font color='#C8C800'>%dm.</font>", obj.Name:upper(), math.floor(dist))
+                
+                -- Impede que o jogo remova o Highlight
+                if vis.Highlight.Parent ~= obj then
+                    vis.Highlight.Parent = obj
                 end
             end
         else
-            vis.UI:Destroy()
-            vis.Highlight:Destroy()
+            -- A entidade foi destruída (passou por você ou foi deletada pelo jogo)
+            if vis.Highlight then vis.Highlight:Destroy() end
+            if vis.UI then vis.UI:Destroy() end
             entityCache[obj] = nil
         end
     end
