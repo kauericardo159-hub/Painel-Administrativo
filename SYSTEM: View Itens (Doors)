@@ -1,0 +1,146 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- ==========================================
+-- SISTEMA DE TOGGLE (LIGA/DESLIGA)
+-- ==========================================
+if _G.SystemViewItensDoorsConnection then
+    _G.SystemViewItensDoorsConnection:Disconnect()
+    _G.SystemViewItensDoorsConnection = nil
+    
+    if _G.ItensDoorsCache then
+        for _, visualData in pairs(_G.ItensDoorsCache) do
+            if visualData.Highlight then visualData.Highlight:Destroy() end
+            if visualData.UI then visualData.UI:Destroy() end
+        end
+        table.clear(_G.ItensDoorsCache)
+    end
+    
+    if _G.SystemItensDoorsFolder then
+        _G.SystemItensDoorsFolder:Destroy()
+        _G.SystemItensDoorsFolder = nil
+    end
+    
+    print("[SYSTEM] View Itens Doors: DESATIVADO")
+    return
+end
+
+print("[SYSTEM] View Itens Doors: ATIVADO")
+
+-- ==========================================
+-- CONFIGURAÇÕES E FILTROS
+-- ==========================================
+_G.SystemItensDoorsFolder = Instance.new("Folder")
+_G.SystemItensDoorsFolder.Name = "DoorsItensVisuals"
+_G.SystemItensDoorsFolder.Parent = localPlayer:WaitForChild("PlayerGui")
+
+_G.ItensDoorsCache = {}
+local itemCache = _G.ItensDoorsCache
+
+-- Itens principais para detectar
+local TARGET_ITENS = {
+    "Key", "Master Key", "LibraryKey", "ElevatorKey", -- Chaves
+    "Lighter", "Flashlight", "Candle", "Bulklight", -- Luz
+    "Vitamins", "Bandage", "Crucifix", "Skeleton Key", -- Utilitários
+    "Gold", "Coin", -- Dinheiro
+    "Battery", "Fuse", "Breaker", -- Puzzles
+    "Shears", "Lockpick", "Book" -- Específicos
+}
+
+-- ==========================================
+-- FUNÇÕES DE CRIAÇÃO VISUAL
+-- ==========================================
+local function createItemVisual(obj)
+    local data = {}
+    
+    -- Highlight azul claro para itens
+    local hl = Instance.new("Highlight")
+    hl.Name = "ItemESP"
+    hl.FillTransparency = 0.6
+    hl.FillColor = Color3.fromRGB(0, 255, 255)
+    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.Parent = obj
+    
+    -- UI de Texto
+    local bg = Instance.new("BillboardGui")
+    bg.Name = "ItemInfo"
+    bg.Size = UDim2.new(0, 150, 0, 40)
+    bg.AlwaysOnTop = true
+    bg.Parent = _G.SystemItensDoorsFolder
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.TextSize = 13
+    textLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+    textLabel.TextStrokeTransparency = 0.5
+    textLabel.RichText = true
+    textLabel.Parent = bg
+    
+    data.Highlight = hl
+    data.UI = bg
+    data.Label = textLabel
+    return data
+end
+
+-- Função para validar se o objeto é um item de Doors
+local function isDoorsItem(obj)
+    -- Verifica se o objeto ou seu Parent imediato está na lista de nomes
+    for _, name in ipairs(TARGET_ITENS) do
+        if obj.Name:find(name) or (obj.Parent and obj.Parent.Name:find(name)) then
+            return true
+        end
+    end
+    -- Detecta itens que ficam dentro de gavetas ou em cima de mesas (comum em Doors)
+    if obj:FindFirstChild("ModuleScript") and obj:IsA("Model") then
+        return true
+    end
+    return false
+end
+
+-- ==========================================
+-- LOOP DE RENDERIZAÇÃO
+-- ==========================================
+_G.SystemViewItensDoorsConnection = RunService.RenderStepped:Connect(function()
+    local char = localPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    -- Varre o Workspace procurando por itens
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if isDoorsItem(obj) then
+            -- Define o ponto central do item (BasePart ou PrimaryPart)
+            local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+            
+            if root then
+                if not itemCache[obj] then
+                    itemCache[obj] = createItemVisual(obj)
+                end
+                
+                local vis = itemCache[obj]
+                local dist = (hrp.Position - root.Position).Magnitude
+                
+                -- Atualiza Posição e Texto
+                vis.UI.Adornee = root
+                vis.Label.Text = string.format("📦 %s\n<font color='#FFFFFF'>[%dm]</font>", obj.Name, math.floor(dist))
+                
+                -- Garante que o Highlight permaneça (Doors costuma resetar modelos)
+                if vis.Highlight.Parent ~= obj then
+                    vis.Highlight.Parent = obj
+                end
+            end
+        end
+    end
+
+    -- Limpa cache de itens coletados ou removidos
+    for obj, vis in pairs(itemCache) do
+        if not obj or not obj.Parent or (obj:IsA("Model") and #obj:GetChildren() == 0) then
+            vis.UI:Destroy()
+            vis.Highlight:Destroy()
+            itemCache[obj] = nil
+        end
+    end
+end)
+
