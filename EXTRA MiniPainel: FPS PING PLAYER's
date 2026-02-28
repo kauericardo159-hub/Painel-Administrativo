@@ -1,11 +1,10 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
-local UserSettings = UserSettings() -- Para salvamento simples no cliente
 
 --[[ 
 ===========================================================
-       ⚙ MINI-PAINEL EXTRA: FPS | PING | PLAYERS ⚙
+       ⚙ MINI-PAINEL EXTRA: FPS | PING | PLAYERS V2 ⚙
 ===========================================================
 ]]
 
@@ -23,11 +22,11 @@ if extraLista:FindFirstChild(functionName) then
     extraLista[functionName]:Destroy()
 end
 
--- 2. CRIAÇÃO DO MINI-PAINEL (Estilo igual ao exemplo 51)
+-- 2. CRIAÇÃO DO MINI-PAINEL (Altura Reduzida)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = functionName
-miniPainel.Size = UDim2.new(0.95, 0, 0, 100) -- Altura ajustada para o botão
-miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- Fundo levemente diferente para destacar
+miniPainel.Size = UDim2.new(0.95, 0, 0, 50) -- ✅ Altura reduzida para 50
+miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 miniPainel.BackgroundTransparency = 0.4
 miniPainel.BorderSizePixel = 0
 miniPainel.ZIndex = extraLista.ZIndex + 1
@@ -65,10 +64,10 @@ task.spawn(function()
     end
 end)
 
--- 4. TÍTULO E TOGGLE
+-- 4. TÍTULO E TOGGLE (Lado a Lado)
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -20, 0, 30)
-title.Position = UDim2.new(0, 10, 0, 5)
+title.Size = UDim2.new(0.6, -10, 1, 0) -- Largura ajustada
+title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "FPS | PING | PLAYERS"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -77,48 +76,29 @@ title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = miniPainel
 
--- Container do Toggle
-local toggleContainer = Instance.new("Frame")
-toggleContainer.Size = UDim2.new(1, 0, 0, 50)
-toggleContainer.Position = UDim2.new(0, 0, 0, 40)
-toggleContainer.BackgroundTransparency = 1
-toggleContainer.Parent = miniPainel
-
-local iconLabel = Instance.new("TextLabel")
-iconLabel.Size = UDim2.new(0, 100, 1, 0)
-iconLabel.Position = UDim2.new(0, 10, 0, 0)
-iconLabel.Text = "📊 Monitor"
-iconLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-iconLabel.Font = Enum.Font.GothamMedium
-iconLabel.TextSize = 14
-iconLabel.TextXAlignment = Enum.TextXAlignment.Left
-iconLabel.BackgroundTransparency = 1
-iconLabel.Parent = toggleContainer
-
--- Lógica de Salvamento e Estado
+-- Lógica de Estado
 local isActive = false
--- Tenta carregar o estado salvo
 if _G[saveKey] ~= nil then
     isActive = _G[saveKey]
 else
-    -- Se não houver global, assume false
     isActive = false
 end
 
--- Botão (Switch)
+-- Botão (Switch) - Reposicionado ao lado do título
 local btnBase = Instance.new("TextButton")
 btnBase.Size = UDim2.new(0, 50, 0, 25)
-btnBase.Position = UDim2.new(1, -60, 0.5, 0)
+btnBase.Position = UDim2.new(1, -60, 0.5, 0) -- Posição à direita
 btnBase.AnchorPoint = Vector2.new(0, 0.5)
 btnBase.Text = ""
 btnBase.AutoButtonColor = false
-btnBase.Parent = toggleContainer
+btnBase.Parent = miniPainel -- Parent ajustado
 
 Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
 
--- Stroke do Botão
+-- ✅ UIStroke BRANCO no Botão (Para destacar do fundo)
 local btnStroke = Instance.new("UIStroke")
 btnStroke.Thickness = 2
+btnStroke.Color = Color3.fromRGB(255, 255, 255)
 btnStroke.Parent = btnBase
 
 -- Knob (Círculo)
@@ -155,18 +135,19 @@ end
 -- Inicializa visual
 UpdateVisual(true)
 
--- 5. LÓGICA DE CLIQUE E loadstring
+-- 5. LÓGICA DE CLIQUE E loadstring (Corrigida)
 btnBase.MouseButton1Click:Connect(function()
     isActive = not isActive
-    _G[saveKey] = isActive -- Salva o estado globalmente
+    _G[saveKey] = isActive 
     UpdateVisual(false)
     
     if isActive then
         -- COLE SEU LOADSTRING AQUI
         print("Ativando Monitor FPS...")
-        -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
     else
         print("Desativando Monitor FPS...")
+        -- Se o script precisar de uma lógica para desativar, coloque aqui
     end
 end)
 
@@ -174,5 +155,4 @@ end)
 miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-print("✅ MiniPainel Extra FPS/Ping Carregado!")
-
+print("✅ MiniPainel Extra FPS/Ping V2 Carregado!")
