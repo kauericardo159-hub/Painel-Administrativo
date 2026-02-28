@@ -2,19 +2,30 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Stats = game:GetService("Stats")
+local TweenService = game:GetService("TweenService")
 
--- ==========================================
--- 1. CRIAÇÃO DA INTERFACE (GUI)
--- ==========================================
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "PainelStatusGui"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true -- Ignora a barra superior do Roblox
+--[[ 
+===========================================================
+       ⚙ SISTEMA DE MONITORAMENTO: FPS | PING | PLAYERS ⚙
+===========================================================
+]]
 
 local player = Players.LocalPlayer
-if player then
-    ScreenGui.Parent = player:WaitForChild("PlayerGui")
+local playerGui = player:WaitForChild("PlayerGui")
+local monitorGuiName = "FPSPingMonitorUI"
+local saveKey = "FPSPingStatus"
+
+-- 1. LIMPEZA DE SEGURANÇA (Para evitar duplicatas)
+if playerGui:FindFirstChild(monitorGuiName) then
+    playerGui[monitorGuiName]:Destroy()
 end
+
+-- 2. CRIAÇÃO DA INTERFACE (GUI)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = monitorGuiName
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- Ignora a barra superior do Roblox
+ScreenGui.Parent = playerGui
 
 -- Frame principal (A "caixa" invisível que vamos arrastar)
 local MainFrame = Instance.new("Frame")
@@ -45,7 +56,7 @@ StatsLabel.Text = "( FPS: -- | Ping: -- | Players: --/-- )"
 StatsLabel.Parent = MainFrame
 
 -- ==========================================
--- 2. SISTEMA DE ARRASTAR (DRAGGABLE)
+-- 3. SISTEMA DE ARRASTAR (DRAGGABLE)
 -- ==========================================
 local dragging, dragInput, dragStart, startPos
 
@@ -84,7 +95,7 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 -- ==========================================
--- 3. LÓGICA DE DADOS (FPS, PING, PLAYERS)
+-- 4. LÓGICA DE DADOS (FPS, PING, PLAYERS)
 -- ==========================================
 -- Função para pegar o Ping do jogador
 local function getPing()
@@ -120,12 +131,20 @@ end
 local lastUpdate = 0
 local frames = 0
 
--- Atualiza as informações a cada frame
-RunService.RenderStepped:Connect(function(dt)
+-- Conexão do loop de atualização
+local runConnection
+runConnection = RunService.RenderStepped:Connect(function(dt)
+    -- ✅ SINCRONIZAÇÃO: Se o estado global for false, destrói a GUI e para o loop
+    if _G[saveKey] == false then
+        if ScreenGui then ScreenGui:Destroy() end
+        if runConnection then runConnection:Disconnect() end
+        return
+    end
+    
     frames = frames + 1
     lastUpdate = lastUpdate + dt
 
-    -- Atualiza os textos a cada 0.5 segundos para o número não ficar piscando freneticamente
+    -- Atualiza os textos a cada 0.5 segundos
     if lastUpdate >= 0.5 then 
         local fps = math.floor(frames / lastUpdate)
         local ping = getPing()
@@ -150,3 +169,4 @@ RunService.RenderStepped:Connect(function(dt)
     end
 end)
 
+print("✅ Monitor FPS/Ping (Sincronizado) Carregado!")
