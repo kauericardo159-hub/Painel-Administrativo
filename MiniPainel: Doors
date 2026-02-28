@@ -1,0 +1,134 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+
+-- 1. LOCALIZAÇÃO NA LISTA
+local playerGui = player:WaitForChild("PlayerGui")
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
+local painel = coreGui:WaitForChild("Painel")
+local lista = painel:WaitForChild("ListaOpcoesContainer")
+
+-- Limpeza de segurança
+if lista:FindFirstChild("DoorsControlCard") then
+    lista.DoorsControlCard:Destroy()
+end
+
+-- 2. CRIAÇÃO DO MINI-PAINEL
+local miniPainel = Instance.new("Frame")
+miniPainel.Name = "DoorsControlCard"
+miniPainel.Size = UDim2.new(0.95, 0, 0, 115) -- Altura otimizada para 3 botões
+miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+miniPainel.BackgroundTransparency = 0.2
+miniPainel.BorderSizePixel = 0
+miniPainel.Parent = lista
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = miniPainel
+
+-- Borda Laranja conforme a imagem
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(255, 145, 0) -- Laranja Doors
+stroke.Transparency = 0.3
+stroke.Parent = miniPainel
+
+-- Título "Doors"
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundTransparency = 1
+title.Text = "Doors"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.Parent = miniPainel
+
+-- Linha divisória
+local line = Instance.new("Frame")
+line.Size = UDim2.new(0.4, 0, 0, 1)
+line.Position = UDim2.new(0.3, 0, 0, 32)
+line.BackgroundColor3 = Color3.fromRGB(255, 145, 0)
+line.BorderSizePixel = 0
+line.Parent = miniPainel
+
+-- 3. FUNÇÃO PARA CRIAR OS TOGGLES (Igual ao View Player)
+local function CreateToggle(name, labelText, posX, loadstringFunction)
+    local container = Instance.new("Frame")
+    container.Name = name .. "Container"
+    container.Size = UDim2.new(0.3, 0, 0, 65)
+    container.Position = UDim2.new(posX, 0, 0.65, 0)
+    container.AnchorPoint = Vector2.new(0.5, 0.5)
+    container.BackgroundTransparency = 1
+    container.Parent = miniPainel
+
+    local iconLabel = Instance.new("TextLabel")
+    iconLabel.Size = UDim2.new(1, 0, 0, 20)
+    iconLabel.Position = UDim2.new(0, 0, -0.1, 0)
+    iconLabel.Text = labelText
+    iconLabel.TextColor3 = Color3.new(1, 1, 1)
+    iconLabel.Font = Enum.Font.GothamMedium
+    iconLabel.TextSize = 12
+    iconLabel.TextWrapped = true
+    iconLabel.BackgroundTransparency = 1
+    iconLabel.Parent = container
+
+    -- Base do Switch
+    local btnBase = Instance.new("TextButton")
+    btnBase.Size = UDim2.new(0, 50, 0, 22)
+    btnBase.Position = UDim2.new(0.5, 0, 0.6, 0)
+    btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
+    btnBase.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Vermelho desligado
+    btnBase.Text = ""
+    btnBase.AutoButtonColor = false
+    btnBase.Parent = container
+
+    Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
+    
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Thickness = 1.5
+    btnStroke.Color = Color3.fromRGB(255, 145, 0)
+    btnStroke.Transparency = 0.5
+    btnStroke.Parent = btnBase
+
+    -- Knob (Bolinha)
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 18, 0, 18)
+    knob.Position = UDim2.new(0.1, 0, 0.5, 0)
+    knob.AnchorPoint = Vector2.new(0, 0.5)
+    knob.BackgroundColor3 = Color3.new(1, 1, 1)
+    knob.Parent = btnBase
+    Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+    -- Lógica de Clique
+    local active = false
+    btnBase.MouseButton1Click:Connect(function()
+        active = not active
+        
+        local targetPos = active and UDim2.new(0.9, -18, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
+        local targetColor = active and Color3.fromRGB(0, 160, 0) or Color3.fromRGB(150, 0, 0)
+
+        TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
+        TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+
+        task.spawn(loadstringFunction)
+    end)
+end
+
+-- 4. CHAMADA DOS BOTÕES (Adicione seus links dentro das aspas)
+CreateToggle("ViewEntities", "View Entities", 0.18, function()
+    loadstring(game:HttpGet(""))()
+end)
+
+CreateToggle("ViewItems", "View Itens", 0.5, function()
+    loadstring(game:HttpGet(""))()
+end)
+
+CreateToggle("EntityAlert", "Entity Alert", 0.82, function()
+    loadstring(game:HttpGet(""))()
+end)
+
+-- 5. ANIMAÇÃO DE ENTRADA
+miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
+TweenService:Create(miniPainel, TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+
+print("MiniPainel Doors criado com sucesso!")
