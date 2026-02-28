@@ -24,8 +24,8 @@ screenGui.Parent = playerGui
 -- 3. PAINEL PRINCIPAL
 local painel = Instance.new("Frame")
 painel.Name = "Panel" -- Nome esperado pelos scripts de perfil/botão
-painel.Size = UDim2.new(0, 750, 0, 450) -- Ligeiramente maior
-painel.Position = UDim2.new(0.5, 0, 1.5, 0) -- Inicia abaixo
+painel.Size = UDim2.new(0, 750, 0, 450) -- Ligeiramente maior para detalhamento
+painel.Position = UDim2.new(0.5, 0, 1.5, 0) -- Inicia abaixo para animação
 painel.AnchorPoint = Vector2.new(0.5, 0.5)
 painel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 painel.BackgroundTransparency = 0.1
@@ -50,7 +50,7 @@ painelGradient.Parent = painel
 
 -- 4. REFORMULAÇÃO DOS UISTROKES (Bordas Estilosas)
 
--- Borda Interna (Sombra)
+-- Borda Interna (Sombra para dar profundidade)
 local strokeInterno = Instance.new("UIStroke")
 strokeInterno.Thickness = 5
 strokeInterno.Color = Color3.new(0, 0, 0)
@@ -65,7 +65,7 @@ strokeExterno.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 strokeExterno.Parent = painel
 
 local strokeGradient = Instance.new("UIGradient")
--- Cores neon para a borda (ciano e branco)
+-- Cores neon para a borda (ciano e branco para contraste)
 strokeGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
@@ -77,7 +77,7 @@ strokeGradient.Parent = strokeExterno
 local function startStrokeAnimation()
     task.spawn(function()
         while painel.Parent do
-            -- Anima o deslocamento do gradiente
+            -- Anima o deslocamento do gradiente para criar efeito de movimento na borda
             local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
             local tween = TweenService:Create(strokeGradient, tweenInfo, {Offset = Vector2.new(1, 1)})
             strokeGradient.Offset = Vector2.new(-1, -1)
@@ -89,7 +89,7 @@ local function startStrokeAnimation()
             tweenBack:Play()
             tweenBack.Completed:Wait()
         end
-    end)
+    end
 end
 startStrokeAnimation()
 
@@ -97,11 +97,11 @@ startStrokeAnimation()
 local listaContainer = Instance.new("ScrollingFrame")
 listaContainer.Name = "ListaOpcoesContainer"
 listaContainer.Size = UDim2.new(0, 380, 0, 300) 
-listaContainer.Position = UDim2.new(1, -25, 0.55, 0) -- Mais baixo e à direita
+listaContainer.Position = UDim2.new(1, -25, 0.55, 0) -- Abaixado e à direita
 listaContainer.AnchorPoint = Vector2.new(1, 0.5)
 listaContainer.BackgroundTransparency = 1
 listaContainer.ScrollBarThickness = 4
-listaContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 255) -- Cor da scrollbar
+listaContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 255) -- Cor da scrollbar combinando com a borda
 listaContainer.BorderSizePixel = 0
 listaContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
 listaContainer.Parent = painel
@@ -111,4 +111,4 @@ layout.Parent = listaContainer
 layout.Padding = UDim.new(0, 15)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-print("Painel Premium recriado com Gradientes e Bordas Animadas!")
+print("✅ Painel Premium V3 recriado com Gradientes e Bordas Animadas!")
