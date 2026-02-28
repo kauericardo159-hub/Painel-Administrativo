@@ -29,8 +29,11 @@ end
 print("[SYSTEM] View Entities: ATIVADO")
 
 -- ==========================================
--- CONFIGURAÇÕES E FILTROS
+-- CONFIGURAÇÕES RESTRITAS
 -- ==========================================
+local MAX_DISTANCE = 1000 -- Limite solicitado
+local SCAN_INTERVAL = 0.5 -- Varre o mapa a cada 0.5s (Economiza muito FPS)
+
 _G.SystemEntitiesFolder = Instance.new("Folder")
 _G.SystemEntitiesFolder.Name = "EntitiesVisuals"
 _G.SystemEntitiesFolder.Parent = localPlayer:WaitForChild("PlayerGui")
@@ -38,34 +41,30 @@ _G.SystemEntitiesFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 _G.EntitiesCache = {}
 local entityCache = _G.EntitiesCache
 
--- Lista de nomes comuns de entidades (Doors & The Rooms)
-local ENTITY_NAMES = {
-    "Rush", "Ambush", "Eyes", "Screech", "Halt", "Seek", "Figure", "Glitch", "Jack", "Timothy", "Hide", "Dupe", -- Doors
-    "A-60", "A-120", "A-90", -- The Rooms
-    "Dread", "Lookman", "Haste", "Pandemonium", "HaltMoving" -- Extras/Hard Mode
+-- Lista exata de entidades de ataque (Doors & Rooms)
+local ATTACK_ENTITIES = {
+    ["RushNew"] = true, ["Ambush"] = true, ["SeekMoving"] = true, 
+    ["Figure"] = true, ["A60"] = true, ["A120"] = true, 
+    ["A90"] = true, ["Halt"] = true, ["Pandemonium"] = true
 }
 
 -- ==========================================
--- FUNÇÕES DE CRIAÇÃO VISUAL
+-- FUNÇÕES DE CRIAÇÃO
 -- ==========================================
 local function createEntityVisual(model)
     local data = {}
     
-    -- Outline Vermelho Intenso
     local hl = Instance.new("Highlight")
     hl.Name = "EntityESP"
-    hl.FillTransparency = 0.5
-    hl.FillColor = Color3.fromRGB(255, 0, 0)
-    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.FillTransparency = 1 -- Apenas Outline para não poluir
+    hl.OutlineColor = Color3.fromRGB(255, 0, 0)
     hl.OutlineTransparency = 0
     hl.Parent = model
     
-    -- UI de Texto
     local bg = Instance.new("BillboardGui")
     bg.Name = "EntityInfo"
     bg.Size = UDim2.new(0, 200, 0, 50)
     bg.AlwaysOnTop = true
-    bg.LightInfluence = 0
     bg.Parent = _G.SystemEntitiesFolder
     
     local textLabel = Instance.new("TextLabel")
@@ -75,7 +74,6 @@ local function createEntityVisual(model)
     textLabel.TextSize = 16
     textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
     textLabel.TextStrokeTransparency = 0
-    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     textLabel.RichText = true
     textLabel.Parent = bg
     
@@ -85,66 +83,54 @@ local function createEntityVisual(model)
     return data
 end
 
--- Função para validar se o objeto é uma entidade válida
-local function isValidEntity(obj)
-    -- Filtro anti-Pressure (Garante que não detecte nada desse jogo)
-    if obj:FindFirstChild("PressureID") or obj.Name:find("Sebastian") then return false end
-    
-    -- Verifica se o nome está na lista ou se tem características de entidade de Doors
-    for _, name in ipairs(ENTITY_NAMES) do
-        if obj.Name == name or obj.Name:find(name) then
-            return true
-        end
-    end
-    
-    -- Detecção por Humanoid (para entidades customizadas) que não são Players
-    if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
-        return true
-    end
-    
-    return false
-end
+-- ==========================================
+-- LOOP DE PERFORMANCE
+-- ==========================================
+local lastScan = 0
 
--- ==========================================
--- LOOP DE RENDERIZAÇÃO (ESP INFINITA)
--- ==========================================
 _G.SystemViewEntitiesConnection = RunService.RenderStepped:Connect(function()
     local char = localPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- Varre o Workspace em busca de entidades
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if isValidEntity(obj) then
-            local root = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChildWhichIsA("BasePart")) or obj
-            
-            if root and root:IsA("BasePart") then
-                if not entityCache[obj] then
-                    entityCache[obj] = createEntityVisual(obj)
-                end
-                
-                local vis = entityCache[obj]
-                local dist = (hrp.Position - root.Position).Magnitude
-                
-                -- Atualiza Posição e Texto
-                vis.UI.Adornee = root
-                vis.Label.Text = string.format("⚠️ %s ⚠️\n<font color='#C8C800'>%dm.</font>", obj.Name:upper(), math.floor(dist))
-                
-                -- Garante que o Highlight permaneça
-                if vis.Highlight.Parent ~= obj then
-                    vis.Highlight.Parent = obj
+    -- 1. VARREDURA OTIMIZADA (Não roda todo frame)
+    if tick() - lastScan > SCAN_INTERVAL then
+        lastScan = tick()
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if ATTACK_ENTITIES[obj.Name] and obj:IsA("Model") then
+                local root = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                if root then
+                    local dist = (hrp.Position - root.Position).Magnitude
+                    if dist <= MAX_DISTANCE then
+                        if not entityCache[obj] then
+                            entityCache[obj] = createEntityVisual(obj)
+                        end
+                    end
                 end
             end
         end
     end
 
-    -- Limpa o cache de entidades que sumiram do mapa
+    -- 2. ATUALIZAÇÃO DE UI (Roda todo frame para suavidade)
     for obj, vis in pairs(entityCache) do
-        if not obj or not obj.Parent then
+        if obj and obj.Parent then
+            local root = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+            if root then
+                local dist = (hrp.Position - root.Position).Magnitude
+                if dist <= MAX_DISTANCE then
+                    vis.UI.Adornee = root
+                    vis.UI.Enabled = true
+                    vis.Highlight.Enabled = true
+                    vis.Label.Text = string.format("⚠️ %s ⚠️\n%dm.", obj.Name:upper(), math.floor(dist))
+                else
+                    vis.UI.Enabled = false
+                    vis.Highlight.Enabled = false
+                end
+            end
+        else
             vis.UI:Destroy()
             vis.Highlight:Destroy()
             entityCache[obj] = nil
         end
     end
 end)
-
