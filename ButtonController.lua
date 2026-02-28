@@ -8,7 +8,11 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- ==========================================
 -- CONFIGURAÇÕES DO BOTÃO
 -- ==========================================
-local BUTTON_ID = "rbxassetid://15188057059" -- <--- COLOQUE SEU ID DE IMAGEM AQUI (ex: rbxassetid://12345678)
+-- Imagem quando o painel está FECHADO
+local BUTTON_ID_CLOSED = "rbxassetid://15188057059" 
+-- Imagem quando o painel está ABERTO (Coloque um ID diferente aqui se quiser mudar o ícone ao abrir)
+local BUTTON_ID_OPEN = "rbxassetid://15188057059" 
+
 local MENU_NAME = "InterfaceMenu_V3"
 local SAVE_NAME = "PremiumMenuPos"
 local BUTTON_SIZE = 60 -- Quadrado
@@ -46,15 +50,14 @@ else
 end
 
 mainButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-mainButton.Image = BUTTON_ID
--- ATUALIZAÇÃO AQUI: Garante que a imagem preencha todo o espaço
+mainButton.Image = BUTTON_ID_CLOSED
 mainButton.ScaleType = Enum.ScaleType.Crop 
 mainButton.AutoButtonColor = false
 mainButton.Parent = screenGui
 
 -- Estilização
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12) -- Mais arredondado
+corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = mainButton
 
 local stroke = Instance.new("UIStroke")
@@ -76,10 +79,8 @@ gradient.Parent = mainButton
 -- 3. LÓGICA DE ARRRASTAR (Segurar 3s)
 -- ==========================================
 local dragging = false
-local dragInput
 local dragStart
 local startPos
-local holdTimer = 0
 local isDraggingMode = false
 
 mainButton.InputBegan:Connect(function(input)
@@ -87,14 +88,12 @@ mainButton.InputBegan:Connect(function(input)
         dragging = true
         dragStart = input.Position
         startPos = mainButton.Position
-        holdTimer = tick()
+        local holdTimer = tick()
         
-        -- Inicia verificação de segurar
         task.spawn(function()
             while dragging and not isDraggingMode do
                 if tick() - holdTimer >= 3 then
                     isDraggingMode = true
-                    -- Efeito visual de que está arrastável
                     TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
                 end
                 task.wait()
@@ -116,7 +115,6 @@ mainButton.InputEnded:Connect(function(input)
         
         if isDraggingMode then
             isDraggingMode = false
-            -- Salva a posição após arrastar
             local pos = mainButton.Position
             pcall(function() writefile(SAVE_NAME..".json", game:GetService("HttpService"):JSONEncode(pos)) end)
             TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15, 15, 15)}):Play()
@@ -132,10 +130,10 @@ local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection
 
 local function toggleUI()
     local coreGui = playerGui:FindFirstChild("SistemaPainel_V3")
-    local painel = coreGui and coreGui:FindFirstChild("Painel")
+    local painel = coreGui and coreGui:FindFirstChild("Panel")
     
     if not painel then return end
-    if isDraggingMode then return end -- Não abre se estiver arrastando
+    if isDraggingMode then return end
 
     isOpen = not isOpen
 
@@ -145,11 +143,17 @@ local function toggleUI()
         TweenService:Create(painel, tweenInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
         TweenService:Create(blurEffect, tweenInfo, {Size = 20}):Play()
         TweenService:Create(stroke, tweenInfo, {Color = Color3.fromRGB(255, 50, 50)}):Play()
+        
+        -- Troca a imagem para o estado aberto
+        mainButton.Image = BUTTON_ID_OPEN
     else
         local closeTween = TweenService:Create(painel, tweenInfo, {Position = UDim2.new(0.5, 0, 1.5, 0)})
         closeTween:Play()
         TweenService:Create(blurEffect, tweenInfo, {Size = 0}):Play()
         TweenService:Create(stroke, tweenInfo, {Color = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        -- Troca a imagem para o estado fechado
+        mainButton.Image = BUTTON_ID_CLOSED
         
         closeTween.Completed:Connect(function()
             if not isOpen then painel.Visible = false end
