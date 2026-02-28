@@ -2,10 +2,16 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
+--[[ 
+===========================================================
+       ⚙ GERENCIADOR DO MINI-PAINEL V9 (CORES) ⚙
+===========================================================
+]]
+
 -- 1. LOCALIZAÇÃO NA LISTA
 local playerGui = player:WaitForChild("PlayerGui")
-local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
-local painel = coreGui:WaitForChild("Painel")
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3")
+local painel = coreGui:WaitForChild("Panel")
 local lista = painel:WaitForChild("ListaOpcoesContainer")
 
 -- Limpeza de segurança para evitar duplicatas ao recarregar
@@ -13,109 +19,141 @@ if lista:FindFirstChild("ViewControlCard") then
     lista.ViewControlCard:Destroy()
 end
 
--- 2. CRIAÇÃO DO MINI-PAINEL (Design Elegante)
+-- 2. CRIAÇÃO DO MINI-PAINEL (Design Elegante e Moderno)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "ViewControlCard"
-miniPainel.Size = UDim2.new(0.95, 0, 0, 115) -- Altura otimizada
+miniPainel.Size = UDim2.new(0.95, 0, 0, 130)
 miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-miniPainel.BackgroundTransparency = 0.2
+miniPainel.BackgroundTransparency = 0.5 
 miniPainel.BorderSizePixel = 0
+-- Garante que fique acima dos itens da lista
+miniPainel.ZIndex = lista.ZIndex + 1 
 miniPainel.Parent = lista
 
+-- UICorner no MiniPainel
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = miniPainel
 
+-- UIStroke Estiloso em volta do MiniPainel (Cinza)
 local stroke = Instance.new("UIStroke")
-stroke.Thickness = 1.8
-stroke.Color = Color3.new(1, 1, 1)
-stroke.Transparency = 0.8
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(100, 100, 100)
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Parent = miniPainel
 
 -- Título Estilizado
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
-title.Text = "View Player & Bot"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 16
+title.Text = "VIEWER CONTROLS"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 18
+title.ZIndex = miniPainel.ZIndex + 1
 title.Parent = miniPainel
 
--- Linha divisória fina abaixo do título
+-- Linha divisória
 local line = Instance.new("Frame")
-line.Size = UDim2.new(0.85, 0, 0, 1)
-line.Position = UDim2.new(0.075, 0, 0, 38)
-line.BackgroundColor3 = Color3.new(1, 1, 1)
-line.BackgroundTransparency = 0.7
+line.Size = UDim2.new(0.85, 0, 0, 2)
+line.Position = UDim2.new(0.5, 0, 0, 35)
+line.AnchorPoint = Vector2.new(0.5, 0)
+line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 line.BorderSizePixel = 0
+line.ZIndex = miniPainel.ZIndex + 1
 line.Parent = miniPainel
 
--- 3. FUNÇÃO DE CRIAÇÃO DO TOGGLE
+-- Versão V2 no Canto Inferior Direito
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Size = UDim2.new(0, 40, 0, 20)
+versionLabel.Position = UDim2.new(1, -45, 1, -25)
+versionLabel.BackgroundTransparency = 1
+versionLabel.Text = "V2"
+versionLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+versionLabel.Font = Enum.Font.GothamBold
+versionLabel.TextSize = 12
+versionLabel.TextXAlignment = Enum.TextXAlignment.Right
+versionLabel.ZIndex = miniPainel.ZIndex + 1
+versionLabel.Parent = miniPainel
+
+-- 3. FUNÇÃO DE CRIAÇÃO DO TOGGLE (Cores Solicitadas)
 local function CreateToggle(name, labelText, posX, loadstringFunction)
     local container = Instance.new("Frame")
     container.Name = name .. "Container"
     container.Size = UDim2.new(0, 140, 0, 65)
-    container.Position = UDim2.new(posX, 0, 0.72, 0)
+    container.Position = UDim2.new(posX, 0, 0.65, 0)
     container.AnchorPoint = Vector2.new(0.5, 0.5)
     container.BackgroundTransparency = 1
+    container.ZIndex = miniPainel.ZIndex + 1
     container.Parent = miniPainel
 
     local iconLabel = Instance.new("TextLabel")
     iconLabel.Size = UDim2.new(1, 0, 0, 25)
     iconLabel.Position = UDim2.new(0, 0, -0.1, 0)
     iconLabel.Text = labelText
-    iconLabel.TextColor3 = Color3.new(1, 1, 1)
-    iconLabel.Font = Enum.Font.GothamMedium
-    iconLabel.TextSize = 15
+    iconLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    iconLabel.Font = Enum.Font.GothamBold
+    iconLabel.TextSize = 16
     iconLabel.BackgroundTransparency = 1
+    iconLabel.ZIndex = miniPainel.ZIndex + 1
     iconLabel.Parent = container
+
+    -- Cores configuráveis
+    local colorInactiveBase = Color3.fromRGB(100, 0, 0) -- Red Escuro
+    local colorInactiveStroke = Color3.fromRGB(255, 0, 0) -- Red Forte
+    local colorActiveBase = Color3.fromRGB(0, 80, 0) -- Verde Escuro
+    local colorActiveStroke = Color3.fromRGB(0, 255, 0) -- Verde Forte
 
     -- Base do Botão (Switch)
     local btnBase = Instance.new("TextButton")
-    btnBase.Size = UDim2.new(0, 58, 0, 26)
-    btnBase.Position = UDim2.new(0.5, 0, 0.65, 0)
+    btnBase.Size = UDim2.new(0, 60, 0, 30)
+    btnBase.Position = UDim2.new(0.5, 0, 0.7, 0)
     btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
-    btnBase.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Inicia Vermelho
+    btnBase.BackgroundColor3 = colorInactiveBase -- ✅ Inicia Vermelho Escuro
     btnBase.Text = ""
     btnBase.AutoButtonColor = false
+    btnBase.ZIndex = miniPainel.ZIndex + 1
     btnBase.Parent = container
 
     Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
     
+    -- ✅ UIStroke RED FORTE (Desativado)
     local btnStroke = Instance.new("UIStroke")
-    btnStroke.Thickness = 1.6
-    btnStroke.Color = Color3.new(1, 1, 1)
-    btnStroke.Transparency = 0.6
+    btnStroke.Thickness = 2
+    btnStroke.Color = colorInactiveStroke
+    btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     btnStroke.Parent = btnBase
 
     -- Círculo Deslizante (Knob)
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 20, 0, 20)
+    knob.Size = UDim2.new(0, 24, 0, 24)
     knob.Position = UDim2.new(0.1, 0, 0.5, 0)
     knob.AnchorPoint = Vector2.new(0, 0.5)
-    knob.BackgroundColor3 = Color3.new(1, 1, 1)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.ZIndex = btnBase.ZIndex + 1
     knob.Parent = btnBase
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    -- LÓGICA DE CLIQUE (Visual + Execução Externa)
-    local isLoaded = false
+    -- LÓGICA DE CLIQUE (Visual + Execução Corrigida)
+    local isActive = false
     btnBase.MouseButton1Click:Connect(function()
-        isLoaded = not isLoaded
+        isActive = not isActive
         
-        -- Animação Visual
-        local targetPos = isLoaded and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
-        local targetColor = isLoaded and Color3.fromRGB(0, 160, 0) or Color3.fromRGB(150, 0, 0)
+        -- Animação Visual e Troca de Cores
+        local targetPos = isActive and UDim2.new(0.9, -22, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
+        local targetBaseColor = isActive and colorActiveBase or colorInactiveBase
+        local targetStrokeColor = isActive and colorActiveStroke or colorInactiveStroke
 
         TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
-        TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+        TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetBaseColor}):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = targetStrokeColor}):Play()
 
-        -- Executa o link no background sempre que clicar (para Ligar E Desligar)
+        -- Executa a função
         task.spawn(loadstringFunction)
     end)
 end
 
--- 4. CHAMADA DOS TOGGLES (Cole seus links dentro das aspas)
+-- 4. CHAMADA DOS TOGGLES
 CreateToggle("PlayerView", "👤 Player", 0.3, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"))()
 end)
@@ -124,8 +162,9 @@ CreateToggle("BotView", "🤖 Bot", 0.7, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"))()
 end)
 
--- 5. ANIMAÇÃO DE ENTRADA (Slide-in)
-miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
-TweenService:Create(miniPainel, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+-- 5. ANIMAÇÃO DE ENTRADA
+miniPainel.Position = UDim2.new(1.2, 0, 0.05, 0)
+TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.025, 0, 0.05, 0)}):Play()
 
-print("MiniPainel View Player & Bot Otimizado com Sucesso!")
+print("✅ MiniPainel View V9 (Cores Corrigidas) Carregado!")
+
