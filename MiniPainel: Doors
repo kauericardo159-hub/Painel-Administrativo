@@ -124,7 +124,7 @@ CreateToggle("ViewItems", "View Itens", 0.5, function()
 end)
 
 CreateToggle("EntityAlert", "Entity Alert", 0.82, function()
-    loadstring(game:HttpGet(""))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Entity%20Alert"))()
 end)
 
 -- 5. ANIMAÇÃO DE ENTRADA
