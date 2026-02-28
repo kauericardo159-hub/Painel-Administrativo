@@ -22,10 +22,10 @@ if extraLista:FindFirstChild(functionName) then
     extraLista[functionName]:Destroy()
 end
 
--- 2. CRIAÇÃO DO MINI-PAINEL (Altura Reduzida)
+-- 2. CRIAÇÃO DO MINI-PAINEL (Design Compacto)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = functionName
-miniPainel.Size = UDim2.new(0.95, 0, 0, 50) -- ✅ Altura reduzida para 50
+miniPainel.Size = UDim2.new(0.95, 0, 0, 50) -- ✅ Altura reduzida para ficar compacto
 miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 miniPainel.BackgroundTransparency = 0.4
 miniPainel.BorderSizePixel = 0
@@ -33,7 +33,7 @@ miniPainel.ZIndex = extraLista.ZIndex + 1
 miniPainel.Parent = extraLista
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
+corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = miniPainel
 
 -- ✅ UIStroke AZUL ESCURO
@@ -64,49 +64,46 @@ task.spawn(function()
     end
 end)
 
--- 4. TÍTULO E TOGGLE (Lado a Lado)
+-- 4. TÍTULO (Posicionado à esquerda)
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0.6, -10, 1, 0) -- Largura ajustada
+title.Size = UDim2.new(0.5, 0, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "FPS | PING | PLAYERS"
+title.Text = "FPS | PING | P." -- Texto encurtado para caber
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = miniPainel
 
--- Lógica de Estado
-local isActive = false
-if _G[saveKey] ~= nil then
-    isActive = _G[saveKey]
-else
-    isActive = false
-end
+-- 5. LÓGICA DE SALVAMENTO E ESTADO
+-- Nota: _G só salva enquanto o jogo estiver aberto. 
+-- Para salvar entre sessões, seria necessário DataStoreServer (não acessível por LocalScript)
+local isActive = _G[saveKey] or false
 
--- Botão (Switch) - Reposicionado ao lado do título
+-- Botão (Switch) - ✅ Agora ao lado do título
 local btnBase = Instance.new("TextButton")
 btnBase.Size = UDim2.new(0, 50, 0, 25)
-btnBase.Position = UDim2.new(1, -60, 0.5, 0) -- Posição à direita
+btnBase.Position = UDim2.new(1, -60, 0.5, 0) -- ✅ Posicionado à direita dentro do card
 btnBase.AnchorPoint = Vector2.new(0, 0.5)
 btnBase.Text = ""
 btnBase.AutoButtonColor = false
-btnBase.Parent = miniPainel -- Parent ajustado
+btnBase.ZIndex = miniPainel.ZIndex + 2
+btnBase.Parent = miniPainel
 
 Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
 
--- ✅ UIStroke BRANCO no Botão (Para destacar do fundo)
+-- Stroke do Botão (UIStroke no botão como solicitado)
 local btnStroke = Instance.new("UIStroke")
 btnStroke.Thickness = 2
-btnStroke.Color = Color3.fromRGB(255, 255, 255)
 btnStroke.Parent = btnBase
 
 -- Knob (Círculo)
 local knob = Instance.new("Frame")
 knob.Size = UDim2.new(0, 19, 0, 19)
-knob.Position = isActive and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
 knob.AnchorPoint = Vector2.new(0, 0.5)
 knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+knob.ZIndex = btnBase.ZIndex + 1
 knob.Parent = btnBase
 Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
@@ -126,32 +123,31 @@ local function UpdateVisual(instant)
         btnBase.BackgroundColor3 = targetBaseColor
         btnStroke.Color = targetStrokeColor
     else
-        TweenService:Create(knob, TweenInfo.new(0.3), {Position = targetPos}):Play()
-        TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetBaseColor}):Play()
-        TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = targetStrokeColor}):Play()
+        TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
+        TweenService:Create(btnBase, TweenInfo.new(0.2), {BackgroundColor3 = targetBaseColor}):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.2), {Color = targetStrokeColor}):Play()
     end
 end
 
 -- Inicializa visual
 UpdateVisual(true)
 
--- 5. LÓGICA DE CLIQUE E loadstring (Corrigida)
+-- 6. LÓGICA DE CLIQUE E loadstring
 btnBase.MouseButton1Click:Connect(function()
     isActive = not isActive
-    _G[saveKey] = isActive 
+    _G[saveKey] = isActive -- Salva o estado globalmente
     UpdateVisual(false)
     
     if isActive then
-        -- COLE SEU LOADSTRING AQUI
+        -- ✅ COLE SEU LOADSTRING AQUI
         print("Ativando Monitor FPS...")
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
+        -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
     else
         print("Desativando Monitor FPS...")
-        -- Se o script precisar de uma lógica para desativar, coloque aqui
     end
 end)
 
--- 6. ANIMAÇÃO DE ENTRADA DO CARD
+-- 7. ANIMAÇÃO DE ENTRADA DO CARD
 miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
