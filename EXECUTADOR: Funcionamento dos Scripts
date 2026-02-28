@@ -43,12 +43,20 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 print("✅ Carregando Sistema View Itens...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPanel-VIEW-ITENS"))()
 
--- 3. MiniPainel: 👀 DOORS
--- FUNÇÃO: Apenas funciona em Doors.
-print("🔴 Carregando Sistema ...")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20Doors"))()
-
 print("========================================")
 print("  SISTEMA CARREGADO COM SUCESSO! ;3  ")
 print("========================================")
 
+--[[
+===============================
+     🔴 LISTA DE MANUTENÇÃO 🔴
+===============================
+]]
+
+--[[
+-- 🔴 AVISO: Precisar ter uma Manutenção.
+-- 0. MiniPainel: 👀 DOORS
+-- FUNÇÃO: Apenas funciona em Doors.
+print("☑ Carregando Sistema ...")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20Doors"))()
+]]
