@@ -1,0 +1,150 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- ==========================================
+-- SISTEMA DE TOGGLE (LIGA/DESLIGA)
+-- ==========================================
+if _G.SystemViewEntitiesConnection then
+    _G.SystemViewEntitiesConnection:Disconnect()
+    _G.SystemViewEntitiesConnection = nil
+    
+    if _G.EntitiesCache then
+        for _, visualData in pairs(_G.EntitiesCache) do
+            if visualData.Highlight then visualData.Highlight:Destroy() end
+            if visualData.UI then visualData.UI:Destroy() end
+        end
+        table.clear(_G.EntitiesCache)
+    end
+    
+    if _G.SystemEntitiesFolder then
+        _G.SystemEntitiesFolder:Destroy()
+        _G.SystemEntitiesFolder = nil
+    end
+    
+    print("[SYSTEM] View Entities: DESATIVADO")
+    return
+end
+
+print("[SYSTEM] View Entities: ATIVADO")
+
+-- ==========================================
+-- CONFIGURAÇÕES E FILTROS
+-- ==========================================
+_G.SystemEntitiesFolder = Instance.new("Folder")
+_G.SystemEntitiesFolder.Name = "EntitiesVisuals"
+_G.SystemEntitiesFolder.Parent = localPlayer:WaitForChild("PlayerGui")
+
+_G.EntitiesCache = {}
+local entityCache = _G.EntitiesCache
+
+-- Lista de nomes comuns de entidades (Doors & The Rooms)
+local ENTITY_NAMES = {
+    "Rush", "Ambush", "Eyes", "Screech", "Halt", "Seek", "Figure", "Glitch", "Jack", "Timothy", "Hide", "Dupe", -- Doors
+    "A-60", "A-120", "A-90", -- The Rooms
+    "Dread", "Lookman", "Haste", "Pandemonium", "HaltMoving" -- Extras/Hard Mode
+}
+
+-- ==========================================
+-- FUNÇÕES DE CRIAÇÃO VISUAL
+-- ==========================================
+local function createEntityVisual(model)
+    local data = {}
+    
+    -- Outline Vermelho Intenso
+    local hl = Instance.new("Highlight")
+    hl.Name = "EntityESP"
+    hl.FillTransparency = 0.5
+    hl.FillColor = Color3.fromRGB(255, 0, 0)
+    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.OutlineTransparency = 0
+    hl.Parent = model
+    
+    -- UI de Texto
+    local bg = Instance.new("BillboardGui")
+    bg.Name = "EntityInfo"
+    bg.Size = UDim2.new(0, 200, 0, 50)
+    bg.AlwaysOnTop = true
+    bg.LightInfluence = 0
+    bg.Parent = _G.SystemEntitiesFolder
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.TextSize = 16
+    textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+    textLabel.TextStrokeTransparency = 0
+    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    textLabel.RichText = true
+    textLabel.Parent = bg
+    
+    data.Highlight = hl
+    data.UI = bg
+    data.Label = textLabel
+    return data
+end
+
+-- Função para validar se o objeto é uma entidade válida
+local function isValidEntity(obj)
+    -- Filtro anti-Pressure (Garante que não detecte nada desse jogo)
+    if obj:FindFirstChild("PressureID") or obj.Name:find("Sebastian") then return false end
+    
+    -- Verifica se o nome está na lista ou se tem características de entidade de Doors
+    for _, name in ipairs(ENTITY_NAMES) do
+        if obj.Name == name or obj.Name:find(name) then
+            return true
+        end
+    end
+    
+    -- Detecção por Humanoid (para entidades customizadas) que não são Players
+    if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
+        return true
+    end
+    
+    return false
+end
+
+-- ==========================================
+-- LOOP DE RENDERIZAÇÃO (ESP INFINITA)
+-- ==========================================
+_G.SystemViewEntitiesConnection = RunService.RenderStepped:Connect(function()
+    local char = localPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    -- Varre o Workspace em busca de entidades
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if isValidEntity(obj) then
+            local root = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChildWhichIsA("BasePart")) or obj
+            
+            if root and root:IsA("BasePart") then
+                if not entityCache[obj] then
+                    entityCache[obj] = createEntityVisual(obj)
+                end
+                
+                local vis = entityCache[obj]
+                local dist = (hrp.Position - root.Position).Magnitude
+                
+                -- Atualiza Posição e Texto
+                vis.UI.Adornee = root
+                vis.Label.Text = string.format("⚠️ %s ⚠️\n<font color='#C8C800'>%dm.</font>", obj.Name:upper(), math.floor(dist))
+                
+                -- Garante que o Highlight permaneça
+                if vis.Highlight.Parent ~= obj then
+                    vis.Highlight.Parent = obj
+                end
+            end
+        end
+    end
+
+    -- Limpa o cache de entidades que sumiram do mapa
+    for obj, vis in pairs(entityCache) do
+        if not obj or not obj.Parent then
+            vis.UI:Destroy()
+            vis.Highlight:Destroy()
+            entityCache[obj] = nil
+        end
+    end
+end)
+
