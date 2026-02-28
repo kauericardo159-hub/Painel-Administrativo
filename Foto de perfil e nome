@@ -5,7 +5,7 @@ local player = Players.LocalPlayer
 -- 1. LOCALIZAÇÃO E LIMPEZA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
-local painel = coreGui:WaitForChild("Painel")
+local painel = coreGui:WaitForChild("Panel") -- Ajustado para "Panel" conforme sistema anterior
 
 if painel:FindFirstChild("UserProfileArea") then
     painel.UserProfileArea:Destroy()
@@ -26,7 +26,6 @@ profileImage.Size = UDim2.new(0, 60, 0, 60)
 profileImage.Position = UDim2.new(0, 0, 0.5, 0)
 profileImage.AnchorPoint = Vector2.new(0, 0.5)
 profileImage.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-profileImage.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
 profileImage.Parent = profileArea
 
 local uiCorner = Instance.new("UICorner")
@@ -39,29 +38,62 @@ fStroke.Thickness = 2.5
 fStroke.Color = Color3.new(1, 1, 1)
 fStroke.Parent = profileImage
 
--- 4. FUNÇÃO PARA LABELS PREMIUM (Com Gradiente e Animação)
+-- UIGradient na foto para um efeito premium
+local imgGradient = Instance.new("UIGradient")
+imgGradient.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(200, 200, 200))
+imgGradient.Rotation = -45
+imgGradient.Parent = profileImage
+
+-- ==========================================
+-- 4. FUNÇÃO DE ATUALIZAÇÃO (Fix Desatualização)
+-- ==========================================
+local function updateProfile()
+    -- Busca a imagem mais recente
+    local success, content = pcall(function()
+        return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+    end)
+    
+    if success then
+        profileImage.Image = content
+    end
+    
+    -- Atualiza nomes
+    local nameLabel = profileArea:FindFirstChild("NameLabel")
+    local userLabel = profileArea:FindFirstChild("UserLabel")
+    
+    if nameLabel then nameLabel.Text = player.DisplayName end
+    if userLabel then userLabel.Text = "@" .. player.Name end
+end
+
+-- Atualiza no início
+updateProfile()
+
+-- Atualiza se o jogador mudar o visual ou nome
+player.CharacterAppearanceLoaded:Connect(updateProfile)
+player:GetPropertyChangedSignal("DisplayName"):Connect(updateProfile)
+
+-- ==========================================
+-- 5. LABELS PREMIUM (Com Gradiente)
+-- ==========================================
 local function CreatePremiumLabel(name, pos, text, size, isBold)
     local label = Instance.new("TextLabel")
     label.Name = name
     label.Size = UDim2.new(0, 200, 0, 20)
-    label.Position = pos + UDim2.new(0, 10, 0, 0) -- Offset para animação
+    label.Position = pos
     label.BackgroundTransparency = 1
     label.TextColor3 = Color3.new(1, 1, 1)
     label.Text = text
     label.Font = isBold and Enum.Font.GothamBold or Enum.Font.Gotham
     label.TextSize = size
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextTransparency = 1 -- Inicia invisível
     label.Parent = profileArea
     
-    -- UIStroke na fonte para destaque
     local textStroke = Instance.new("UIStroke")
     textStroke.Thickness = 1.5
     textStroke.Color = Color3.new(0, 0, 0)
     textStroke.Transparency = 0.5
     textStroke.Parent = label
 
-    -- Gradiente no Texto
     local textGradient = Instance.new("UIGradient")
     textGradient.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(180, 180, 180))
     textGradient.Rotation = 90
@@ -70,29 +102,7 @@ local function CreatePremiumLabel(name, pos, text, size, isBold)
     return label
 end
 
-local nameLabel = CreatePremiumLabel("NameLabel", UDim2.new(0, 70, 0.3, 0), player.DisplayName, 18, true)
-local userLabel = CreatePremiumLabel("UserLabel", UDim2.new(0, 70, 0.6, 5), "@" .. player.Name, 13, false)
+CreatePremiumLabel("NameLabel", UDim2.new(0, 75, 0.2, 0), player.DisplayName, 18, true)
+CreatePremiumLabel("UserLabel", UDim2.new(0, 75, 0.6, 0), "@" .. player.Name, 13, false)
 
--- 5. ANIMAÇÃO DE ENTRADA
-local function animateProfile()
-    local info = TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    
-    -- A foto surge aumentando
-    profileImage.Size = UDim2.new(0, 0, 0, 0)
-    TweenService:Create(profileImage, info, {Size = UDim2.new(0, 60, 0, 60)}):Play()
-    
-    -- Os nomes deslizam para a direita e aparecem
-    task.wait(0.2)
-    TweenService:Create(nameLabel, info, {Position = UDim2.new(0, 70, 0.3, 0), TextTransparency = 0}):Play()
-    task.wait(0.1)
-    TweenService:Create(userLabel, info, {Position = UDim2.new(0, 70, 0.6, 5), TextTransparency = 0.3}):Play()
-end
-
--- Dispara a animação quando o painel se torna visível
-painel:GetPropertyChangedSignal("Visible"):Connect(function()
-    if painel.Visible then
-        animateProfile()
-    end
-end)
-
-print("Perfil Premium com Animação carregado no Topo!")
+print("Perfil Premium Atualizado e Estiloso!")
