@@ -4,7 +4,7 @@ local player = Players.LocalPlayer
 
 --[[ 
 ===========================================================
-       ⚙ GERENCIADOR DA LISTA EXTRA V1 ⚙
+       ⚙ GERENCIADOR DA LISTA EXTRA V3 (ALTURA) ⚙
 ===========================================================
 ]]
 
@@ -18,14 +18,14 @@ if painel:FindFirstChild("ExtraListContainer") then
     painel.ExtraListContainer:Destroy()
 end
 
--- 2. CONTAINER DA LISTA EXTRA (Baseado na imagem/tamanho da original)
+-- 2. CONTAINER DA LISTA EXTRA (Posição Esquerda + Altura Reduzida)
 local extraContainer = Instance.new("ScrollingFrame")
 extraContainer.Name = "ExtraListContainer"
 
--- TAMANHO E POSIÇÃO: Mesma estrutura da original, alinhado à direita
-extraContainer.Size = UDim2.new(0.55, 0, 0.85, 0) 
-extraContainer.Position = UDim2.new(0.97, 0, 0.52, 0) 
-extraContainer.AnchorPoint = Vector2.new(1, 0.5)
+-- TAMANHO E POSIÇÃO: Ajustado para o lado esquerdo
+extraContainer.Size = UDim2.new(0.35, 0, 0.70, 0) -- ✅ ALTURA REDUZIDA para 70%
+extraContainer.Position = UDim2.new(0.03, 0, 0.60, 0) -- ✅ POSIÇÃO VERTICAL AJUSTADA para 60%
+extraContainer.AnchorPoint = Vector2.new(0, 0.5)
 
 extraContainer.BackgroundTransparency = 1 -- Fundo transparente
 extraContainer.BorderSizePixel = 0
@@ -95,8 +95,8 @@ local function animateListItems()
     for _, item in pairs(extraContainer:GetChildren()) do
         if item:IsA("GuiObject") and not item:IsA("UIPadding") and not item:IsA("UIListLayout") then
             local originalPos = item.Position
-            -- Começa deslocado para a direita e invisível
-            item.Position = originalPos + UDim2.new(0, 30, 0, 0)
+            -- Começa deslocado para a ESQUERDA e invisível
+            item.Position = originalPos - UDim2.new(0, 30, 0, 0)
             item.BackgroundTransparency = 1 
             
             TweenService:Create(item, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -120,5 +120,4 @@ painel:GetPropertyChangedSignal("Visible"):Connect(function()
     end
 end)
 
-print("✅ Lista Extra V1 (Azul + Borda Animada) Carregada!")
-
+print("✅ Lista Extra V3 (Altura Reduzida) Carregada!")
