@@ -15,8 +15,8 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- CONFIGURAÇÕES DO BOTÃO
 -- ==========================================
 -- IMAGENS DO BOTÃO (Pode colocar IDs diferentes para abrir/fechar)
-local BUTTON_ID_CLOSED = "rbxassetid://15188057059" 
-local BUTTON_ID_OPEN = "rbxassetid://15188057059" 
+local BUTTON_ID_CLOSED = "rbxassetid://16007391180" 
+local BUTTON_ID_OPEN = "rbxassetid://16007391180" 
 
 local MENU_NAME = "InterfaceMenu_V3"
 local SAVE_NAME = "PremiumMenuPos"
