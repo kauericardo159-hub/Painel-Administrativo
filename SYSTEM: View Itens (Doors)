@@ -29,8 +29,11 @@ end
 print("[SYSTEM] View Itens Doors: ATIVADO")
 
 -- ==========================================
--- CONFIGURAÇÕES E FILTROS
+-- CONFIGURAÇÕES RESTRITAS
 -- ==========================================
+local MAX_DISTANCE = 100 -- Limite solicitado
+local SCAN_INTERVAL = 0.3 -- Varredura eficiente para poupar FPS
+
 _G.SystemItensDoorsFolder = Instance.new("Folder")
 _G.SystemItensDoorsFolder.Name = "DoorsItensVisuals"
 _G.SystemItensDoorsFolder.Parent = localPlayer:WaitForChild("PlayerGui")
@@ -38,31 +41,29 @@ _G.SystemItensDoorsFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 _G.ItensDoorsCache = {}
 local itemCache = _G.ItensDoorsCache
 
--- Itens principais para detectar
-local TARGET_ITENS = {
-    "Key", "Master Key", "LibraryKey", "ElevatorKey", -- Chaves
-    "Lighter", "Flashlight", "Candle", "Bulklight", -- Luz
-    "Vitamins", "Bandage", "Crucifix", "Skeleton Key", -- Utilitários
-    "Gold", "Coin", -- Dinheiro
-    "Battery", "Fuse", "Breaker", -- Puzzles
-    "Shears", "Lockpick", "Book" -- Específicos
+-- Filtro restrito apenas para o que é coletável ou crucial
+local COLLECTABLE_ITEMS = {
+    ["Key"] = true, ["MasterKey"] = true, ["LibraryKey"] = true, ["ElevatorKey"] = true, -- Chaves
+    ["Lighter"] = true, ["Flashlight"] = true, ["Candle"] = true, ["Bulklight"] = true, -- Luz
+    ["Vitamins"] = true, ["Bandage"] = true, ["Crucifix"] = true, ["SkeletonKey"] = true, -- Utilitários
+    ["Gold"] = true, ["Coin"] = true, -- Dinheiro
+    ["Battery"] = true, ["Fuse"] = true, ["Breaker"] = true, -- Puzzles
+    ["Shears"] = true, ["Lockpick"] = true, ["Book"] = true, -- Específicos
+    ["Door"] = true -- Portas Verdadeiras
 }
 
 -- ==========================================
--- FUNÇÕES DE CRIAÇÃO VISUAL
+-- FUNÇÕES DE CRIAÇÃO
 -- ==========================================
 local function createItemVisual(obj)
     local data = {}
     
-    -- Highlight azul claro para itens
     local hl = Instance.new("Highlight")
     hl.Name = "ItemESP"
-    hl.FillTransparency = 0.6
-    hl.FillColor = Color3.fromRGB(0, 255, 255)
-    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.FillTransparency = 0.7
+    hl.OutlineTransparency = 0
     hl.Parent = obj
     
-    -- UI de Texto
     local bg = Instance.new("BillboardGui")
     bg.Name = "ItemInfo"
     bg.Size = UDim2.new(0, 150, 0, 40)
@@ -74,7 +75,6 @@ local function createItemVisual(obj)
     textLabel.BackgroundTransparency = 1
     textLabel.Font = Enum.Font.GothamBold
     textLabel.TextSize = 13
-    textLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
     textLabel.TextStrokeTransparency = 0.5
     textLabel.RichText = true
     textLabel.Parent = bg
@@ -85,62 +85,78 @@ local function createItemVisual(obj)
     return data
 end
 
--- Função para validar se o objeto é um item de Doors
-local function isDoorsItem(obj)
-    -- Verifica se o objeto ou seu Parent imediato está na lista de nomes
-    for _, name in ipairs(TARGET_ITENS) do
-        if obj.Name:find(name) or (obj.Parent and obj.Parent.Name:find(name)) then
-            return true
+-- ==========================================
+-- LÓGICA DE DETECÇÃO (Door & Rooms)
+-- ==========================================
+local function isValidItem(obj)
+    -- Detecção de Itens Coletáveis e Portas
+    if COLLECTABLE_ITEMS[obj.Name] then
+        if obj.Name == "Door" then
+            -- Verifica se é a porta verdadeira (Doors geralmente nomeia a correta de forma diferente ou usa atributos)
+            if obj:FindFirstChild("Lock") or obj:FindFirstChild("Door") then return true end
+            return false -- Ignora portas falsas
         end
-    end
-    -- Detecta itens que ficam dentro de gavetas ou em cima de mesas (comum em Doors)
-    if obj:FindFirstChild("ModuleScript") and obj:IsA("Model") then
         return true
     end
     return false
 end
 
 -- ==========================================
--- LOOP DE RENDERIZAÇÃO
+-- LOOP DE PERFORMANCE
 -- ==========================================
+local lastScan = 0
+
 _G.SystemViewItensDoorsConnection = RunService.RenderStepped:Connect(function()
     local char = localPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- Varre o Workspace procurando por itens
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if isDoorsItem(obj) then
-            -- Define o ponto central do item (BasePart ou PrimaryPart)
-            local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
-            
-            if root then
-                if not itemCache[obj] then
-                    itemCache[obj] = createItemVisual(obj)
-                end
-                
-                local vis = itemCache[obj]
-                local dist = (hrp.Position - root.Position).Magnitude
-                
-                -- Atualiza Posição e Texto
-                vis.UI.Adornee = root
-                vis.Label.Text = string.format("📦 %s\n<font color='#FFFFFF'>[%dm]</font>", obj.Name, math.floor(dist))
-                
-                -- Garante que o Highlight permaneça (Doors costuma resetar modelos)
-                if vis.Highlight.Parent ~= obj then
-                    vis.Highlight.Parent = obj
+    -- 1. VARREDURA OTIMIZADA
+    if tick() - lastScan > SCAN_INTERVAL then
+        lastScan = tick()
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if isValidItem(obj) then
+                local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+                if root then
+                    local dist = (hrp.Position - root.Position).Magnitude
+                    if dist <= MAX_DISTANCE then
+                        if not itemCache[obj] then
+                            itemCache[obj] = createItemVisual(obj)
+                        end
+                    end
                 end
             end
         end
     end
 
-    -- Limpa cache de itens coletados ou removidos
+    -- 2. ATUALIZAÇÃO DE UI E DISTÂNCIA
     for obj, vis in pairs(itemCache) do
-        if not obj or not obj.Parent or (obj:IsA("Model") and #obj:GetChildren() == 0) then
+        if obj and obj.Parent then
+            local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+            if root then
+                local dist = (hrp.Position - root.Position).Magnitude
+                if dist <= MAX_DISTANCE then
+                    vis.UI.Adornee = root
+                    vis.UI.Enabled = true
+                    vis.Highlight.Enabled = true
+                    
+                    -- Cor diferente para Porta e Itens
+                    local color = obj.Name == "Door" and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(0, 255, 255)
+                    vis.Highlight.FillColor = color
+                    vis.Highlight.OutlineColor = color
+                    vis.Label.TextColor3 = color
+                    
+                    local displayName = obj.Name == "Door" and "🚪 SAÍDA" or obj.Name
+                    vis.Label.Text = string.format("%s\n<font color='#FFFFFF'>[%dm]</font>", displayName, math.floor(dist))
+                else
+                    vis.UI.Enabled = false
+                    vis.Highlight.Enabled = false
+                end
+            end
+        else
             vis.UI:Destroy()
             vis.Highlight:Destroy()
             itemCache[obj] = nil
         end
     end
 end)
-
