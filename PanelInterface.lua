@@ -5,7 +5,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 -- 1. SISTEMA DE LIMPEZA E SUBSTITUIÇÃO
 -- Garante que versões antigas sejam removidas para evitar sobreposição de scripts
-local coreName = "SistemaPainel_V3"
+local coreName = "InterfaceMenu_V3"
 local oldGui = playerGui:FindFirstChild(coreName)
 if oldGui then oldGui:Destroy() end
 
