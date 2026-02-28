@@ -29,27 +29,28 @@ local coreGui = playerGui:WaitForChild("SistemaPainel_V3")
 local painel = coreGui:WaitForChild("Panel")
 local lista = painel:WaitForChild("ListaOpcoesContainer")
 
--- Limpeza de segurança
+-- Limpeza de segurança para evitar duplicatas ao recarregar
 if lista:FindFirstChild("ViewItensCard") then
     lista.ViewItensCard:Destroy()
 end
 
--- 3. CRIAÇÃO DO MINI-PAINEL REMAKE
+-- 3. CRIAÇÃO DO MINI-PAINEL (Design Elegante e Moderno)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "ViewItensCard"
 miniPainel.Size = UDim2.new(0.95, 0, 0, 130)
 miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-miniPainel.BackgroundTransparency = 0.5
+miniPainel.BackgroundTransparency = 0.5 
 miniPainel.BorderSizePixel = 0
-miniPainel.ZIndex = lista.ZIndex + 1
+-- Garante que fique acima dos itens da lista
+miniPainel.ZIndex = lista.ZIndex + 1 
 miniPainel.Parent = lista
 
--- UICorner
+-- UICorner no MiniPainel
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = miniPainel
 
--- UIStroke Cinza em volta do Painel
+-- UIStroke Estiloso em volta do MiniPainel (Cinza)
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 2
 stroke.Color = Color3.fromRGB(100, 100, 100)
@@ -60,7 +61,7 @@ stroke.Parent = miniPainel
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
-title.Text = "ITEM VIEWER"
+title.Text = "VIEW ITENS"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBlack
 title.TextSize = 18
@@ -77,7 +78,7 @@ line.BorderSizePixel = 0
 line.ZIndex = miniPainel.ZIndex + 1
 line.Parent = miniPainel
 
--- Versão V2
+-- Versão V2 no Canto Inferior Direito
 local versionLabel = Instance.new("TextLabel")
 versionLabel.Size = UDim2.new(0, 40, 0, 20)
 versionLabel.Position = UDim2.new(1, -45, 1, -25)
@@ -117,14 +118,12 @@ local colorInactiveStroke = Color3.fromRGB(255, 0, 0) -- Red Forte
 local colorActiveBase = Color3.fromRGB(0, 80, 0) -- Verde Escuro
 local colorActiveStroke = Color3.fromRGB(0, 255, 0) -- Verde Forte
 
--- Define estado inicial baseado na variável global
-_G.ViewItensActive = _G.ViewItensActive or false
-
 -- Base do Switch
 local btnBase = Instance.new("TextButton")
 btnBase.Size = UDim2.new(0, 60, 0, 30)
 btnBase.Position = UDim2.new(0.5, 0, 0.7, 0)
 btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
+-- Define cor inicial baseada na variável global
 btnBase.BackgroundColor3 = _G.ViewItensActive and colorActiveBase or colorInactiveBase
 btnBase.Text = ""
 btnBase.AutoButtonColor = false
@@ -133,9 +132,10 @@ btnBase.Parent = container
 
 Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
 
--- UIStroke do Botão (Forte)
+-- UIStroke Botão
 local btnStroke = Instance.new("UIStroke")
 btnStroke.Thickness = 2
+-- Define cor inicial baseada na variável global
 btnStroke.Color = _G.ViewItensActive and colorActiveStroke or colorInactiveStroke
 btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 btnStroke.Parent = btnBase
@@ -150,11 +150,12 @@ knob.ZIndex = btnBase.ZIndex + 1
 knob.Parent = btnBase
 Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
--- 5. LÓGICA DE CLIQUE
+-- 5. LÓGICA DE CLIQUE E SINCRONIZAÇÃO
 btnBase.MouseButton1Click:Connect(function()
     _G.ViewItensActive = not _G.ViewItensActive
     local ativo = _G.ViewItensActive
     
+    -- Animação Visual e Troca de Cores
     local targetPos = ativo and UDim2.new(0.9, -22, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
     local targetBaseColor = ativo and colorActiveBase or colorInactiveBase
     local targetStrokeColor = ativo and colorActiveStroke or colorInactiveStroke
@@ -164,8 +165,8 @@ btnBase.MouseButton1Click:Connect(function()
     TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = targetStrokeColor}):Play()
 end)
 
--- 6. ANIMAÇÃO DE ENTRADA
+-- 6. ANIMAÇÃO DE ENTRADA DO CARD
 miniPainel.Position = UDim2.new(1.2, 0, 0.05, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.025, 0, 0.05, 0)}):Play()
 
-print("✅ MiniPainel Itens Remake Carregado!")
+print("✅ MiniPainel Itens V9 (Cores Corrigidas) Carregado!")
