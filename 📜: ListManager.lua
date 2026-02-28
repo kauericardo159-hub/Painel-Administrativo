@@ -4,7 +4,7 @@ local player = Players.LocalPlayer
 
 --[[ 
 ===========================================================
-       ⚙ GERENCIADOR DA LISTA DE OPÇÕES V6 ⚙
+       ⚙ GERENCIADOR DA LISTA DE OPÇÕES V7 ⚙
 ===========================================================
 ]]
 
@@ -22,11 +22,11 @@ end
 local listaContainer = Instance.new("ScrollingFrame")
 listaContainer.Name = "ListaOpcoesContainer"
 
--- TAMANHO: Ocupa quase toda a parte direita (ex: 45% largura, 90% altura)
-listaContainer.Size = UDim2.new(0.45, 0, 0.9, 0) 
+-- ✅ TAMANHO AJUSTADO: Mais largo (0.55) e um pouco mais baixo (0.85)
+listaContainer.Size = UDim2.new(0.55, 0, 0.85, 0) 
 
 -- POSIÇÃO: Alinhado à direita
-listaContainer.Position = UDim2.new(0.97, 0, 0.5, 0) 
+listaContainer.Position = UDim2.new(0.97, 0, 0.52, 0) -- Leve ajuste na vertical
 listaContainer.AnchorPoint = Vector2.new(1, 0.5)
 
 listaContainer.BackgroundTransparency = 1 -- Fundo transparente
@@ -122,4 +122,4 @@ painel:GetPropertyChangedSignal("Visible"):Connect(function()
     end
 end)
 
-print("✅ Lista V6 (Direita + Borda Animada) Recriada!")
+print("✅ Lista V7 (Ajustada) Recriada!")
