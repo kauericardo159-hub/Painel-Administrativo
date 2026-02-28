@@ -116,7 +116,7 @@ end
 
 -- 4. CHAMADA DOS BOTÕES (Adicione seus links dentro das aspas)
 CreateToggle("ViewEntities", "View Entities", 0.18, function()
-    loadstring(game:HttpGet(""))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Entities"))()
 end)
 
 CreateToggle("ViewItems", "View Itens", 0.5, function()
