@@ -4,28 +4,32 @@
 ===========================================================
 ]]
 
+print("🚀 Iniciando sistema...")
+
 -- 1. INTERFACE DO PAINEL (O "Coração" do sistema)
--- Precisa carregar primeiro para que os outros saibam onde se inserir.
+-- Precisa carregar primeiro para criar a estrutura no PlayerGui.
 print("☑ Carregando Interface...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/PanelInterface.lua"))()
-task.wait(0.2)
+task.wait(2) -- Aguarda a interface ser criada
 
 -- 2. LISTA DE COMANDOS & FUNÇÕES
 -- Cria o container central dentro do painel já existente.
 print("☑ Carregando Lista de Comandos...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ListManager.lua"))()
-task.wait(0.1)
+task.wait(2) -- Aguarda o container ser criado
 
 -- 3. NOME & PERFIL
 -- Insere a foto e o nome no topo do painel.
 print("☑ Carregando Perfil do Usuário...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Foto%20de%20perfil%20e%20nome"))()
-task.wait(0.1)
+task.wait(2) -- Aguarda os elementos de perfil serem inseridos
 
 -- 4. BOTÃO PRINCIPAL (O Controle)
 -- Carrega por último para garantir que ele encontre o painel e consiga animá-lo.
 print("☑ Carregando Controlador do Botão...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/ButtonController.lua"))()
+
+print("✅ Sistema Carregado com Sucesso!")
 
 --[[
 ===============================
@@ -42,10 +46,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 -- FUNÇÃO: Ver itens pelo mapa.
 print("✅ Carregando Sistema View Itens...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPanel-VIEW-ITENS"))()
-
-print("========================================")
-print("  SISTEMA CARREGADO COM SUCESSO! ;3  ")
-print("========================================")
 
 --[[
 ===============================
