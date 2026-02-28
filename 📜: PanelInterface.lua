@@ -5,12 +5,12 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 --[[ 
 ===========================================================
-       ⚙ ESTRUTURA E ESTILIZAÇÃO DO PAINEL V3 ⚙
+       ⚙ ESTRUTURA E ESTILIZAÇÃO DO PAINEL V4 ⚙
 ===========================================================
 ]]
 
--- 1. SISTEMA DE LIMPEZA E SUBSTITUIÇÃO
-local coreName = "SistemaPainel_V3" -- Nome padronizado para o sistema
+-- 1. SISTEMA DE LIMPEZA (Garante a remoção de versões anteriores)
+local coreName = "SistemaPainel_V3"
 local oldGui = playerGui:FindFirstChild(coreName)
 if oldGui then oldGui:Destroy() end
 
@@ -18,97 +18,79 @@ if oldGui then oldGui:Destroy() end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = coreName
 screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true -- Ocupa a tela inteira
+screenGui.IgnoreGuiInset = true -- Ocupa a tela inteira, inclusive atrás da barra do topo
 screenGui.Parent = playerGui
 
--- 3. PAINEL PRINCIPAL
+-- 3. PAINEL PRINCIPAL (Reformulação de Tamanho e Fundo)
 local painel = Instance.new("Frame")
-painel.Name = "Panel" -- Nome esperado pelos scripts de perfil/botão
-painel.Size = UDim2.new(0, 750, 0, 450) -- Ligeiramente maior para detalhamento
-painel.Position = UDim2.new(0.5, 0, 1.5, 0) -- Inicia abaixo para animação
+painel.Name = "Panel" -- NOME CRÍTICO: Não alterar
+painel.Size = UDim2.new(0, 780, 0, 480) -- Ligeiramente maior para respiro
+painel.Position = UDim2.new(0.5, 0, 1.5, 0) -- Inicia abaixo da tela
 painel.AnchorPoint = Vector2.new(0.5, 0.5)
-painel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-painel.BackgroundTransparency = 0.1
+painel.BackgroundColor3 = Color3.fromRGB(10, 10, 10) -- Mais escuro para contraste
+painel.BackgroundTransparency = 0.05 -- Quase opaco
 painel.BorderSizePixel = 0
 painel.Visible = false
 painel.Parent = screenGui
 
--- Arredondamento do Painel
+-- Arredondamento do Painel (Mais suave)
 local painelCorner = Instance.new("UICorner")
-painelCorner.CornerRadius = UDim.new(0, 15)
+painelCorner.CornerRadius = UDim.new(0, 20)
 painelCorner.Parent = painel
 
--- Gradiente de Fundo Estiloso
+-- 💎 EFEITO DE GRADIENTE DE FUNDO (Ciano Profundo)
 local painelGradient = Instance.new("UIGradient")
 painelGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 15, 15)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 5, 5))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 25)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(10, 10, 10)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
 })
-painelGradient.Rotation = 60
+painelGradient.Rotation = 135
 painelGradient.Parent = painel
 
--- 4. REFORMULAÇÃO DOS UISTROKES (Bordas Estilosas)
+-- 4. REFORMULAÇÃO DOS UISTROKES (Sombra e Brilho)
 
--- Borda Interna (Sombra para dar profundidade)
-local strokeInterno = Instance.new("UIStroke")
-strokeInterno.Thickness = 5
-strokeInterno.Color = Color3.new(0, 0, 0)
-strokeInterno.Transparency = 0.5
-strokeInterno.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-strokeInterno.Parent = painel
+-- 💡 DROP SHADOW (Sombra projetada atrás do painel)
+local dropShadow = Instance.new("ImageLabel")
+dropShadow.Name = "DropShadow"
+dropShadow.Size = UDim2.new(1, 40, 1, 40)
+dropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+dropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+dropShadow.BackgroundTransparency = 1
+dropShadow.Image = "rbxassetid://1316045217" -- ID de uma sombra suave
+dropShadow.ImageColor3 = Color3.new(0, 0, 0)
+dropShadow.ImageTransparency = 0.5
+dropShadow.ZIndex = painel.ZIndex - 1 -- Atrás do painel
+dropShadow.Parent = painel
 
--- Borda Externa (O "Brilho" com UIGradient Animado)
+-- ✨ BORDA NEON PULSANTE (UIStroke + UIGradient)
 local strokeExterno = Instance.new("UIStroke")
-strokeExterno.Thickness = 2
+strokeExterno.Thickness = 3 -- Borda mais espessa para destacar
 strokeExterno.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 strokeExterno.Parent = painel
 
 local strokeGradient = Instance.new("UIGradient")
--- Cores neon para a borda (ciano e branco para contraste)
+-- Paleta Neon: Ciano vibrante para um visual moderno
 strokeGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 255, 255)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))
 })
 strokeGradient.Parent = strokeExterno
 
--- 5. ANIMAÇÃO DE UISTROKE (Efeito de Brilho Pulsante e Rotativo)
-local function startStrokeAnimation()
-    task.spawn(function()
-        while painel.Parent do
-            -- Anima o deslocamento do gradiente para criar efeito de movimento na borda
-            local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
-            local tween = TweenService:Create(strokeGradient, tweenInfo, {Offset = Vector2.new(1, 1)})
-            strokeGradient.Offset = Vector2.new(-1, -1)
-            tween:Play()
-            tween.Completed:Wait()
-            
-            -- Reverte o deslocamento
-            local tweenBack = TweenService:Create(strokeGradient, tweenInfo, {Offset = Vector2.new(-1, -1)})
-            tweenBack:Play()
-            tweenBack.Completed:Wait()
-        end
+-- 5. ANIMAÇÃO DE ESTILO (Pulsar de Brilho)
+task.spawn(function()
+    while painel.Parent do
+        -- Animação suave de opacidade do gradiente de borda
+        local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+        local tween = TweenService:Create(strokeGradient, tweenInfo, {Offset = Vector2.new(0.2, 0.2)})
+        tween:Play()
+        tween.Completed:Wait()
+        
+        local tweenBack = TweenService:Create(strokeGradient, tweenInfo, {Offset = Vector2.new(-0.2, -0.2)})
+        tweenBack:Play()
+        tweenBack.Completed:Wait()
     end
-end
-startStrokeAnimation()
+end)
 
--- 6. ÁREA DA LISTA DE OPÇÕES (Integrada e Abaixada)
-local listaContainer = Instance.new("ScrollingFrame")
-listaContainer.Name = "ListaOpcoesContainer"
-listaContainer.Size = UDim2.new(0, 380, 0, 300) 
-listaContainer.Position = UDim2.new(1, -25, 0.55, 0) -- Abaixado e à direita
-listaContainer.AnchorPoint = Vector2.new(1, 0.5)
-listaContainer.BackgroundTransparency = 1
-listaContainer.ScrollBarThickness = 4
-listaContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 255) -- Cor da scrollbar combinando com a borda
-listaContainer.BorderSizePixel = 0
-listaContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-listaContainer.Parent = painel
-
-local layout = Instance.new("UIListLayout")
-layout.Parent = listaContainer
-layout.Padding = UDim.new(0, 15)
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-print("✅ Painel Premium V3 recriado com Gradientes e Bordas Animadas!")
+print("✅ Painel Base V4 (Premium) Carregado!")
