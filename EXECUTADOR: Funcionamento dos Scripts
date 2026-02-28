@@ -59,8 +59,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 ]]
 
 -- 1. MiniPainel: FPS | PING | PLAYER's
--- Função: Exibir FPS, Pint e números de Players no server
-loadstring(game:HttpGet(""))()
+-- Função: Exibir FPS, Ping e números de Players no server
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20MiniPainel%3A%20FPS%20PING%20PLAYER's"))()
 task.wait(3)
 --[[
 ===============================
