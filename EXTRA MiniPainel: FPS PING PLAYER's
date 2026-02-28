@@ -4,7 +4,7 @@ local player = Players.LocalPlayer
 
 --[[ 
 ===========================================================
-       ⚙ MINI-PAINEL EXTRA: FPS | PING | PLAYERS V3 ⚙
+       ⚙ MINI-PAINEL EXTRA: FPS | PING | PLAYERS V4 ⚙
 ===========================================================
 ]]
 
@@ -15,8 +15,8 @@ local painel = coreGui:WaitForChild("Panel")
 local extraLista = painel:WaitForChild("ExtraListContainer")
 
 local functionName = "FPSPingCard"
-local saveKey = "FPSPingStatus"
-local monitorGuiName = "FPSPingMonitorUI" -- Nome do elemento visual na tela
+local saveKey = "FPSPingStatus" -- Nome da configuração salva
+local monitorGuiName = "FPSPingMonitorUI" 
 
 -- Limpeza de duplicatas
 if extraLista:FindFirstChild(functionName) then
@@ -65,7 +65,7 @@ task.spawn(function()
     end
 end)
 
--- 4. TÍTULO (Posicionado à esquerda)
+-- 4. TÍTULO
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.5, 0, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
@@ -77,10 +77,19 @@ title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = miniPainel
 
--- 5. LÓGICA DE SALVAMENTO E ESTADO
-local isActive = _G[saveKey] or false
+-- 5. LÓGICA DE SALVAMENTO PERSISTENTE (GetSetting)
+local isActive = false
+local success, savedValue = pcall(function()
+    return player:GetSetting(saveKey)
+end)
 
--- Botão (Switch) - Agora ao lado do título
+if success and savedValue ~= nil then
+    isActive = savedValue
+else
+    isActive = false
+end
+
+-- Botão (Switch)
 local btnBase = Instance.new("TextButton")
 btnBase.Size = UDim2.new(0, 50, 0, 25)
 btnBase.Position = UDim2.new(1, -60, 0.5, 0)
@@ -92,12 +101,10 @@ btnBase.Parent = miniPainel
 
 Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
 
--- Stroke do Botão (UIStroke no botão como solicitado)
 local btnStroke = Instance.new("UIStroke")
 btnStroke.Thickness = 2
 btnStroke.Parent = btnBase
 
--- Knob (Círculo)
 local knob = Instance.new("Frame")
 knob.Size = UDim2.new(0, 19, 0, 19)
 knob.AnchorPoint = Vector2.new(0, 0.5)
@@ -128,34 +135,41 @@ local function UpdateVisual(instant)
     end
 end
 
--- Inicializa visual
+-- Inicializa visual baseado no estado salvo
 UpdateVisual(true)
 
--- 6. LÓGICA DE CLIQUE E loadstring (ATUALIZADA)
+-- 6. LÓGICA DE CLIQUE, LOADSTRING E SALVAMENTO (SetSetting)
 btnBase.MouseButton1Click:Connect(function()
     isActive = not isActive
-    _G[saveKey] = isActive 
+    
+    -- ✅ SALVA O ESTADO NO COMPUTADOR DO JOGADOR
+    pcall(function()
+        player:SetSetting(saveKey, isActive)
+    end)
+    
     UpdateVisual(false)
     
     if isActive then
-        -- ✅ LOADSTRING ATIVADO (Sem comentários)
         print("Ativando Monitor FPS...")
         loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
     else
-        -- ✅ LÓGICA DE DESATIVAÇÃO (Para sumir da tela)
         print("Desativando Monitor FPS...")
-        
-        -- PROCURA E REMOVE O ELEMENTO VISUAL NA TELA
         local existingMonitor = playerGui:FindFirstChild(monitorGuiName)
         if existingMonitor then
             existingMonitor:Destroy()
         end
-        -- Você também pode adicionar aqui uma lógica extra se o script loadstring criar variáveis globais
     end
 end)
 
--- 7. ANIMAÇÃO DE ENTRADA DO CARD
+-- ✅ 7. VERIFICAÇÃO INICIAL AO ABRIR O PAINEL
+if isActive then
+    -- Se estava salvo como ativado, carrega o sistema automaticamente
+    print("Carregando sistema salvo: Ativado")
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
+end
+
+-- 8. ANIMAÇÃO DE ENTRADA DO CARD
 miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-print("✅ MiniPainel Extra FPS/Ping V3 Carregado!")
+print("✅ MiniPainel Extra FPS/Ping V4 Carregado!")
