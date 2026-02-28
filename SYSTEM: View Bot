@@ -43,6 +43,21 @@ local OUTLINE_COLOR = Color3.fromRGB(255, 0, 0) -- Outline Vermelho
 local DIST_COLOR = "#C8C800" -- Amarelo um pouco escuro
 local HP_COLOR = "#B40000"   -- Vermelho um pouco escuro
 
+-- ==========================================
+-- CONFIGURAÇÕES DE DETECÇÃO (NOVO)
+-- ==========================================
+-- Nomes de entidades que o script DEVE focar (Mesmo sem Humanoid)
+local MONSTER_NAMES = {
+    "rush", "ambush", "figure", "seek", "screech", "halt", "eyes", -- Doors
+    "angler", "pandemonium", "blitz", "chainsmoker", "pinkie", "froger", -- Pressure
+    "ayuwoki", "rakoof", "monster", "killer", "bot", "enemy", "chaser" -- Outros
+}
+
+-- Nomes de entidades que o script DEVE ignorar (Vendedores, NPCs)
+local IGNORED_NAMES = {
+    "npc", "vendor", "shop", "merchant", "dummy", "guide", "trader", "jeff", "el goblino", "bob", "sebastian"
+}
+
 -- Pasta Global
 _G.SystemViewBotFolder = Instance.new("Folder")
 _G.SystemViewBotFolder.Name = "ViewBotCache"
@@ -103,13 +118,33 @@ local function createVisuals(model)
     return data
 end
 
--- Função para verificar se um modelo é um Bot e não um Player
+-- Função APRIMORADA para verificar bots
 local function isBot(model)
     if not model:IsA("Model") then return false end
     if Players:GetPlayerFromCharacter(model) then return false end -- Não é player
-    if not model:FindFirstChild("Humanoid") then return false end -- Tem humanoid
     if model == localPlayer.Character then return false end -- Não é o próprio player
-    return true
+    
+    local nameLower = string.lower(model.Name)
+    
+    -- 1. Verifica Blacklist (Ignora NPCs pacíficos pelo nome)
+    for _, ignored in ipairs(IGNORED_NAMES) do
+        if string.find(nameLower, ignored) then return false end
+    end
+    
+    -- 2. Verifica Whitelist (Monstros conhecidos que podem não ter Humanoid)
+    for _, monster in ipairs(MONSTER_NAMES) do
+        if string.find(nameLower, monster) then return true end
+    end
+    
+    -- 3. Verificaência Genérica de Inimigo (Tem Humanoid, mas se move e tem vida normal)
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if hum then
+        -- Se a velocidade for 0 ou tiver vida infinita, quase certeza que é um Vendor/NPC estático
+        if hum.WalkSpeed == 0 or hum.MaxHealth > 99999 then return false end 
+        return true
+    end
+    
+    return false
 end
 
 -- ==========================================
@@ -139,10 +174,23 @@ _G.SystemViewBotConnection = RunService.RenderStepped:Connect(function(dt)
     for _, obj in ipairs(workspace:GetDescendants()) do
         if isBot(obj) then
             local botModel = obj
-            local head = botModel:FindFirstChild("Head") or botModel:FindFirstChildWhichIsA("BasePart")
-            local hum = botModel:FindFirstChild("Humanoid")
             
-            if head and hum and hum.Health > 0 then
+            -- Melhoria na busca pela "Cabeça" ou peça principal
+            local head = botModel:FindFirstChild("Head") 
+                or botModel:FindFirstChild("HumanoidRootPart") 
+                or botModel:FindFirstChild("Torso") 
+                or botModel.PrimaryPart 
+                or botModel:FindFirstChildWhichIsA("BasePart")
+                
+            local hum = botModel:FindFirstChildOfClass("Humanoid")
+            
+            -- Verifica se está vivo (se tiver humanoid) ou assume vivo se for entidade de evento (Doors)
+            local isAlive = true
+            if hum then
+                isAlive = hum.Health > 0
+            end
+            
+            if head and isAlive then
                 local dist = (myHRP.Position - head.Position).Magnitude
                 
                 if dist <= MAX_DISTANCE then
@@ -170,9 +218,12 @@ _G.SystemViewBotConnection = RunService.RenderStepped:Connect(function(dt)
                     vis.NameLabel.TextTransparency = fade
                     vis.StatsLabel.TextTransparency = fade
                     
+                    -- Lida com entidades que não têm Humanoid (exibe "???" na vida)
+                    local hpText = hum and math.floor(hum.Health) or "???"
+                    
                     -- Renderiza as Informações Detalhadas
                     vis.NameLabel.Text = string.format('<font color="%s">🤖: %s</font>', BOT_NAME_COLOR, botModel.Name)
-                    vis.StatsLabel.Text = string.format('<font color="%s">📏: %dm.</font> | <font color="%s">❤: %d</font>', DIST_COLOR, math.floor(dist), HP_COLOR, math.floor(hum.Health))
+                    vis.StatsLabel.Text = string.format('<font color="%s">📏: %dm.</font> | <font color="%s">❤: %s</font>', DIST_COLOR, math.floor(dist), HP_COLOR, tostring(hpText))
                 else
                     -- Fora da distância
                     if botCache[botModel] then
@@ -181,7 +232,7 @@ _G.SystemViewBotConnection = RunService.RenderStepped:Connect(function(dt)
                     end
                 end
             else
-                -- Bot Morto
+                -- Bot Morto ou Desaparecido
                 if botCache[botModel] then
                     botCache[botModel].Highlight.Parent = nil
                     botCache[botModel].UI.Enabled = false
