@@ -120,7 +120,7 @@ CreateToggle("ViewEntities", "View Entities", 0.18, function()
 end)
 
 CreateToggle("ViewItems", "View Itens", 0.5, function()
-    loadstring(game:HttpGet(""))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Itens%20(Doors)"))()
 end)
 
 CreateToggle("EntityAlert", "Entity Alert", 0.82, function()
