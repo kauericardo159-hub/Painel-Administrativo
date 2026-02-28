@@ -51,6 +51,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 -- FUNÇÃO: Ver itens pelo mapa
 print("✅ Carregando Sistema View Itens...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPanel-VIEW-ITENS"))()
+task.wait(3)
 
 --[[
 ==================================
@@ -60,10 +61,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 
 -- 1. MiniPainel: FPS | PING | PLAYER's
 -- Função: Exibir FPS, Ping e números de Players no server
--- Salvamento:
-loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%9F%A2%20SAVE%3A%20FPS%20%7C%20PING%20%7C%20PLAYER's"))()
-task.wait(3)
-
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20MiniPainel%3A%20FPS%20PING%20PLAYER's"))()
 task.wait(3)
 
