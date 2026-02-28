@@ -4,7 +4,7 @@ local player = Players.LocalPlayer
 
 --[[ 
 ===========================================================
-       ⚙ MINI-PAINEL EXTRA: FPS | PING | PLAYERS V2 ⚙
+       ⚙ MINI-PAINEL EXTRA: FPS | PING | PLAYERS V3 ⚙
 ===========================================================
 ]]
 
@@ -16,6 +16,7 @@ local extraLista = painel:WaitForChild("ExtraListContainer")
 
 local functionName = "FPSPingCard"
 local saveKey = "FPSPingStatus"
+local monitorGuiName = "FPSPingMonitorUI" -- Nome do elemento visual na tela
 
 -- Limpeza de duplicatas
 if extraLista:FindFirstChild(functionName) then
@@ -25,7 +26,7 @@ end
 -- 2. CRIAÇÃO DO MINI-PAINEL (Design Compacto)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = functionName
-miniPainel.Size = UDim2.new(0.95, 0, 0, 50) -- ✅ Altura reduzida para ficar compacto
+miniPainel.Size = UDim2.new(0.95, 0, 0, 50)
 miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 miniPainel.BackgroundTransparency = 0.4
 miniPainel.BorderSizePixel = 0
@@ -69,7 +70,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.5, 0, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "FPS | PING | P." -- Texto encurtado para caber
+title.Text = "FPS | PING | P."
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 14
@@ -77,14 +78,12 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = miniPainel
 
 -- 5. LÓGICA DE SALVAMENTO E ESTADO
--- Nota: _G só salva enquanto o jogo estiver aberto. 
--- Para salvar entre sessões, seria necessário DataStoreServer (não acessível por LocalScript)
 local isActive = _G[saveKey] or false
 
--- Botão (Switch) - ✅ Agora ao lado do título
+-- Botão (Switch) - Agora ao lado do título
 local btnBase = Instance.new("TextButton")
 btnBase.Size = UDim2.new(0, 50, 0, 25)
-btnBase.Position = UDim2.new(1, -60, 0.5, 0) -- ✅ Posicionado à direita dentro do card
+btnBase.Position = UDim2.new(1, -60, 0.5, 0)
 btnBase.AnchorPoint = Vector2.new(0, 0.5)
 btnBase.Text = ""
 btnBase.AutoButtonColor = false
@@ -108,10 +107,10 @@ knob.Parent = btnBase
 Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
 -- Cores
-local colorInactiveBase = Color3.fromRGB(100, 0, 0) -- Red Escuro
-local colorInactiveStroke = Color3.fromRGB(255, 0, 0) -- Red Forte
-local colorActiveBase = Color3.fromRGB(0, 80, 0) -- Verde Escuro
-local colorActiveStroke = Color3.fromRGB(0, 255, 0) -- Verde Forte
+local colorInactiveBase = Color3.fromRGB(100, 0, 0)
+local colorInactiveStroke = Color3.fromRGB(255, 0, 0)
+local colorActiveBase = Color3.fromRGB(0, 80, 0)
+local colorActiveStroke = Color3.fromRGB(0, 255, 0)
 
 local function UpdateVisual(instant)
     local targetPos = isActive and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
@@ -132,18 +131,26 @@ end
 -- Inicializa visual
 UpdateVisual(true)
 
--- 6. LÓGICA DE CLIQUE E loadstring
+-- 6. LÓGICA DE CLIQUE E loadstring (ATUALIZADA)
 btnBase.MouseButton1Click:Connect(function()
     isActive = not isActive
-    _G[saveKey] = isActive -- Salva o estado globalmente
+    _G[saveKey] = isActive 
     UpdateVisual(false)
     
     if isActive then
-        -- ✅ COLE SEU LOADSTRING AQUI
+        -- ✅ LOADSTRING ATIVADO (Sem comentários)
         print("Ativando Monitor FPS...")
-        -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
     else
+        -- ✅ LÓGICA DE DESATIVAÇÃO (Para sumir da tela)
         print("Desativando Monitor FPS...")
+        
+        -- PROCURA E REMOVE O ELEMENTO VISUAL NA TELA
+        local existingMonitor = playerGui:FindFirstChild(monitorGuiName)
+        if existingMonitor then
+            existingMonitor:Destroy()
+        end
+        -- Você também pode adicionar aqui uma lógica extra se o script loadstring criar variáveis globais
     end
 end)
 
@@ -151,4 +158,4 @@ end)
 miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
 TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-print("✅ MiniPainel Extra FPS/Ping V2 Carregado!")
+print("✅ MiniPainel Extra FPS/Ping V3 Carregado!")
