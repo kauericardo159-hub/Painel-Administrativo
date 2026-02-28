@@ -8,8 +8,10 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- ==========================================
 -- CONFIGURAÇÕES DO BOTÃO
 -- ==========================================
-local BUTTON_ID = "rbxassetid://15188057059" -- <--- COLOQUE SEU ID DE IMAGEM AQUI
-local MENU_NAME = "InterfaceMenu_V3"
+-- COLOQUE SEU ID DE IMAGEM AQUI (ex: rbxassetid://12345678)
+local BUTTON_ID = "rbxassetid://00000000000" 
+local MENU_NAME = "InterfaceMenu_V3" -- Nome do ScreenGui
+local PAINEL_NAME = "SistemaPainel_V3" -- Nome do painel principal
 local SAVE_NAME = "PremiumMenuPos"
 local BUTTON_SIZE = 60 -- Quadrado
 
@@ -42,19 +44,25 @@ local savedPos = nil
 if pcall(function() savedPos = game:GetService("HttpService"):JSONDecode(readfile(SAVE_NAME..".json")) end) and savedPos then
     mainButton.Position = UDim2.new(savedPos.X.Scale, savedPos.X.Offset, savedPos.Y.Scale, savedPos.Y.Offset)
 else
-    mainButton.Position = UDim2.new(0, 25, 0.5, -(BUTTON_SIZE/2)) -- Posição inicial
+    mainButton.Position = UDim2.new(0, 25, 0.5, -(BUTTON_SIZE/2)) -- Posição inicial padrão
 end
 
 mainButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainButton.Image = BUTTON_ID
--- ATUALIZAÇÃO: Stretch faz a imagem esticar para preencher todo o espaço
+-- ==========================================
+-- CORREÇÃO: Preencher imagem inteira
+-- ==========================================
 mainButton.ScaleType = Enum.ScaleType.Stretch 
+mainButton.ImageColor3 = Color3.new(1, 1, 1) -- Garante que a imagem não fique escura
+mainButton.BackgroundTransparency = 0 -- Mostra o fundo se a imagem for transparente
+-- ==========================================
+
 mainButton.AutoButtonColor = false
 mainButton.Parent = screenGui
 
 -- Estilização
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12) -- Mais arredondado
+corner.CornerRadius = UDim.new(0, 12) -- Arredondamento suave
 corner.Parent = mainButton
 
 local stroke = Instance.new("UIStroke")
@@ -63,11 +71,15 @@ stroke.Color = Color3.fromRGB(200, 200, 200)
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Parent = mainButton
 
--- UIGradient Refinado
+-- UIGradient Refinado (sutil para não cobrir a imagem totalmente)
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 180))
+})
+gradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.5), -- Mais transparente no centro
+    NumberSequenceKeypoint.new(1, 0.5)
 })
 gradient.Rotation = 45
 gradient.Parent = mainButton
@@ -78,7 +90,6 @@ gradient.Parent = mainButton
 local dragging = false
 local dragStart
 local startPos
-local holdTimer = 0
 local isDraggingMode = false
 
 mainButton.InputBegan:Connect(function(input)
@@ -86,12 +97,12 @@ mainButton.InputBegan:Connect(function(input)
         dragging = true
         dragStart = input.Position
         startPos = mainButton.Position
-        holdTimer = tick()
         
         -- Inicia verificação de segurar
         task.spawn(function()
+            local holdStart = tick()
             while dragging and not isDraggingMode do
-                if tick() - holdTimer >= 3 then
+                if tick() - holdStart >= 3 then
                     isDraggingMode = true
                     -- Efeito visual de que está arrastável
                     TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
@@ -102,14 +113,14 @@ mainButton.InputBegan:Connect(function(input)
     end
 end)
 
-mainButton.InputChanged:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and isDraggingMode then
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and isDraggingMode and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
         mainButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
-mainButton.InputEnded:Connect(function(input)
+UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = false
         
@@ -130,11 +141,15 @@ local isOpen = false
 local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
 local function toggleUI()
-    -- Busca o painel do seu script anterior
-    local coreGui = playerGui:FindFirstChild("SistemaPainel_V3")
+    -- Procura pelo Painel principal
+    local coreGui = playerGui:FindFirstChild(PAINEL_NAME)
     local painel = coreGui and coreGui:FindFirstChild("Panel")
     
-    if not painel then return end
+    if not painel then 
+        warn("Erro: Painel principal '"..PAINEL_NAME.."' não encontrado.")
+        return 
+    end
+    
     if isDraggingMode then return end -- Não abre se estiver arrastando
 
     isOpen = not isOpen
@@ -172,12 +187,12 @@ end)
 -- Hover efeitos
 mainButton.MouseEnter:Connect(function()
     if isDraggingMode then return end
-    TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
+    TweenService:Create(mainButton, TweenInfo.new(0.2), {ImageTransparency = 0.3}):Play()
 end)
 
 mainButton.MouseLeave:Connect(function()
     if isDraggingMode then return end
-    TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.1}):Play()
+    TweenService:Create(mainButton, TweenInfo.new(0.2), {ImageTransparency = 0}):Play()
 end)
 
-print("Botão Premium V3 Atualizado e Preenchido!")
+print("Botão Premium V3 Atualizado e Estiloso!")
