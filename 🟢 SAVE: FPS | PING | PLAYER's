@@ -1,0 +1,57 @@
+local DataStoreService = game:GetService("DataStoreService")
+local myDataStore = DataStoreService:GetDataStore("FPSMonitorSettings_V1")
+local Players = game:GetService("Players")
+
+-- Função para carregar dados
+Players.PlayerAdded:Connect(function(player)
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = player
+	
+	-- Criamos um valor no servidor para rastrear o estado
+	local statusValue = Instance.new("BoolValue")
+	statusValue.Name = "FPSMonitorStatus"
+	statusValue.Parent = player -- Parent ao player, não leaderstats para não aparecer na lista
+	
+	-- Tenta carregar os dados
+	local userId = player.UserId
+	local success, data = pcall(function()
+		return myDataStore:GetAsync(userId)
+	end)
+	
+	if success then
+		statusValue.Value = data or false -- Se não houver dados, assume false
+	else
+		warn("Erro ao carregar dados de FPS Monitor para " .. player.Name)
+		statusValue.Value = false
+	end
+end)
+
+-- Função para salvar dados ao sair
+Players.PlayerRemoving:Connect(function(player)
+	local userId = player.UserId
+	local statusValue = player:FindFirstChild("FPSMonitorStatus")
+	
+	if statusValue then
+		local success, err = pcall(function()
+			myDataStore:SetAsync(userId, statusValue.Value)
+		end)
+		
+		if not success then
+			warn("Erro ao salvar dados de FPS Monitor para " .. player.Name .. ": " .. err)
+		end
+	end
+end)
+
+-- RemoteEvent para atualizar do cliente para o servidor
+local remoteEvent = Instance.new("RemoteEvent")
+remoteEvent.Name = "UpdateFPSMonitorStatus"
+remoteEvent.Parent = game:GetService("ReplicatedStorage")
+
+remoteEvent.OnServerEvent:Connect(function(player, newStatus)
+	local statusValue = player:FindFirstChild("FPSMonitorStatus")
+	if statusValue then
+		statusValue.Value = newStatus
+	end
+end)
+
