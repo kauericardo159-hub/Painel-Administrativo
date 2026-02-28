@@ -1,0 +1,152 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
+
+-- ==========================================
+-- 1. CRIAÇÃO DA INTERFACE (GUI)
+-- ==========================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PainelStatusGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- Ignora a barra superior do Roblox
+
+local player = Players.LocalPlayer
+if player then
+    ScreenGui.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- Frame principal (A "caixa" invisível que vamos arrastar)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 320, 0, 30)
+MainFrame.Position = UDim2.new(0.5, 0, 0, 10) -- Topo e Centro
+MainFrame.AnchorPoint = Vector2.new(0.5, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.5 -- Um fundo levemente transparente para leitura
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8) -- Bordas arredondadas
+UICorner.Parent = MainFrame
+
+-- O Texto que vai mostrar tudo
+local StatsLabel = Instance.new("TextLabel")
+StatsLabel.Name = "StatsLabel"
+StatsLabel.Size = UDim2.new(1, 0, 1, 0)
+StatsLabel.BackgroundTransparency = 1
+StatsLabel.RichText = true -- Permite pintar partes separadas do texto!
+StatsLabel.Font = Enum.Font.GothamBold
+StatsLabel.TextSize = 14
+StatsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatsLabel.Text = "( FPS: -- | Ping: -- | Players: --/-- )"
+StatsLabel.Parent = MainFrame
+
+-- ==========================================
+-- 2. SISTEMA DE ARRASTAR (DRAGGABLE)
+-- ==========================================
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X, 
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
+end
+
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- ==========================================
+-- 3. LÓGICA DE DADOS (FPS, PING, PLAYERS)
+-- ==========================================
+-- Função para pegar o Ping do jogador
+local function getPing()
+    local ping = 0
+    pcall(function()
+        ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+    end)
+    return ping
+end
+
+-- Define a cor do FPS
+local function getFPSColor(fps)
+    if fps >= 50 then
+        return "#00AAFF" -- Azul (Bom)
+    elseif fps >= 30 then
+        return "#FFFFFF" -- Branco (Médio)
+    else
+        return "#FF0000" -- Vermelho (Ruim)
+    end
+end
+
+-- Define a cor do Ping
+local function getPingColor(ping)
+    if ping < 100 then
+        return "#00FF00" -- Verde (Bom)
+    elseif ping < 200 then
+        return "#FFFFFF" -- Branco (Médio)
+    else
+        return "#FF0000" -- Vermelho (Ruim)
+    end
+end
+
+local lastUpdate = 0
+local frames = 0
+
+-- Atualiza as informações a cada frame
+RunService.RenderStepped:Connect(function(dt)
+    frames = frames + 1
+    lastUpdate = lastUpdate + dt
+
+    -- Atualiza os textos a cada 0.5 segundos para o número não ficar piscando freneticamente
+    if lastUpdate >= 0.5 then 
+        local fps = math.floor(frames / lastUpdate)
+        local ping = getPing()
+        
+        local numPlayers = #Players:GetPlayers()
+        local maxPlayers = Players.MaxPlayers
+        
+        local fpsColor = getFPSColor(fps)
+        local pingColor = getPingColor(ping)
+        
+        -- Formata o texto final usando as tags de cor do RichText
+        local formattedText = string.format(
+            "( FPS: <font color='%s'>%d</font> | Ping: <font color='%s'>%d</font> | Players: %d / %d )",
+            fpsColor, fps, pingColor, ping, numPlayers, maxPlayers
+        )
+        
+        StatsLabel.Text = formattedText
+        
+        -- Reseta os contadores para o próximo cálculo
+        frames = 0
+        lastUpdate = 0
+    end
+end)
+
