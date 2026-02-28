@@ -29,10 +29,10 @@ end
 print("[SYSTEM] View Itens Doors: ATIVADO")
 
 -- ==========================================
--- CONFIGURAÇÕES RESTRITAS
+-- CONFIGURAÇÕES RESTRITAS E PALAVRAS-CHAVE
 -- ==========================================
-local MAX_DISTANCE = 100 -- Limite solicitado
-local SCAN_INTERVAL = 0.3 -- Varredura eficiente para poupar FPS
+local MAX_DISTANCE = 100 -- Limite de 100 metros
+local SCAN_INTERVAL = 0.3 -- Varredura a cada 0.3s para FPS alto
 
 _G.SystemItensDoorsFolder = Instance.new("Folder")
 _G.SystemItensDoorsFolder.Name = "DoorsItensVisuals"
@@ -41,27 +41,27 @@ _G.SystemItensDoorsFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 _G.ItensDoorsCache = {}
 local itemCache = _G.ItensDoorsCache
 
--- Filtro restrito apenas para o que é coletável ou crucial
-local COLLECTABLE_ITEMS = {
-    ["Key"] = true, ["MasterKey"] = true, ["LibraryKey"] = true, ["ElevatorKey"] = true, -- Chaves
-    ["Lighter"] = true, ["Flashlight"] = true, ["Candle"] = true, ["Bulklight"] = true, -- Luz
-    ["Vitamins"] = true, ["Bandage"] = true, ["Crucifix"] = true, ["SkeletonKey"] = true, -- Utilitários
-    ["Gold"] = true, ["Coin"] = true, -- Dinheiro
-    ["Battery"] = true, ["Fuse"] = true, ["Breaker"] = true, -- Puzzles
-    ["Shears"] = true, ["Lockpick"] = true, ["Book"] = true, -- Específicos
-    ["Door"] = true -- Portas Verdadeiras
+-- Usando trechos de palavras para não errar o nome exato (tudo minúsculo)
+local KEYWORDS = {
+    "gold", "coin", "key", "lighter", "flash", "candle", "bulk",
+    "vitamin", "bandage", "crucifix", "skeleton", "fuse", "battery",
+    "breaker", "shear", "lockpick", "book", "chest", "loot"
 }
 
 -- ==========================================
 -- FUNÇÕES DE CRIAÇÃO
 -- ==========================================
-local function createItemVisual(obj)
+local function createItemVisual(obj, isDoor)
     local data = {}
     
     local hl = Instance.new("Highlight")
     hl.Name = "ItemESP"
-    hl.FillTransparency = 0.7
+    hl.FillTransparency = 0.6
     hl.OutlineTransparency = 0
+    -- Verde para porta, Ciano para itens
+    local color = isDoor and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(0, 255, 255)
+    hl.FillColor = color
+    hl.OutlineColor = color
     hl.Parent = obj
     
     local bg = Instance.new("BillboardGui")
@@ -75,6 +75,7 @@ local function createItemVisual(obj)
     textLabel.BackgroundTransparency = 1
     textLabel.Font = Enum.Font.GothamBold
     textLabel.TextSize = 13
+    textLabel.TextColor3 = color
     textLabel.TextStrokeTransparency = 0.5
     textLabel.RichText = true
     textLabel.Parent = bg
@@ -82,23 +83,34 @@ local function createItemVisual(obj)
     data.Highlight = hl
     data.UI = bg
     data.Label = textLabel
+    data.IsDoor = isDoor
     return data
 end
 
 -- ==========================================
--- LÓGICA DE DETECÇÃO (Door & Rooms)
+-- LÓGICA DE DETECÇÃO (Palavras-Chave)
 -- ==========================================
-local function isValidItem(obj)
-    -- Detecção de Itens Coletáveis e Portas
-    if COLLECTABLE_ITEMS[obj.Name] then
-        if obj.Name == "Door" then
-            -- Verifica se é a porta verdadeira (Doors geralmente nomeia a correta de forma diferente ou usa atributos)
-            if obj:FindFirstChild("Lock") or obj:FindFirstChild("Door") then return true end
-            return false -- Ignora portas falsas
+local function checkItemStatus(obj)
+    if not obj:IsA("Model") and not obj:IsA("BasePart") then return false, false end
+
+    local name = string.lower(obj.Name)
+
+    -- 1. Verifica Portas Verdadeiras
+    if name == "door" or string.find(name, "door_") then
+        -- A porta certa geralmente tem um Sign (Placa) ou Lock (Cadeado) associado a ela
+        if obj:FindFirstChild("Lock") or obj:FindFirstChild("Sign") or obj:FindFirstChild("Hidden") then
+            return true, true -- (É válido, É porta)
         end
-        return true
     end
-    return false
+
+    -- 2. Verifica Itens por palavra-chave
+    for _, kw in ipairs(KEYWORDS) do
+        if string.find(name, kw) then
+            return true, false -- (É válido, Não é porta)
+        end
+    end
+
+    return false, false
 end
 
 -- ==========================================
@@ -115,13 +127,15 @@ _G.SystemViewItensDoorsConnection = RunService.RenderStepped:Connect(function()
     if tick() - lastScan > SCAN_INTERVAL then
         lastScan = tick()
         for _, obj in ipairs(workspace:GetDescendants()) do
-            if isValidItem(obj) then
+            local isValid, isDoor = checkItemStatus(obj)
+            
+            if isValid then
                 local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
                 if root then
                     local dist = (hrp.Position - root.Position).Magnitude
                     if dist <= MAX_DISTANCE then
                         if not itemCache[obj] then
-                            itemCache[obj] = createItemVisual(obj)
+                            itemCache[obj] = createItemVisual(obj, isDoor)
                         end
                     end
                 end
@@ -140,20 +154,16 @@ _G.SystemViewItensDoorsConnection = RunService.RenderStepped:Connect(function()
                     vis.UI.Enabled = true
                     vis.Highlight.Enabled = true
                     
-                    -- Cor diferente para Porta e Itens
-                    local color = obj.Name == "Door" and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(0, 255, 255)
-                    vis.Highlight.FillColor = color
-                    vis.Highlight.OutlineColor = color
-                    vis.Label.TextColor3 = color
-                    
-                    local displayName = obj.Name == "Door" and "🚪 SAÍDA" or obj.Name
+                    local displayName = vis.IsDoor and "🚪 SAÍDA" or obj.Name
                     vis.Label.Text = string.format("%s\n<font color='#FFFFFF'>[%dm]</font>", displayName, math.floor(dist))
                 else
+                    -- Oculta se passar de 100m
                     vis.UI.Enabled = false
                     vis.Highlight.Enabled = false
                 end
             end
         else
+            -- Destrói visual se o item sumir (for pego)
             vis.UI:Destroy()
             vis.Highlight:Destroy()
             itemCache[obj] = nil
