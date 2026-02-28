@@ -8,11 +8,10 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- ==========================================
 -- CONFIGURAÇÕES DO BOTÃO
 -- ==========================================
--- <--- COLOQUE SEU ID DE IMAGEM AQUI (ex: rbxassetid://12345678)
-local BUTTON_ID = "rbxassetid://15188057059" 
+local BUTTON_ID = "rbxassetid://15188057059" -- <--- COLOQUE SEU ID DE IMAGEM AQUI
 local MENU_NAME = "InterfaceMenu_V3"
 local SAVE_NAME = "PremiumMenuPos"
-local BUTTON_SIZE = 60 -- Tamanho do botão quadrado
+local BUTTON_SIZE = 60 -- Quadrado
 
 -- 1. LIMPEZA E CONFIGURAÇÃO DE EFEITOS
 local oldMenu = playerGui:FindFirstChild(MENU_NAME)
@@ -48,11 +47,8 @@ end
 
 mainButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainButton.Image = BUTTON_ID
--- ==========================================
--- CORREÇÃO: Preencher a imagem inteira
--- ==========================================
+-- ATUALIZAÇÃO: Stretch faz a imagem esticar para preencher todo o espaço
 mainButton.ScaleType = Enum.ScaleType.Stretch 
--- ==========================================
 mainButton.AutoButtonColor = false
 mainButton.Parent = screenGui
 
@@ -80,7 +76,6 @@ gradient.Parent = mainButton
 -- 3. LÓGICA DE ARRRASTAR (Segurar 3s)
 -- ==========================================
 local dragging = false
-local dragInput
 local dragStart
 local startPos
 local holdTimer = 0
@@ -135,8 +130,9 @@ local isOpen = false
 local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
 local function toggleUI()
+    -- Busca o painel do seu script anterior
     local coreGui = playerGui:FindFirstChild("SistemaPainel_V3")
-    local painel = coreGui and coreGui:FindFirstChild("Panel") -- Corrigido para "Panel" conforme sistema funcional
+    local painel = coreGui and coreGui:FindFirstChild("Panel")
     
     if not painel then return end
     if isDraggingMode then return end -- Não abre se estiver arrastando
@@ -184,4 +180,4 @@ mainButton.MouseLeave:Connect(function()
     TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.1}):Play()
 end)
 
-print("Botão Premium V3 Carregado!")
+print("Botão Premium V3 Atualizado e Preenchido!")
