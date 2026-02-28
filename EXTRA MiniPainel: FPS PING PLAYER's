@@ -164,7 +164,7 @@ btnBase.MouseButton1Click:Connect(function()
     if isActive then
         -- COLE SEU LOADSTRING AQUI
         print("Ativando Monitor FPS...")
-        -- loadstring(game:HttpGet("URL_AQUI"))()
+        -- loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
     else
         print("Desativando Monitor FPS...")
     end
