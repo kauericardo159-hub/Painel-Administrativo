@@ -23,7 +23,7 @@ end
 -- ATENÇÃO: O Roblox não aceita links "https://". Você precisa upar a imagem no Roblox e pegar o ID.
 -- Substitua os números abaixo pelo ID da imagem que você baixar daquele link.
 local minhaCapaId = "10653344262" 
-local gameIconId = "rbxassetid://10653344262" .. minhaCapaId
+local gameIconId = "rbxassetid://" .. minhaCapaId
 
 -- ==========================================
 -- 3. CRIAÇÃO DO MINI-PAINEL (Estilo Doors)
