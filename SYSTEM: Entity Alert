@@ -1,106 +1,126 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local localPlayer = Players.LocalPlayer
 
 -- ==========================================
 -- SISTEMA DE TOGGLE (LIGA/DESLIGA)
 -- ==========================================
-if _G.SystemEntityAlertConn then
-    _G.SystemEntityAlertConn:Disconnect()
-    _G.SystemEntityAlertConn = nil
+if _G.EntityAlertActive then
+    _G.EntityAlertActive = false
+    if _G.AlertUIFolder then _G.AlertUIFolder:Destroy() end
     print("[SYSTEM] Entity Alert: DESATIVADO")
     return
 end
 
+_G.EntityAlertActive = true
 print("[SYSTEM] Entity Alert: ATIVADO")
 
 -- ==========================================
--- CONFIGURAÇÕES E LISTA DE ALERTAS
+-- CONFIGURAÇÕES E SONS
 -- ==========================================
-local WARNING_DISTANCE = 500 -- Distância para iniciar o aviso (em studs)
-local ALERT_TIME = 3 -- Tempo que o aviso fica na tela
+local ALERT_SOUND_ID = "rbxassetid://232127604" -- Som estilo HD Admin
+local ALERT_COLOR = Color3.fromRGB(255, 50, 0) -- Vermelho Alerta
+local TEXT_COLOR = Color3.fromRGB(255, 255, 255)
 
--- Entidades que disparam o alerta crítico
-local ALERT_ENTITIES = {
-    ["RushMoving"] = "RUSH", ["AmbushMoving"] = "AMBUSH", 
-    ["SeekMoving"] = "SEEK", ["A60"] = "A-60", 
-    ["A120"] = "A-120", ["A90"] = "A-90",
-    ["Blitzo"] = "BLITZ", ["Grumble"] = "GRUMBLE"
+local DOORS_MASTER_LIST = {
+    "rush", "ambush", "figure", "seek", "screech", "halt", "eyes", "glitch", "dupe", "void", "snare", "hide", "jack", "timothy",
+    "giggle", "grumble", "gloombat", "seek_mines", "figure_mines", "dam", "flesh_panopticon",
+    "a60", "a120", "a90", "a-60", "a-120", "a-90",
+    "blitz", "lookman", "haste", "vacuum", "dread"
 }
 
+-- Criar pasta para UI
+_G.AlertUIFolder = Instance.new("ScreenGui")
+_G.AlertUIFolder.Name = "EntityAlertSystem"
+_G.AlertUIFolder.ResetOnSpawn = false
+_G.AlertUIFolder.Parent = localPlayer:WaitForChild("PlayerGui")
+
+-- Som de Alerta
+local alertSound = Instance.new("Sound")
+alertSound.SoundId = ALERT_SOUND_ID
+alertSound.Volume = 1
+alertSound.Parent = _G.AlertUIFolder
+
 -- ==========================================
--- FUNÇÃO DE AVISO (Estilo HD Admin)
+-- CRIAÇÃO DO BANNER DE AVISO
 -- ==========================================
-local function showAdminAlert(message, color)
-    local screenGui = localPlayer.PlayerGui:FindFirstChild("AdminAlert") or Instance.new("ScreenGui", localPlayer.PlayerGui)
-    screenGui.Name = "AdminAlert"
-    screenGui.ResetOnSpawn = false
-    
-    -- Limpa avisos antigos
-    for _, child in ipairs(screenGui:GetChildren()) do child:Destroy() end
-    
-    -- Fundo do Aviso (Topo da tela)
+local function CreateAlertBanner(entityName)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0.5, 0, 0, 40)
-    frame.Position = UDim2.new(0.25, 0, 0, 10)
-    frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    frame.BackgroundTransparency = 0.3
+    frame.Name = "Alert_" .. entityName
+    frame.Size = UDim2.new(0, 300, 0, 45)
+    frame.Position = UDim2.new(0.5, -150, 0, -60) -- Começa fora da tela
+    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    frame.BackgroundTransparency = 0.2
     frame.BorderSizePixel = 0
-    frame.Parent = screenGui
-    
+    frame.Parent = _G.AlertUIFolder
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = frame
-    
-    -- Texto do Aviso
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = "⚠️ " .. message .. " ⚠️"
-    textLabel.TextColor3 = color
-    textLabel.Font = Enum.Font.GothamBold
-    textLabel.TextSize = 22
-    textLabel.TextStrokeTransparency = 0
-    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    textLabel.Parent = frame
-    
-    -- Som de alerta
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://1548842106" -- Som de alerta estilo admin
-    sound.Volume = 1
-    sound.Parent = game.SoundService
-    sound:Play()
-    
-    -- Auto-destruição após o tempo
-    task.delay(ALERT_TIME, function()
-        frame:Destroy()
-        sound:Destroy()
-    end)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 2
+    stroke.Color = ALERT_COLOR
+    stroke.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = "⚠️ ENTITY: " .. string.upper(entityName)
+    label.TextColor3 = TEXT_COLOR
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.RichText = true
+    label.Parent = frame
+
+    -- Animação de Entrada
+    TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -150, 0, 50)}):Play()
+    alertSound:Play()
+
+    return frame
 end
 
 -- ==========================================
--- LOOP DE MONITORAMENTO (Alta Performance)
+-- LÓGICA DE DETECÇÃO (LOOP)
 -- ==========================================
-_G.SystemEntityAlertConn = RunService.Heartbeat:Connect(function()
-    local char = localPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+local activeAlerts = {}
 
-    -- Verifica apenas objetos essenciais no workspace
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if ALERT_ENTITIES[obj.Name] and obj:IsA("Model") then
-            local root = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-            if root then
-                local dist = (hrp.Position - root.Position).Magnitude
-                
-                -- Se a entidade estiver perto e não for o Figure (que não precisa de alerta de distância)
-                if dist <= WARNING_DISTANCE and obj.Name ~= "Figure" then
-                    showAdminAlert(ALERT_ENTITIES[obj.Name] .. " APROXIMANDO-SE! (" .. math.floor(dist) .. "m)", Color3.fromRGB(255, 0, 0))
-                    -- Pequena espera para não spammar o som
-                    task.wait(ALERT_TIME) 
+task.spawn(function()
+    while _G.EntityAlertActive do
+        local currentEntitiesInWorkspace = {}
+        
+        -- Varre o workspace em busca das entidades da lista
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Model") then
+                local nameLower = string.lower(obj.Name)
+                for _, target in ipairs(DOORS_MASTER_LIST) do
+                    if string.find(nameLower, target) then
+                        currentEntitiesInWorkspace[target] = true
+                        
+                        -- Se a entidade apareceu e não tem alerta, cria um
+                        if not activeAlerts[target] then
+                            activeAlerts[target] = CreateAlertBanner(target)
+                        end
+                        break
+                    end
                 end
             end
         end
+
+        -- Verifica se alguma entidade da lista de alertas sumiu do workspace
+        for target, frame in pairs(activeAlerts) do
+            if not currentEntitiesInWorkspace[target] then
+                -- Animação de Saída
+                local outTween = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -150, 0, -60)})
+                outTween:Play()
+                outTween.Completed:Connect(function()
+                    frame:Destroy()
+                end)
+                activeAlerts[target] = nil
+            end
+        end
+
+        task.wait(0.5) -- Checagem a cada meio segundo (Economiza CPU)
     end
 end)
-
