@@ -70,10 +70,10 @@ task.wait(3)
 ===============================
 ]]
 
---[[
+
 -- 🔴 AVISO: Precisar ter uma Manutenção.
 -- 0. MiniPainel: 👀 DOORS
 -- FUNÇÃO: Apenas funciona em Doors.
 print("☑ Carregando Sistema ...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20Doors"))()
-]]
+
