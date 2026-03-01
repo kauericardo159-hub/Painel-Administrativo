@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local MarketplaceService = game:GetService("MarketplaceService")
 local player = Players.LocalPlayer
 
 -- ==========================================
@@ -17,36 +16,33 @@ if extraLista:FindFirstChild(functionName) then
     extraLista[functionName]:Destroy()
 end
 
--- Busca o ícone atual do jogo (Sincronização automática)
-local success, gameInfo = pcall(function()
-    return MarketplaceService:GetProductInfo(game.PlaceId)
-end)
-local gameIconId = success and "rbxassetid://" .. gameInfo.IconImageAssetId or "rbxassetid://10873387885"
+-- Link da Capa solicitado
+local gameIconLink = "https://tr.rbxcdn.com/180DAY-463da8865fd237fd47484bbe0b9382e5/512/512/Image/Webp/noFilter"
 
 -- ==========================================
--- 2. CRIAÇÃO DO MINI-PAINEL
+-- 2. CRIAÇÃO DO MINI-PAINEL (Design Doors)
 -- ==========================================
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = functionName
 miniPainel.Size = UDim2.new(0.95, 0, 0, 105)
-miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-miniPainel.BackgroundTransparency = 0.4
+miniPainel.BackgroundColor3 = Color3.fromRGB(15, 12, 10) -- Tom marrom escuro "Doors"
+miniPainel.BackgroundTransparency = 0.3
 miniPainel.BorderSizePixel = 0
 miniPainel.ZIndex = extraLista.ZIndex + 5
 miniPainel.Parent = extraLista
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
+corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = miniPainel
 
--- UIStrokes (Estilo Azul + Preto Animado)
+-- ✅ DOUBLE STROKE (Azul + Preto Animado)
 local strokeAzul = Instance.new("UIStroke")
-strokeAzul.Thickness = 2
-strokeAzul.Color = Color3.fromRGB(0, 50, 150)
+strokeAzul.Thickness = 1.8
+strokeAzul.Color = Color3.fromRGB(0, 80, 200)
 strokeAzul.Parent = miniPainel
 
 local strokePreto = Instance.new("UIStroke")
-strokePreto.Thickness = 4
+strokePreto.Thickness = 3.5
 strokePreto.Color = Color3.fromRGB(0, 0, 0)
 strokePreto.Transparency = 1
 strokePreto.Parent = miniPainel
@@ -54,42 +50,42 @@ strokePreto.Parent = miniPainel
 task.spawn(function()
     while miniPainel.Parent do
         local ti = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
-        TweenService:Create(strokePreto, ti, {Transparency = 0.5}):Play()
+        TweenService:Create(strokePreto, ti, {Transparency = 0.4}):Play()
         task.wait(1.5)
         TweenService:Create(strokePreto, ti, {Transparency = 1}):Play()
         task.wait(1.5)
     end
 end)
 
--- ✅ CAPA DO JOGO (Substituindo o Emoji)
+-- ✅ CAPA DO JOGO (Link Externo)
 local gameIcon = Instance.new("ImageLabel")
 gameIcon.Name = "GameIcon"
-gameIcon.Size = UDim2.new(0, 24, 0, 24)
+gameIcon.Size = UDim2.new(0, 32, 0, 32)
 gameIcon.Position = UDim2.new(0, 10, 0, 8)
 gameIcon.BackgroundTransparency = 1
-gameIcon.Image = gameIconId
+gameIcon.Image = gameIconLink
 gameIcon.ZIndex = miniPainel.ZIndex + 2
 gameIcon.Parent = miniPainel
 
 local iconCorner = Instance.new("UICorner")
-iconCorner.CornerRadius = UDim.new(0, 4)
+iconCorner.CornerRadius = UDim.new(0, 6)
 iconCorner.Parent = gameIcon
 
--- Título (Ajustado para o lado da imagem)
+-- Título (Estilo Laranja Queimado)
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 0, 30)
-title.Position = UDim2.new(0, 40, 0, 5)
+title.Position = UDim2.new(0, 50, 0, 8)
 title.BackgroundTransparency = 1
-title.Text = "DOORS SYSTEM"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "DOORS CONTROL"
+title.TextColor3 = Color3.fromRGB(255, 160, 50) -- Laranja clássico
 title.Font = Enum.Font.GothamBold
-title.TextSize = 13
+title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.ZIndex = miniPainel.ZIndex + 1
 title.Parent = miniPainel
 
 -- ==========================================
--- 3. FUNÇÃO DE TOGGLE (Sincronizada)
+-- 3. FUNÇÃO DE TOGGLE (LOGICA CORRIGIDA)
 -- ==========================================
 local function CreateToggle(name, labelText, posX, saveKey, url)
     local container = Instance.new("Frame")
@@ -102,9 +98,9 @@ local function CreateToggle(name, labelText, posX, saveKey, url)
     container.Parent = miniPainel
 
     local iconLabel = Instance.new("TextLabel")
-    iconLabel.Size = UDim2.new(1, 0, 0, 25)
+    iconLabel.Size = UDim2.new(1, 0, 0, 20)
     iconLabel.Text = labelText
-    iconLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    iconLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
     iconLabel.Font = Enum.Font.GothamMedium
     iconLabel.TextSize = 10
     iconLabel.BackgroundTransparency = 1
@@ -112,7 +108,7 @@ local function CreateToggle(name, labelText, posX, saveKey, url)
     iconLabel.Parent = container
 
     local btnBase = Instance.new("TextButton")
-    btnBase.Size = UDim2.new(0, 45, 0, 20)
+    btnBase.Size = UDim2.new(0, 42, 0, 18)
     btnBase.Position = UDim2.new(0.5, 0, 0.7, 0)
     btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
     btnBase.Text = ""
@@ -122,56 +118,60 @@ local function CreateToggle(name, labelText, posX, saveKey, url)
     Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
 
     local btnStroke = Instance.new("UIStroke")
-    btnStroke.Thickness = 2
+    btnStroke.Thickness = 1.5
     btnStroke.Parent = btnBase
 
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 14, 0, 14)
+    knob.Size = UDim2.new(0, 12, 0, 12)
     knob.AnchorPoint = Vector2.new(0, 0.5)
     knob.BackgroundColor3 = Color3.new(1, 1, 1)
     knob.ZIndex = btnBase.ZIndex + 1
     knob.Parent = btnBase
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
+    -- Sincronização inicial
     if _G[saveKey] == nil then _G[saveKey] = false end
 
     local function UpdateVisual(instant)
         local active = _G[saveKey]
-        local targetPos = active and UDim2.new(1, -17, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
-        local bgColor = active and Color3.fromRGB(0, 120, 0) or Color3.fromRGB(120, 0, 0)
-        local strokeColor = active and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        local targetPos = active and UDim2.new(1, -15, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+        local bgColor = active and Color3.fromRGB(200, 120, 0) or Color3.fromRGB(60, 60, 60)
+        local strokeColor = active and Color3.fromRGB(255, 180, 0) or Color3.fromRGB(100, 100, 100)
 
         if instant then
             knob.Position = targetPos
             btnBase.BackgroundColor3 = bgColor
             btnStroke.Color = strokeColor
         else
-            TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
-            TweenService:Create(btnBase, TweenInfo.new(0.2), {BackgroundColor3 = bgColor}):Play()
-            TweenService:Create(btnStroke, TweenInfo.new(0.2), {Color = strokeColor}):Play()
+            TweenService:Create(knob, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
+            TweenService:Create(btnBase, TweenInfo.new(0.25), {BackgroundColor3 = bgColor}):Play()
+            TweenService:Create(btnStroke, TweenInfo.new(0.25), {Color = strokeColor}):Play()
         end
     end
 
     UpdateVisual(true)
 
+    -- ✅ CORREÇÃO: Executa o script EM TODOS OS CLIQUES para permitir o Toggle interno
     btnBase.Activated:Connect(function()
         _G[saveKey] = not _G[saveKey]
         UpdateVisual(false)
-        if _G[saveKey] then
-            task.spawn(function() loadstring(game:HttpGet(url))() end)
-        end
+        
+        -- Executa sempre, o script de destino decide se liga ou desliga
+        task.spawn(function()
+            loadstring(game:HttpGet(url))()
+        end)
     end)
 end
 
 -- ==========================================
 -- 4. INICIALIZAÇÃO
 -- ==========================================
-CreateToggle("ViewEnt", "Entities", 0.18, "D_ViewEnt", "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Entities")
+CreateToggle("ViewEnt", "Entities", 0.18, "SystemViewEntitiesActive", "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Entities")
 CreateToggle("ViewItens", "Items", 0.5, "D_ViewItems", "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Itens%20(Doors)")
-CreateToggle("Alert", "Alert", 0.82, "D_Alert", "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Entity%20Alert")
+CreateToggle("Alert", "Alert", 0.82, "EntityAlertActive", "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Entity%20Alert")
 
 -- Animação de Entrada
 miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
-TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+TweenService:Create(miniPainel, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-print("✅ MiniPainel Doors V4 (Capa Dinâmica) Carregado!")
+print("✅ MiniPainel Doors V5 (Logica de Clique Forçada) Carregado!")
