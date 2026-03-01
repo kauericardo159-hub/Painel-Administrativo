@@ -5,14 +5,18 @@ local localPlayer = Players.LocalPlayer
 -- ==========================================
 -- SISTEMA DE TOGGLE (LIGA/DESLIGA)
 -- ==========================================
-local function ClearSystem()
-    if _G.SystemViewEntitiesRenderConn then _G.SystemViewEntitiesRenderConn:Disconnect() _G.SystemViewEntitiesRenderConn = nil end
-    if _G.SystemViewEntitiesAddedConn then _G.SystemViewEntitiesAddedConn:Disconnect() _G.SystemViewEntitiesAddedConn = nil end
+if _G.SystemViewEntitiesActive then
+    _G.SystemViewEntitiesActive = false 
+    
+    if _G.SystemViewEntitiesConnection then
+        _G.SystemViewEntitiesConnection:Disconnect()
+        _G.SystemViewEntitiesConnection = nil
+    end
     
     if _G.EntitiesCache then
-        for _, vis in pairs(_G.EntitiesCache) do
-            if vis.Highlight then vis.Highlight:Destroy() end
-            if vis.UI then vis.UI:Destroy() end
+        for _, visualData in pairs(_G.EntitiesCache) do
+            if visualData.Highlight then visualData.Highlight:Destroy() end
+            if visualData.UI then visualData.UI:Destroy() end
         end
         table.clear(_G.EntitiesCache)
     end
@@ -21,147 +25,204 @@ local function ClearSystem()
         _G.SystemEntitiesFolder:Destroy()
         _G.SystemEntitiesFolder = nil
     end
-end
-
-if _G.SystemViewEntitiesRenderConn or _G.SystemViewEntitiesAddedConn then
-    ClearSystem()
+    
     print("[SYSTEM] View Entities: DESATIVADO")
     return
 end
 
-print("[SYSTEM] View Entities: ATIVADO")
+_G.SystemViewEntitiesActive = true
+print("[SYSTEM] View Entities: ATIVADO (Tudo Detectado)")
 
 -- ==========================================
--- CONFIGURAÇÕES E LISTA DE MONSTROS
+-- CONFIGURAÇÕES VISUAIS
 -- ==========================================
+local MAX_DISTANCE = 1000 -- Aumentado para ver entidades longe em andares grandes
+local FADE_START = 300
+
+local NAME_COLOR = "#FFFFFF"
+local STROKE_COLOR = Color3.fromRGB(255, 120, 0) -- Laranja Doors
+local OUTLINE_COLOR = Color3.fromRGB(255, 0, 0)  -- Vermelho Alerta
+local DIST_COLOR = "#FFD700" -- Dourado
+local HP_COLOR = "#FF3232"
+
+-- ==========================================
+-- LISTA MESTRE DE ENTIDADES (TODOS OS MODOS)
+-- ==========================================
+local DOORS_MASTER_LIST = {
+    -- FLOOR 1: THE HOTEL
+    "rush", "ambush", "figure", "seek", "screech", "halt", "eyes", "glitch", "dupe", "void", "snare", "hide", "jack", "timothy",
+    
+    -- FLOOR 2: THE MINES
+    "giggle", "grumble", "gloombat", "seek_mines", "figure_mines", "dam", "flesh_panopticon",
+    
+    -- THE ROOMS
+    "a60", "a120", "a90", "a-60", "a-120", "a-90",
+    
+    -- THE BACKDOOR
+    "blitz", "lookman", "haste", "vacuum",
+    
+    -- ENTIDADES ESPECIAIS / EVENTOS
+    "guiding", "curious", "dread", "backdoor_haste", "shia_labeauhf"
+}
+
+local IGNORE_LIST = {
+    "jeff", "el goblino", "bob", "sebastian", "merchant", "shop", "dummy", "guide", "light", "player"
+}
+
+-- Pasta Global
 _G.SystemEntitiesFolder = Instance.new("Folder")
-_G.SystemEntitiesFolder.Name = "EntitiesVisuals"
+_G.SystemEntitiesFolder.Name = "ViewEntitiesCache"
 _G.SystemEntitiesFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 
 _G.EntitiesCache = {}
-local entityCache = _G.EntitiesCache
-
--- Lista de nomes e fragmentos de nomes das entidades ativas (Hotel, Rooms, Mines, Modifiers)
-local ENTITY_KEYWORDS = {
-    "rushmoving", "ambushmoving", "seekmoving", "figure", -- Hotel Padrão
-    "a-60", "a60", "a-90", "a90", "a-120", "a120", -- The Rooms
-    "grumble", "giggler", "gloombat", -- Floor 2 (The Mines)
-    "pandemonium", "blitz", "lookman", "haste", "dread" -- Modificadores e Extras
-}
+local entCache = _G.EntitiesCache
 
 -- ==========================================
--- LÓGICA DE DETECÇÃO IMEDIATA
+-- FUNÇÕES AUXILIARES
 -- ==========================================
-local function isEntity(obj)
-    if not obj then return false end
-    -- Evita marcar sons, salas ou ragdolls mortos
-    if obj:IsA("Sound") or string.find(string.lower(obj.Name), "ragdoll") or string.find(string.lower(obj.Name), "room") then 
-        return false 
-    end
-    
-    -- Tem que ser Model ou BasePart para ter posição física
-    if not obj:IsA("Model") and not obj:IsA("BasePart") then return false end
-
-    local name = string.lower(obj.Name)
-    for _, kw in ipairs(ENTITY_KEYWORDS) do
-        if string.find(name, kw) then
-            return true
-        end
-    end
-    return false
-end
-
--- ==========================================
--- FUNÇÕES DE CRIAÇÃO VISUAL
--- ==========================================
-local function createEntityVisual(obj)
+local function createVisuals(model)
     local data = {}
     
     local hl = Instance.new("Highlight")
-    hl.Name = "EntityESP"
-    hl.FillTransparency = 0.5
-    hl.FillColor = Color3.fromRGB(255, 0, 0)
-    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.Name = "EntityOutline"
+    hl.FillTransparency = 1
+    hl.OutlineColor = OUTLINE_COLOR
     hl.OutlineTransparency = 0
-    hl.Parent = obj
     
     local bg = Instance.new("BillboardGui")
     bg.Name = "EntityInfo"
     bg.Size = UDim2.new(0, 200, 0, 50)
+    bg.StudsOffset = Vector3.new(0, 4, 0)
     bg.AlwaysOnTop = true
+    bg.LightInfluence = 0
     bg.Parent = _G.SystemEntitiesFolder
     
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Font = Enum.Font.GothamBold
-    textLabel.TextSize = 16
-    textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-    textLabel.TextStrokeTransparency = 0
-    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    textLabel.RichText = true
-    textLabel.Parent = bg
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 15
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.TextStrokeColor3 = STROKE_COLOR
+    nameLabel.RichText = true
+    nameLabel.Parent = bg
+    
+    local statsLabel = Instance.new("TextLabel")
+    statsLabel.Size = UDim2.new(1, 0, 0.4, 0)
+    statsLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    statsLabel.BackgroundTransparency = 1
+    statsLabel.Font = Enum.Font.GothamMedium
+    statsLabel.TextSize = 13
+    statsLabel.TextStrokeTransparency = 0.5
+    statsLabel.RichText = true
+    statsLabel.Parent = bg
     
     data.Highlight = hl
     data.UI = bg
-    data.Label = textLabel
-    data.Obj = obj
+    data.NameLabel = nameLabel
+    data.StatsLabel = statsLabel
+    
     return data
 end
 
--- Função que tenta adicionar a entidade ao sistema
-local function tryAddEntity(obj)
-    if isEntity(obj) and not entityCache[obj] then
-        entityCache[obj] = createEntityVisual(obj)
+local function isEntity(model)
+    if not model:IsA("Model") then return false end
+    if Players:GetPlayerFromCharacter(model) then return false end
+    
+    local nameLower = string.lower(model.Name)
+    
+    -- 1. Verifica se deve ignorar
+    for _, ignored in ipairs(IGNORE_LIST) do
+        if string.find(nameLower, ignored) then return false end
     end
+    
+    -- 2. Verifica Whitelist Mestre
+    for _, entityName in ipairs(DOORS_MASTER_LIST) do
+        if string.find(nameLower, entityName) then return true end
+    end
+    
+    -- 3. Caso especial: Grumble e Giggle (Floor 2) costumam ter nomes variados no código
+    if string.find(nameLower, "grum") or string.find(nameLower, "gigg") then return true end
+
+    return false
 end
 
 -- ==========================================
--- INICIALIZAÇÃO E EVENTOS EM TEMPO REAL
+-- THREAD 1: BUSCADOR (Background - Ultra Otimizado)
 -- ==========================================
-
--- 1. Varredura inicial (Pega o Figure ou entidades que já estão no mapa)
-for _, obj in ipairs(workspace:GetDescendants()) do
-    tryAddEntity(obj)
-end
-
--- 2. DETECÇÃO INSTANTÂNEA (A mágica acontece aqui)
--- Sempre que o jogo invocar algo no mapa, ele verifica em milissegundos.
-_G.SystemViewEntitiesAddedConn = workspace.DescendantAdded:Connect(function(obj)
-    tryAddEntity(obj)
+task.spawn(function()
+    while _G.SystemViewEntitiesActive do
+        local descendants = workspace:GetDescendants()
+        
+        for i, obj in ipairs(descendants) do
+            if not _G.SystemViewEntitiesActive then break end
+            
+            if obj:IsA("Model") and not entCache[obj] then
+                if isEntity(obj) then
+                    entCache[obj] = createVisuals(obj)
+                end
+            end
+            
+            -- Otimização: Evita queda de FPS ao varrer mapas gigantes como Floor 2
+            if i % 600 == 0 then task.wait() end 
+        end
+        task.wait(1.2) -- Busca novos inimigos a cada 1.2s
+    end
 end)
 
 -- ==========================================
--- LOOP DE ATUALIZAÇÃO DE POSIÇÃO E DISTÂNCIA
+-- THREAD 2: ATUALIZADOR (Interface)
 -- ==========================================
-_G.SystemViewEntitiesRenderConn = RunService.RenderStepped:Connect(function()
-    local char = localPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if not hrp then return end
+_G.SystemViewEntitiesConnection = RunService.RenderStepped:Connect(function()
+    local myChar = localPlayer.Character
+    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
 
-    for obj, vis in pairs(entityCache) do
-        if obj and obj.Parent then
-            -- Tenta achar o centro da entidade
-            local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+    for model, vis in pairs(entCache) do
+        -- Limpeza automática
+        if not model or not model.Parent then
+            vis.Highlight:Destroy()
+            vis.UI:Destroy()
+            entCache[model] = nil
+            continue
+        end
+
+        -- Tenta achar o melhor ponto para ancorar a UI (Cabeça ou Peça Principal)
+        local anchor = model.PrimaryPart 
+            or model:FindFirstChild("HumanoidRootPart") 
+            or model:FindFirstChild("Head") 
+            or model:FindFirstChildWhichIsA("BasePart")
+
+        if anchor then
+            local dist = (myHRP.Position - anchor.Position).Magnitude
             
-            if root then
-                local dist = (hrp.Position - root.Position).Magnitude
+            if dist <= MAX_DISTANCE then
+                local fade = math.clamp((dist - FADE_START) / (MAX_DISTANCE - FADE_START), 0, 1)
                 
-                vis.UI.Adornee = root
+                vis.Highlight.Parent = model
+                vis.Highlight.OutlineTransparency = fade
+                
+                vis.UI.Adornee = anchor
                 vis.UI.Enabled = true
-                vis.Label.Text = string.format("⚠️ %s ⚠️\n<font color='#C8C800'>%dm.</font>", obj.Name:upper(), math.floor(dist))
                 
-                -- Impede que o jogo remova o Highlight
-                if vis.Highlight.Parent ~= obj then
-                    vis.Highlight.Parent = obj
-                end
+                vis.NameLabel.TextTransparency = fade
+                vis.StatsLabel.TextTransparency = fade
+                vis.NameLabel.TextStrokeTransparency = fade
+                
+                local hum = model:FindFirstChildOfClass("Humanoid")
+                local hpText = (hum and hum.MaxHealth < 5000) and math.floor(hum.Health) or "???"
+
+                -- Texto Bonito e Formatado
+                vis.NameLabel.Text = string.format('<font color="%s">⚠️ %s</font>', NAME_COLOR, string.upper(model.Name))
+                vis.StatsLabel.Text = string.format('<font color="%s">%dm</font> | <font color="%s">HP: %s</font>', DIST_COLOR, math.floor(dist), HP_COLOR, tostring(hpText))
+            else
+                vis.Highlight.Parent = nil
+                vis.UI.Enabled = false
             end
         else
-            -- A entidade foi destruída (passou por você ou foi deletada pelo jogo)
-            if vis.Highlight then vis.Highlight:Destroy() end
-            if vis.UI then vis.UI:Destroy() end
-            entityCache[obj] = nil
+            vis.Highlight.Parent = nil
+            vis.UI.Enabled = false
         end
     end
 end)
