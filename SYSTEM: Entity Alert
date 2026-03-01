@@ -4,19 +4,12 @@ local TweenService = game:GetService("TweenService")
 local localPlayer = Players.LocalPlayer
 
 -- ==========================================
--- SISTEMA DE TOGGLE (LIGA/DESLIGA) - CORRIGIDO
+-- SISTEMA DE TOGGLE (LIGA/DESLIGA)
 -- ==========================================
 if _G.EntityAlertActive then
-    _G.EntityAlertActive = false -- Sinaliza para parar o loop
-    
-    task.wait(0.1) -- Pequena pausa para garantir a parada da Thread
-    
-    if _G.AlertUIFolder then
-        _G.AlertUIFolder:Destroy()
-        _G.AlertUIFolder = nil
-    end
-    
-    print("[SYSTEM] Entity Alert: DESATIVADO IMEDIATAMENTE")
+    _G.EntityAlertActive = false
+    if _G.AlertUIFolder then _G.AlertUIFolder:Destroy() end
+    print("[SYSTEM] Entity Alert: DESATIVADO")
     return
 end
 
@@ -56,7 +49,7 @@ local function CreateAlertBanner(entityName)
     local frame = Instance.new("Frame")
     frame.Name = "Alert_" .. entityName
     frame.Size = UDim2.new(0, 300, 0, 45)
-    frame.Position = UDim2.new(0.5, -150, 0, -70) -- Começa fora da tela (topo)
+    frame.Position = UDim2.new(0.5, -150, 0, -60) -- Começa fora da tela
     frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     frame.BackgroundTransparency = 0.2
     frame.BorderSizePixel = 0
@@ -82,26 +75,23 @@ local function CreateAlertBanner(entityName)
     label.Parent = frame
 
     -- Animação de Entrada
-    TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -150, 0, 20)}):Play()
+    TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -150, 0, 50)}):Play()
     alertSound:Play()
 
     return frame
 end
 
 -- ==========================================
--- LÓGICA DE DETECÇÃO (LOOP CORRIGIDO)
+-- LÓGICA DE DETECÇÃO (LOOP)
 -- ==========================================
 local activeAlerts = {}
 
 task.spawn(function()
     while _G.EntityAlertActive do
         local currentEntitiesInWorkspace = {}
-        local descendants = workspace:GetDescendants()
         
-        -- Varre o workspace
-        for i, obj in ipairs(descendants) do
-            if not _G.EntityAlertActive then break end -- SEGURANÇA: Para se desativar
-            
+        -- Varre o workspace em busca das entidades da lista
+        for _, obj in ipairs(workspace:GetDescendants()) do
             if obj:IsA("Model") then
                 local nameLower = string.lower(obj.Name)
                 for _, target in ipairs(DOORS_MASTER_LIST) do
@@ -116,22 +106,21 @@ task.spawn(function()
                     end
                 end
             end
-            if i % 600 == 0 then task.wait() end -- Otimização de CPU
         end
 
         -- Verifica se alguma entidade da lista de alertas sumiu do workspace
         for target, frame in pairs(activeAlerts) do
             if not currentEntitiesInWorkspace[target] then
                 -- Animação de Saída
-                local outTween = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -150, 0, -70)})
+                local outTween = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -150, 0, -60)})
                 outTween:Play()
                 outTween.Completed:Connect(function()
-                    if frame then frame:Destroy() end
+                    frame:Destroy()
                 end)
                 activeAlerts[target] = nil
             end
         end
 
-        task.wait(0.3) -- Checagem mais rápida e fluida
+        task.wait(0.5) -- Checagem a cada meio segundo (Economiza CPU)
     end
 end)
