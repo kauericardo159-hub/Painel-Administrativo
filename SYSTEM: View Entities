@@ -3,16 +3,21 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 
 -- ==========================================
--- SISTEMA DE TOGGLE (LIGA/DESLIGA)
+-- SISTEMA DE TOGGLE (LIGA/DESLIGA) - CORRIGIDO
 -- ==========================================
 if _G.SystemViewEntitiesActive then
-    _G.SystemViewEntitiesActive = false 
+    _G.SystemViewEntitiesActive = false -- Sinaliza para parar os loops
     
+    -- Aguarda um milissegundo para garantir que os loops leram o 'false'
+    task.wait(0.1) 
+    
+    -- Desconecta o renderizado imediatamente
     if _G.SystemViewEntitiesConnection then
         _G.SystemViewEntitiesConnection:Disconnect()
         _G.SystemViewEntitiesConnection = nil
     end
     
+    -- Limpeza imediata do Cache e Visuals
     if _G.EntitiesCache then
         for _, visualData in pairs(_G.EntitiesCache) do
             if visualData.Highlight then visualData.Highlight:Destroy() end
@@ -26,43 +31,34 @@ if _G.SystemViewEntitiesActive then
         _G.SystemEntitiesFolder = nil
     end
     
-    print("[SYSTEM] View Entities: DESATIVADO")
+    print("[SYSTEM] View Entities: DESATIVADO IMEDIATAMENTE")
     return
 end
 
+-- Iniciando sistema
 _G.SystemViewEntitiesActive = true
-print("[SYSTEM] View Entities: ATIVADO (Tudo Detectado)")
+print("[SYSTEM] View Entities: ATIVADO")
 
 -- ==========================================
 -- CONFIGURAÇÕES VISUAIS
 -- ==========================================
-local MAX_DISTANCE = 1000 -- Aumentado para ver entidades longe em andares grandes
+local MAX_DISTANCE = 1000 
 local FADE_START = 300
 
 local NAME_COLOR = "#FFFFFF"
-local STROKE_COLOR = Color3.fromRGB(255, 120, 0) -- Laranja Doors
-local OUTLINE_COLOR = Color3.fromRGB(255, 0, 0)  -- Vermelho Alerta
-local DIST_COLOR = "#FFD700" -- Dourado
+local STROKE_COLOR = Color3.fromRGB(255, 120, 0) 
+local OUTLINE_COLOR = Color3.fromRGB(255, 0, 0)
+local DIST_COLOR = "#FFD700"
 local HP_COLOR = "#FF3232"
 
 -- ==========================================
--- LISTA MESTRE DE ENTIDADES (TODOS OS MODOS)
+-- LISTA MESTRE DE ENTIDADES
 -- ==========================================
 local DOORS_MASTER_LIST = {
-    -- FLOOR 1: THE HOTEL
     "rush", "ambush", "figure", "seek", "screech", "halt", "eyes", "glitch", "dupe", "void", "snare", "hide", "jack", "timothy",
-    
-    -- FLOOR 2: THE MINES
     "giggle", "grumble", "gloombat", "seek_mines", "figure_mines", "dam", "flesh_panopticon",
-    
-    -- THE ROOMS
     "a60", "a120", "a90", "a-60", "a-120", "a-90",
-    
-    -- THE BACKDOOR
-    "blitz", "lookman", "haste", "vacuum",
-    
-    -- ENTIDADES ESPECIAIS / EVENTOS
-    "guiding", "curious", "dread", "backdoor_haste", "shia_labeauhf"
+    "blitz", "lookman", "haste", "vacuum", "dread"
 }
 
 local IGNORE_LIST = {
@@ -88,6 +84,7 @@ local function createVisuals(model)
     hl.FillTransparency = 1
     hl.OutlineColor = OUTLINE_COLOR
     hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     
     local bg = Instance.new("BillboardGui")
     bg.Name = "EntityInfo"
@@ -127,35 +124,33 @@ local function createVisuals(model)
 end
 
 local function isEntity(model)
-    if not model:IsA("Model") then return false end
+    if not model:IsA("Model") or not model.PrimaryPart then return false end
     if Players:GetPlayerFromCharacter(model) then return false end
     
     local nameLower = string.lower(model.Name)
     
-    -- 1. Verifica se deve ignorar
     for _, ignored in ipairs(IGNORE_LIST) do
         if string.find(nameLower, ignored) then return false end
     end
     
-    -- 2. Verifica Whitelist Mestre
     for _, entityName in ipairs(DOORS_MASTER_LIST) do
         if string.find(nameLower, entityName) then return true end
     end
     
-    -- 3. Caso especial: Grumble e Giggle (Floor 2) costumam ter nomes variados no código
     if string.find(nameLower, "grum") or string.find(nameLower, "gigg") then return true end
 
     return false
 end
 
 -- ==========================================
--- THREAD 1: BUSCADOR (Background - Ultra Otimizado)
+-- THREAD 1: BUSCADOR (Background Task Otimizado)
 -- ==========================================
 task.spawn(function()
     while _G.SystemViewEntitiesActive do
         local descendants = workspace:GetDescendants()
         
         for i, obj in ipairs(descendants) do
+            -- Checagem de segurança dentro do loop para parar IMEDIATAMENTE
             if not _G.SystemViewEntitiesActive then break end
             
             if obj:IsA("Model") and not entCache[obj] then
@@ -164,35 +159,31 @@ task.spawn(function()
                 end
             end
             
-            -- Otimização: Evita queda de FPS ao varrer mapas gigantes como Floor 2
-            if i % 600 == 0 then task.wait() end 
+            if i % 500 == 0 then task.wait() end 
         end
-        task.wait(1.2) -- Busca novos inimigos a cada 1.2s
+        task.wait(1)
     end
 end)
 
 -- ==========================================
--- THREAD 2: ATUALIZADOR (Interface)
+-- THREAD 2: ATUALIZADOR (Render Task)
 -- ==========================================
 _G.SystemViewEntitiesConnection = RunService.RenderStepped:Connect(function()
+    if not _G.SystemViewEntitiesActive then return end
+    
     local myChar = localPlayer.Character
     local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
     if not myHRP then return end
 
     for model, vis in pairs(entCache) do
-        -- Limpeza automática
-        if not model or not model.Parent then
-            vis.Highlight:Destroy()
-            vis.UI:Destroy()
+        if not model or not model.Parent or not model:FindFirstChild("Humanoid") then
+            if vis.Highlight then vis.Highlight:Destroy() end
+            if vis.UI then vis.UI:Destroy() end
             entCache[model] = nil
             continue
         end
 
-        -- Tenta achar o melhor ponto para ancorar a UI (Cabeça ou Peça Principal)
-        local anchor = model.PrimaryPart 
-            or model:FindFirstChild("HumanoidRootPart") 
-            or model:FindFirstChild("Head") 
-            or model:FindFirstChildWhichIsA("BasePart")
+        local anchor = model.PrimaryPart or model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Head")
 
         if anchor then
             local dist = (myHRP.Position - anchor.Position).Magnitude
@@ -213,16 +204,12 @@ _G.SystemViewEntitiesConnection = RunService.RenderStepped:Connect(function()
                 local hum = model:FindFirstChildOfClass("Humanoid")
                 local hpText = (hum and hum.MaxHealth < 5000) and math.floor(hum.Health) or "???"
 
-                -- Texto Bonito e Formatado
                 vis.NameLabel.Text = string.format('<font color="%s">⚠️ %s</font>', NAME_COLOR, string.upper(model.Name))
                 vis.StatsLabel.Text = string.format('<font color="%s">%dm</font> | <font color="%s">HP: %s</font>', DIST_COLOR, math.floor(dist), HP_COLOR, tostring(hpText))
             else
                 vis.Highlight.Parent = nil
                 vis.UI.Enabled = false
             end
-        else
-            vis.Highlight.Parent = nil
-            vis.UI.Enabled = false
         end
     end
 end)
