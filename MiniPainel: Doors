@@ -1,134 +1,177 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local MarketplaceService = game:GetService("MarketplaceService")
 local player = Players.LocalPlayer
 
--- 1. LOCALIZAÇÃO NA LISTA
+-- ==========================================
+-- 1. LOCALIZAÇÃO E LIMPEZA
+-- ==========================================
 local playerGui = player:WaitForChild("PlayerGui")
-local coreGui = playerGui:WaitForChild("SistemaPainel_V3", 5)
-local painel = coreGui:WaitForChild("Painel")
-local lista = painel:WaitForChild("ListaOpcoesContainer")
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3")
+local painel = coreGui:WaitForChild("Panel")
+local extraLista = painel:WaitForChild("ExtraListContainer")
 
--- Limpeza de segurança
-if lista:FindFirstChild("DoorsControlCard") then
-    lista.DoorsControlCard:Destroy()
+local functionName = "DoorsControlCard"
+
+if extraLista:FindFirstChild(functionName) then
+    extraLista[functionName]:Destroy()
 end
 
+-- Busca o ícone atual do jogo (Sincronização automática)
+local success, gameInfo = pcall(function()
+    return MarketplaceService:GetProductInfo(game.PlaceId)
+end)
+local gameIconId = success and "rbxassetid://" .. gameInfo.IconImageAssetId or "rbxassetid://10873387885"
+
+-- ==========================================
 -- 2. CRIAÇÃO DO MINI-PAINEL
+-- ==========================================
 local miniPainel = Instance.new("Frame")
-miniPainel.Name = "DoorsControlCard"
-miniPainel.Size = UDim2.new(0.95, 0, 0, 115) -- Altura otimizada para 3 botões
-miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-miniPainel.BackgroundTransparency = 0.2
+miniPainel.Name = functionName
+miniPainel.Size = UDim2.new(0.95, 0, 0, 105)
+miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+miniPainel.BackgroundTransparency = 0.4
 miniPainel.BorderSizePixel = 0
-miniPainel.Parent = lista
+miniPainel.ZIndex = extraLista.ZIndex + 5
+miniPainel.Parent = extraLista
 
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = miniPainel
 
--- Borda Laranja conforme a imagem
-local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
-stroke.Color = Color3.fromRGB(255, 145, 0) -- Laranja Doors
-stroke.Transparency = 0.3
-stroke.Parent = miniPainel
+-- UIStrokes (Estilo Azul + Preto Animado)
+local strokeAzul = Instance.new("UIStroke")
+strokeAzul.Thickness = 2
+strokeAzul.Color = Color3.fromRGB(0, 50, 150)
+strokeAzul.Parent = miniPainel
 
--- Título "Doors"
+local strokePreto = Instance.new("UIStroke")
+strokePreto.Thickness = 4
+strokePreto.Color = Color3.fromRGB(0, 0, 0)
+strokePreto.Transparency = 1
+strokePreto.Parent = miniPainel
+
+task.spawn(function()
+    while miniPainel.Parent do
+        local ti = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+        TweenService:Create(strokePreto, ti, {Transparency = 0.5}):Play()
+        task.wait(1.5)
+        TweenService:Create(strokePreto, ti, {Transparency = 1}):Play()
+        task.wait(1.5)
+    end
+end)
+
+-- ✅ CAPA DO JOGO (Substituindo o Emoji)
+local gameIcon = Instance.new("ImageLabel")
+gameIcon.Name = "GameIcon"
+gameIcon.Size = UDim2.new(0, 24, 0, 24)
+gameIcon.Position = UDim2.new(0, 10, 0, 8)
+gameIcon.BackgroundTransparency = 1
+gameIcon.Image = gameIconId
+gameIcon.ZIndex = miniPainel.ZIndex + 2
+gameIcon.Parent = miniPainel
+
+local iconCorner = Instance.new("UICorner")
+iconCorner.CornerRadius = UDim.new(0, 4)
+iconCorner.Parent = gameIcon
+
+-- Título (Ajustado para o lado da imagem)
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 35)
+title.Size = UDim2.new(1, -50, 0, 30)
+title.Position = UDim2.new(0, 40, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "Doors"
-title.TextColor3 = Color3.new(1, 1, 1)
+title.Text = "DOORS SYSTEM"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = 13
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.ZIndex = miniPainel.ZIndex + 1
 title.Parent = miniPainel
 
--- Linha divisória
-local line = Instance.new("Frame")
-line.Size = UDim2.new(0.4, 0, 0, 1)
-line.Position = UDim2.new(0.3, 0, 0, 32)
-line.BackgroundColor3 = Color3.fromRGB(255, 145, 0)
-line.BorderSizePixel = 0
-line.Parent = miniPainel
-
--- 3. FUNÇÃO PARA CRIAR OS TOGGLES (Igual ao View Player)
-local function CreateToggle(name, labelText, posX, loadstringFunction)
+-- ==========================================
+-- 3. FUNÇÃO DE TOGGLE (Sincronizada)
+-- ==========================================
+local function CreateToggle(name, labelText, posX, saveKey, url)
     local container = Instance.new("Frame")
     container.Name = name .. "Container"
-    container.Size = UDim2.new(0.3, 0, 0, 65)
+    container.Size = UDim2.new(0.3, 0, 0, 60)
     container.Position = UDim2.new(posX, 0, 0.65, 0)
     container.AnchorPoint = Vector2.new(0.5, 0.5)
     container.BackgroundTransparency = 1
+    container.ZIndex = miniPainel.ZIndex + 1
     container.Parent = miniPainel
 
     local iconLabel = Instance.new("TextLabel")
-    iconLabel.Size = UDim2.new(1, 0, 0, 20)
-    iconLabel.Position = UDim2.new(0, 0, -0.1, 0)
+    iconLabel.Size = UDim2.new(1, 0, 0, 25)
     iconLabel.Text = labelText
-    iconLabel.TextColor3 = Color3.new(1, 1, 1)
+    iconLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     iconLabel.Font = Enum.Font.GothamMedium
-    iconLabel.TextSize = 12
-    iconLabel.TextWrapped = true
+    iconLabel.TextSize = 10
     iconLabel.BackgroundTransparency = 1
+    iconLabel.ZIndex = container.ZIndex + 1
     iconLabel.Parent = container
 
-    -- Base do Switch
     local btnBase = Instance.new("TextButton")
-    btnBase.Size = UDim2.new(0, 50, 0, 22)
-    btnBase.Position = UDim2.new(0.5, 0, 0.6, 0)
+    btnBase.Size = UDim2.new(0, 45, 0, 20)
+    btnBase.Position = UDim2.new(0.5, 0, 0.7, 0)
     btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
-    btnBase.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Vermelho desligado
     btnBase.Text = ""
-    btnBase.AutoButtonColor = false
+    btnBase.AutoButtonColor = true
+    btnBase.ZIndex = container.ZIndex + 2
     btnBase.Parent = container
-
     Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
-    
+
     local btnStroke = Instance.new("UIStroke")
-    btnStroke.Thickness = 1.5
-    btnStroke.Color = Color3.fromRGB(255, 145, 0)
-    btnStroke.Transparency = 0.5
+    btnStroke.Thickness = 2
     btnStroke.Parent = btnBase
 
-    -- Knob (Bolinha)
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 18, 0, 18)
-    knob.Position = UDim2.new(0.1, 0, 0.5, 0)
+    knob.Size = UDim2.new(0, 14, 0, 14)
     knob.AnchorPoint = Vector2.new(0, 0.5)
     knob.BackgroundColor3 = Color3.new(1, 1, 1)
+    knob.ZIndex = btnBase.ZIndex + 1
     knob.Parent = btnBase
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    -- Lógica de Clique
-    local active = false
-    btnBase.MouseButton1Click:Connect(function()
-        active = not active
-        
-        local targetPos = active and UDim2.new(0.9, -18, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
-        local targetColor = active and Color3.fromRGB(0, 160, 0) or Color3.fromRGB(150, 0, 0)
+    if _G[saveKey] == nil then _G[saveKey] = false end
 
-        TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
-        TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+    local function UpdateVisual(instant)
+        local active = _G[saveKey]
+        local targetPos = active and UDim2.new(1, -17, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+        local bgColor = active and Color3.fromRGB(0, 120, 0) or Color3.fromRGB(120, 0, 0)
+        local strokeColor = active and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
 
-        task.spawn(loadstringFunction)
+        if instant then
+            knob.Position = targetPos
+            btnBase.BackgroundColor3 = bgColor
+            btnStroke.Color = strokeColor
+        else
+            TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
+            TweenService:Create(btnBase, TweenInfo.new(0.2), {BackgroundColor3 = bgColor}):Play()
+            TweenService:Create(btnStroke, TweenInfo.new(0.2), {Color = strokeColor}):Play()
+        end
+    end
+
+    UpdateVisual(true)
+
+    btnBase.Activated:Connect(function()
+        _G[saveKey] = not _G[saveKey]
+        UpdateVisual(false)
+        if _G[saveKey] then
+            task.spawn(function() loadstring(game:HttpGet(url))() end)
+        end
     end)
 end
 
--- 4. CHAMADA DOS BOTÕES (Adicione seus links dentro das aspas)
-CreateToggle("ViewEntities", "View Entities", 0.18, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Entities"))()
-end)
+-- ==========================================
+-- 4. INICIALIZAÇÃO
+-- ==========================================
+CreateToggle("ViewEnt", "Entities", 0.18, "D_ViewEnt", "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Entities")
+CreateToggle("ViewItens", "Items", 0.5, "D_ViewItems", "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Itens%20(Doors)")
+CreateToggle("Alert", "Alert", 0.82, "D_Alert", "https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Entity%20Alert")
 
-CreateToggle("ViewItems", "View Itens", 0.5, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Itens%20(Doors)"))()
-end)
+-- Animação de Entrada
+miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
+TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-CreateToggle("EntityAlert", "Entity Alert", 0.82, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20Entity%20Alert"))()
-end)
-
--- 5. ANIMAÇÃO DE ENTRADA
-miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
-TweenService:Create(miniPainel, TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
-
-print("MiniPainel Doors criado com sucesso!")
+print("✅ MiniPainel Doors V4 (Capa Dinâmica) Carregado!")
