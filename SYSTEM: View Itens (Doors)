@@ -3,170 +3,195 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 
 -- ==========================================
--- SISTEMA DE TOGGLE (LIGA/DESLIGA)
+-- SISTEMA DE TOGGLE (LIGA/DESLIGA) - CORRIGIDO
 -- ==========================================
-if _G.SystemViewItensDoorsConnection then
-    _G.SystemViewItensDoorsConnection:Disconnect()
-    _G.SystemViewItensDoorsConnection = nil
+if _G.SystemViewItemsActive then
+    _G.SystemViewItemsActive = false 
     
-    if _G.ItensDoorsCache then
-        for _, visualData in pairs(_G.ItensDoorsCache) do
+    task.wait(0.1) 
+    
+    if _G.SystemViewItemsConnection then
+        _G.SystemViewItemsConnection:Disconnect()
+        _G.SystemViewItemsConnection = nil
+    end
+    
+    if _G.ItemsCache then
+        for _, visualData in pairs(_G.ItemsCache) do
             if visualData.Highlight then visualData.Highlight:Destroy() end
             if visualData.UI then visualData.UI:Destroy() end
         end
-        table.clear(_G.ItensDoorsCache)
+        table.clear(_G.ItemsCache)
     end
     
-    if _G.SystemItensDoorsFolder then
-        _G.SystemItensDoorsFolder:Destroy()
-        _G.SystemItensDoorsFolder = nil
+    if _G.SystemItemsFolder then
+        _G.SystemItemsFolder:Destroy()
+        _G.SystemItemsFolder = nil
     end
     
-    print("[SYSTEM] View Itens Doors: DESATIVADO")
+    print("[SYSTEM] View Items: DESATIVADO IMEDIATAMENTE")
     return
 end
 
-print("[SYSTEM] View Itens Doors: ATIVADO")
+_G.SystemViewItemsActive = true
+print("[SYSTEM] View Items: ATIVADO")
 
 -- ==========================================
--- CONFIGURAÇÕES RESTRITAS E PALAVRAS-CHAVE
+-- CONFIGURAÇÕES VISUAIS
 -- ==========================================
-local MAX_DISTANCE = 100 -- Limite de 100 metros
-local SCAN_INTERVAL = 0.3 -- Varredura a cada 0.3s para FPS alto
+local MAX_DISTANCE = 500
+local FADE_START = 150
 
-_G.SystemItensDoorsFolder = Instance.new("Folder")
-_G.SystemItensDoorsFolder.Name = "DoorsItensVisuals"
-_G.SystemItensDoorsFolder.Parent = localPlayer:WaitForChild("PlayerGui")
+local NAME_COLOR = "#FFFFFF"
+local STROKE_COLOR = Color3.fromRGB(255, 165, 0) -- Laranja Dourado
+local OUTLINE_COLOR = Color3.fromRGB(255, 200, 0)
+local DIST_COLOR = "#FFFF00" -- Amarelo
 
-_G.ItensDoorsCache = {}
-local itemCache = _G.ItensDoorsCache
-
--- Usando trechos de palavras para não errar o nome exato (tudo minúsculo)
-local KEYWORDS = {
-    "gold", "coin", "key", "lighter", "flash", "candle", "bulk",
-    "vitamin", "bandage", "crucifix", "skeleton", "fuse", "battery",
-    "breaker", "shear", "lockpick", "book", "chest", "loot"
+-- ==========================================
+-- LISTA DE ITENS (DOORS & ROOMS)
+-- ==========================================
+local ITEM_KEYWORDS = {
+    "key", "baul", "chest", "locker", "wardrobe", "lighter", "flashlight",
+    "skeleton", "battery", "scanner", "herb", "vitamin", "crucifix",
+    "lockpick", "candle", "gold", "coin", "tablet", "bolt", "lever"
 }
 
+-- Pastas e Cache
+_G.SystemItemsFolder = Instance.new("Folder")
+_G.SystemItemsFolder.Name = "ViewItemsCache"
+_G.SystemItemsFolder.Parent = localPlayer:WaitForChild("PlayerGui")
+
+_G.ItemsCache = {}
+local itemCache = _G.ItemsCache
+
 -- ==========================================
--- FUNÇÕES DE CRIAÇÃO
+-- FUNÇÕES AUXILIARES
 -- ==========================================
-local function createItemVisual(obj, isDoor)
+local function createVisuals(model)
     local data = {}
     
     local hl = Instance.new("Highlight")
-    hl.Name = "ItemESP"
-    hl.FillTransparency = 0.6
+    hl.Name = "ItemOutline"
+    hl.FillTransparency = 0.8
+    hl.FillColor = OUTLINE_COLOR
+    hl.OutlineColor = OUTLINE_COLOR
     hl.OutlineTransparency = 0
-    -- Verde para porta, Ciano para itens
-    local color = isDoor and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(0, 255, 255)
-    hl.FillColor = color
-    hl.OutlineColor = color
-    hl.Parent = obj
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     
     local bg = Instance.new("BillboardGui")
     bg.Name = "ItemInfo"
     bg.Size = UDim2.new(0, 150, 0, 40)
+    bg.StudsOffset = Vector3.new(0, 2, 0)
     bg.AlwaysOnTop = true
-    bg.Parent = _G.SystemItensDoorsFolder
+    bg.LightInfluence = 0
+    bg.Parent = _G.SystemItemsFolder
     
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Font = Enum.Font.GothamBold
-    textLabel.TextSize = 13
-    textLabel.TextColor3 = color
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.RichText = true
-    textLabel.Parent = bg
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 13
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    nameLabel.RichText = true
+    nameLabel.Parent = bg
     
     data.Highlight = hl
     data.UI = bg
-    data.Label = textLabel
-    data.IsDoor = isDoor
+    data.NameLabel = nameLabel
+    
     return data
 end
 
--- ==========================================
--- LÓGICA DE DETECÇÃO (Palavras-Chave)
--- ==========================================
-local function checkItemStatus(obj)
-    if not obj:IsA("Model") and not obj:IsA("BasePart") then return false, false end
-
-    local name = string.lower(obj.Name)
-
-    -- 1. Verifica Portas Verdadeiras
-    if name == "door" or string.find(name, "door_") then
-        -- A porta certa geralmente tem um Sign (Placa) ou Lock (Cadeado) associado a ela
-        if obj:FindFirstChild("Lock") or obj:FindFirstChild("Sign") or obj:FindFirstChild("Hidden") then
-            return true, true -- (É válido, É porta)
+local function isItem(model)
+    if not model:IsA("Model") and not model:IsA("Tool") then return false end
+    
+    -- Ignorar se for jogador
+    if Players:GetPlayerFromCharacter(model) then return false end
+    
+    local nameLower = string.lower(model.Name)
+    
+    -- Verifica se o nome do objeto contém uma palavra chave
+    for _, keyword in ipairs(ITEM_KEYWORDS) do
+        if string.find(nameLower, keyword) then 
+            return true 
         end
     end
-
-    -- 2. Verifica Itens por palavra-chave
-    for _, kw in ipairs(KEYWORDS) do
-        if string.find(name, kw) then
-            return true, false -- (É válido, Não é porta)
-        end
+    
+    -- Verifica itens que podem ser abertos (Baús, Armários)
+    if model:FindFirstChild("ActivateEvent") or model:FindFirstChild("InteractTag") then
+        return true
     end
-
-    return false, false
+    
+    return false
 end
 
 -- ==========================================
--- LOOP DE PERFORMANCE
+-- THREAD 1: BUSCADOR (Background Task Otimizado)
 -- ==========================================
-local lastScan = 0
-
-_G.SystemViewItensDoorsConnection = RunService.RenderStepped:Connect(function()
-    local char = localPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    -- 1. VARREDURA OTIMIZADA
-    if tick() - lastScan > SCAN_INTERVAL then
-        lastScan = tick()
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            local isValid, isDoor = checkItemStatus(obj)
+task.spawn(function()
+    while _G.SystemViewItemsActive do
+        local descendants = workspace:GetDescendants()
+        
+        for i, obj in ipairs(descendants) do
+            if not _G.SystemViewItemsActive then break end
             
-            if isValid then
-                local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
-                if root then
-                    local dist = (hrp.Position - root.Position).Magnitude
-                    if dist <= MAX_DISTANCE then
-                        if not itemCache[obj] then
-                            itemCache[obj] = createItemVisual(obj, isDoor)
-                        end
-                    end
-                end
+            if isItem(obj) and not itemCache[obj] then
+                itemCache[obj] = createVisuals(obj)
             end
+            
+            if i % 600 == 0 then task.wait() end -- Anti-lag
         end
+        task.wait(1)
     end
+end)
 
-    -- 2. ATUALIZAÇÃO DE UI E DISTÂNCIA
-    for obj, vis in pairs(itemCache) do
-        if obj and obj.Parent then
-            local root = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
-            if root then
-                local dist = (hrp.Position - root.Position).Magnitude
-                if dist <= MAX_DISTANCE then
-                    vis.UI.Adornee = root
-                    vis.UI.Enabled = true
-                    vis.Highlight.Enabled = true
-                    
-                    local displayName = vis.IsDoor and "🚪 SAÍDA" or obj.Name
-                    vis.Label.Text = string.format("%s\n<font color='#FFFFFF'>[%dm]</font>", displayName, math.floor(dist))
-                else
-                    -- Oculta se passar de 100m
-                    vis.UI.Enabled = false
-                    vis.Highlight.Enabled = false
-                end
+-- ==========================================
+-- THREAD 2: ATUALIZADOR (Render Task)
+-- ==========================================
+_G.SystemViewItemsConnection = RunService.RenderStepped:Connect(function()
+    if not _G.SystemViewItemsActive then return end
+    
+    local myChar = localPlayer.Character
+    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+
+    for item, vis in pairs(itemCache) do
+        -- Limpeza automática de itens deletados
+        if not item or not item.Parent then
+            if vis.Highlight then vis.Highlight:Destroy() end
+            if vis.UI then vis.UI:Destroy() end
+            itemCache[item] = nil
+            continue
+        end
+
+        -- Tenta achar a peça central do item
+        local anchor = item:FindFirstChild("Handle") 
+            or item:FindFirstChild("BasePart") 
+            or item:FindFirstChildWhichIsA("BasePart", true)
+
+        if anchor then
+            local dist = (myHRP.Position - anchor.Position).Magnitude
+            
+            if dist <= MAX_DISTANCE then
+                local fade = math.clamp((dist - FADE_START) / (MAX_DISTANCE - FADE_START), 0, 1)
+                
+                vis.Highlight.Parent = item
+                vis.Highlight.OutlineTransparency = fade
+                vis.Highlight.FillTransparency = 0.7 + (fade * 0.3)
+                
+                vis.UI.Adornee = anchor
+                vis.UI.Enabled = true
+                
+                vis.NameLabel.TextTransparency = fade
+                vis.NameLabel.TextStrokeTransparency = fade
+                
+                -- Texto Formatado
+                vis.NameLabel.Text = string.format('<font color="%s">📦 %s</font>\n<font color="%s">%dm</font>', NAME_COLOR, string.upper(item.Name), DIST_COLOR, math.floor(dist))
+            else
+                vis.Highlight.Parent = nil
+                vis.UI.Enabled = false
             end
-        else
-            -- Destrói visual se o item sumir (for pego)
-            vis.UI:Destroy()
-            vis.Highlight:Destroy()
-            itemCache[obj] = nil
         end
     end
 end)
