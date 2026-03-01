@@ -71,7 +71,7 @@ task.wait(3)
 ]]
 
 --[[
--- 🔴 AVISO: Precisar ter uma Manutenção.
+-- 🔴 AVISO: Grande Manutenção, demora grande para concluir.
 -- 0. MiniPainel: 👀 DOORS
 -- FUNÇÃO: Apenas funciona em Doors.
 print("☑ Carregando Sistema ...")
