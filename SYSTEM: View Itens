@@ -1,135 +1,158 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 local localPlayer = Players.LocalPlayer
 
 -- CONFIGURAÇÕES
 local MAX_DISTANCE = 100
-local SCAN_RATE = 0.5 -- Scaneia o Workspace inteiro a cada 0.5 segundos (não a cada frame)
-local UPDATE_RATE = 0.1 -- Atualiza distâncias e UIs a cada 0.1 segundos
+local UPDATE_RATE = 0.1 -- Atualiza a cada 0.1 segundos
 
 _G.ViewItensActive = _G.ViewItensActive or false
 
-local activeHighlights = {}
-local activeUIs = {}
+local trackedItems = {}
+local connections = {}
+local wasActive = false
 
--- Função de limpeza rápida
-local function clearItem(obj, handle)
-    if activeHighlights[obj] then 
-        activeHighlights[obj]:Destroy() 
-        activeHighlights[obj] = nil 
-    end
-    if handle and activeUIs[handle] then 
-        activeUIs[handle]:Destroy() 
-        activeUIs[handle] = nil 
-    end
-end
+-- TEMPLATES: Criamos a UI uma vez e só clonamos depois (muito mais leve)
+local uiTemplate = Instance.new("BillboardGui")
+uiTemplate.Name = "ItemViewUI"
+uiTemplate.Size = UDim2.new(0, 150, 0, 40)
+uiTemplate.StudsOffset = Vector3.new(0, 2, 0)
+uiTemplate.AlwaysOnTop = true
+uiTemplate.LightInfluence = 0
+uiTemplate.Enabled = false
 
--- Função de limpeza forçada (ao desativar)
-local function forceFullCleanup()
-    for obj, hl in pairs(activeHighlights) do if hl then hl:Destroy() end end
-    for handle, ui in pairs(activeUIs) do if ui then ui:Destroy() end end
-    table.clear(activeHighlights)
-    table.clear(activeUIs)
-end
+local labelTemplate = Instance.new("TextLabel")
+labelTemplate.Size = UDim2.new(1, 0, 1, 0)
+labelTemplate.BackgroundTransparency = 1
+labelTemplate.Font = Enum.Font.GothamBold
+labelTemplate.TextColor3 = Color3.fromRGB(255, 120, 0)
+labelTemplate.TextSize = 13
+labelTemplate.TextStrokeTransparency = 0.5
+labelTemplate.RichText = true
+labelTemplate.Parent = uiTemplate
 
--- Validação rápida
+-- Validação Otimizada
 local function isValidItem(obj)
-    -- Ignora se for o próprio player ou já estiver marcado
+    -- Filtro principal rápido (Ignora 99% do mapa imediatamente)
     if not (obj:IsA("Tool") or (obj:IsA("Model") and obj:FindFirstChild("Handle"))) then return false end
     
     local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
     if not handle or handle.Transparency > 0.5 then return false end
 
-    -- Ignora se estiver na mão de alguém
-    local root = obj.Parent
-    while root and root ~= workspace do
-        if root:FindFirstChildOfClass("Humanoid") then return false end
-        root = root.Parent
-    end
-
     -- Filtro de nome
     local name = obj.Name:lower()
     if name:find("door") or name:find("porta") or name:find("gate") then return false end
 
-    return true
+    -- Verifica se está na mão de alguém (Ancestry)
+    local root = obj.Parent
+    while root and root ~= Workspace do
+        if root:FindFirstChildOfClass("Humanoid") then return false end
+        root = root.Parent
+    end
+
+    return true, handle
 end
 
--- LOOPS SEPARADOS PARA PERFORMANCE
--- Loop 1: Varredura de Itens (Lento - 2x por segundo)
+-- Registro do Item
+local function registerItem(obj)
+    if trackedItems[obj] then return end -- Já está registrado
+    
+    local valid, handle = isValidItem(obj)
+    if not valid then return end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "ItemHighlight"
+    hl.FillTransparency = 1
+    hl.OutlineColor = Color3.fromRGB(255, 120, 0)
+    hl.Enabled = false -- Começa desativado para poupar performance
+    hl.Parent = obj
+
+    local ui = uiTemplate:Clone()
+    ui.Parent = handle
+
+    -- Salva na tabela para fácil acesso no loop
+    trackedItems[obj] = {
+        Handle = handle,
+        Highlight = hl,
+        UI = ui,
+        TextLabel = ui.TextLabel,
+        Name = obj.Name
+    }
+end
+
+-- Desregistro e Limpeza Segura
+local function unregisterItem(obj)
+    local data = trackedItems[obj]
+    if data then
+        if data.Highlight then data.Highlight:Destroy() end
+        if data.UI then data.UI:Destroy() end
+        trackedItems[obj] = nil
+    end
+end
+
+-- GERENCIADOR PRINCIPAL (Substitui os 2 loops antigos)
 task.spawn(function()
     while true do
-        if _G.ViewItensActive then
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if isValidItem(obj) then
-                    -- Marca que precisa de outline se não tiver
-                    if not activeHighlights[obj] then
-                        local hl = Instance.new("Highlight")
-                        hl.Name = "ItemHighlight"
-                        hl.FillTransparency = 1
-                        hl.OutlineColor = Color3.fromRGB(255, 120, 0)
-                        hl.Parent = obj
-                        activeHighlights[obj] = hl
-                    end
-                else
-                    local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
-                    clearItem(obj, handle)
-                end
+        task.wait(UPDATE_RATE)
+        
+        local isActive = _G.ViewItensActive == true
+        
+        -- SISTEMA LIGA/DESLIGA INTELIGENTE
+        if isActive and not wasActive then
+            wasActive = true
+            -- Varredura inicial (apenas uma vez!)
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                registerItem(obj)
+            end
+            -- Ouve novos itens caindo no mapa
+            connections.Added = Workspace.DescendantAdded:Connect(registerItem)
+            connections.Removing = Workspace.DescendantRemoving:Connect(unregisterItem)
+            
+        elseif not isActive and wasActive then
+            wasActive = false
+            -- Limpa tudo se for desativado
+            if connections.Added then connections.Added:Disconnect() end
+            if connections.Removing then connections.Removing:Disconnect() end
+            for obj in pairs(trackedItems) do
+                unregisterItem(obj)
             end
         end
-        task.wait(SCAN_RATE)
-    end
-end)
-
--- Loop 2: Atualização de Distância e UI (Rápido - 10x por segundo)
-RunService.Heartbeat:Connect(function()
-    if not _G.ViewItensActive then
-        if next(activeHighlights) or next(activeUIs) then forceFullCleanup() end
-        return
-    end
-
-    local char = localPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    for obj, hl in pairs(activeHighlights) do
-        local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
-        if handle and hl.Parent then
-            local dist = (hrp.Position - handle.Position).Magnitude
+        
+        -- ATUALIZAÇÃO DE DISTÂNCIA E UI
+        if isActive then
+            local char = localPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then continue end
             
-            if dist <= MAX_DISTANCE then
-                -- Atualiza UI
-                local ui = activeUIs[handle]
-                if not ui then
-                    -- Cria UI se não existir
-                    local billboard = Instance.new("BillboardGui")
-                    billboard.Name = "ItemViewUI"
-                    billboard.Size = UDim2.new(0, 150, 0, 40)
-                    billboard.StudsOffset = Vector3.new(0, 2, 0)
-                    billboard.AlwaysOnTop = true
-                    billboard.LightInfluence = 0
-                    billboard.Parent = handle
-                    
-                    local label = Instance.new("TextLabel")
-                    label.Size = UDim2.new(1, 0, 1, 0)
-                    label.BackgroundTransparency = 1
-                    label.Font = Enum.Font.GothamBold
-                    label.TextColor3 = Color3.fromRGB(255, 120, 0)
-                    label.TextSize = 13
-                    label.TextStrokeTransparency = 0.5
-                    label.RichText = true
-                    label.Parent = billboard
-                    activeUIs[handle] = billboard
-                    ui = billboard
+            local hrpPos = hrp.Position
+            local highlightCount = 0 -- O Roblox crasha/buga se passar de 31 Highlights
+            
+            for obj, data in pairs(trackedItems) do
+                -- Verificação extra: o item foi pego por um jogador?
+                if not obj.Parent or obj.Parent:FindFirstChildOfClass("Humanoid") then
+                    unregisterItem(obj)
+                    continue
                 end
-                ui.Enabled = true
-                ui.TextLabel.Text = string.format("📦 %s\n<font color='rgb(200,200,0)'>📏 %dM.</font>", obj.Name, math.floor(dist))
-            else
-                -- Longe demais
-                if activeUIs[handle] then activeUIs[handle].Enabled = false end
+
+                local dist = (hrpPos - data.Handle.Position).Magnitude
+                
+                if dist <= MAX_DISTANCE then
+                    data.UI.Enabled = true
+                    data.UI.TextLabel.Text = string.format("📦 %s\n<font color='rgb(200,200,0)'>📏 %dM.</font>", data.Name, math.floor(dist))
+                    
+                    -- Limita os Highlights aos 30 itens mais próximos/detectados
+                    if highlightCount < 30 then
+                        data.Highlight.Enabled = true
+                        highlightCount += 1
+                    else
+                        data.Highlight.Enabled = false
+                    end
+                else
+                    -- Esconde UI e Highlight se estiver longe
+                    data.UI.Enabled = false
+                    data.Highlight.Enabled = false
+                end
             end
-        else
-            -- Item deletado ou inválido
-            clearItem(obj, handle)
         end
     end
 end)
