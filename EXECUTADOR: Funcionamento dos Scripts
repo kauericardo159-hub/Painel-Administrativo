@@ -7,7 +7,7 @@
 print("🚀 Iniciando sistema...")
 
 -- 1. INTERFACE DO PAINEL (O "Coração" do sistema)
-print("☑ Carregando Interface...")
+print("🔷️ Carregando Interface...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20PanelInterface.lua"))()
 -- Aguarda o CoreGui ser criado antes de prosseguir
 local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -15,26 +15,26 @@ playerGui:WaitForChild("SistemaPainel_V3")
 task.wait(1)
 
 -- 2. LISTA DE COMANDOS & FUNÇÕES
-print("☑ Carregando Lista de Comandos...")
+print("🔷️ Carregando Lista de Comandos...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20ListManager.lua"))()
 task.wait(1)
 
 -- 3. LISTA DE COMANDOS & FUNÇÕES
-print("☑ Carregando Extra Lista de Comandos...")
+print("🔷️ Carregando Extra Lista de Comandos...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20ExtraListManager.lua"))()
 task.wait(1)
 
 -- 4. BOTÃO PRINCIPAL (O Controle)
-print("☑ Carregando Controlador do Botão...")
+print("🔷️ Carregando Controlador do Botão...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20ButtonController.lua"))()
 task.wait(1)
 
 -- 5. NOME & PERFIL
 -- Carrega por último para garantir que o Painel exista.
-print("☑ Carregando Perfil do Usuário...")
+print("🔷️ Carregando Perfil do Usuário...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Foto%20de%20perfil%20e%20nome"))()
 
-print("✅ Sistema Carregado com Sucesso!")
+print("✅ Painel Completo Carregado com Sucesso!")
 
 --[[
 ===============================
@@ -77,3 +77,5 @@ task.wait(3)
 print("☑ Carregando Sistema ...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20Doors"))()
 ]]
+
+print("✅ Sistemas Carregado com Sucesso!")
