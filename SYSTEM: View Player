@@ -9,7 +9,8 @@ if _G.SystemViewPlayerConnection then
     _G.SystemViewPlayerConnection:Disconnect()
     _G.SystemViewPlayerConnection = nil
     
-    -- CORREÇÃO: Limpeza profunda do Cache ao desativar
+    if _G.CleanupThread then task.cancel(_G.CleanupThread) end
+    
     if _G.PlayerCacheViewPlayer then
         for _, visualData in pairs(_G.PlayerCacheViewPlayer) do
             if visualData.Highlight then visualData.Highlight:Destroy() end
@@ -32,25 +33,32 @@ print("[SYSTEM] View Player: ATIVADO")
 -- ==========================================
 -- CONFIGURAÇÕES
 -- ==========================================
-local MAX_DISTANCE = 400
-local FADE_START = 150
+local MAX_DISTANCE = 450
+local FADE_START = 200
 
--- Cores Fixas (Formato Hexadecimal)
+-- Cores e Emojis
 local DIST_COLOR = "#C8C800"
 local HP_COLOR = "#B40000"
+local FRIEND_OUTLINE = Color3.fromRGB(0, 200, 255) -- Azul Claro
+local FRIEND_NAME_COLOR = "#00FF7F" -- Verde Primavera
+local FRIEND_EMOJI = "🫂"
 
 -- Pasta Global
 _G.SystemViewPlayerFolder = Instance.new("Folder")
 _G.SystemViewPlayerFolder.Name = "ViewPlayerCache"
 _G.SystemViewPlayerFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 
--- Cache Global para facilitar a limpeza
 _G.PlayerCacheViewPlayer = {}
 local localCache = _G.PlayerCacheViewPlayer
 
 -- ==========================================
 -- FUNÇÕES AUXILIARES
 -- ==========================================
+local function isFriend(player)
+    -- Retorna true se for amigo do LocalPlayer
+    return localPlayer:IsFriendsWith(player.UserId)
+end
+
 local function getTeamColor(player)
     if player.Team then
         return player.TeamColor.Color
@@ -58,17 +66,19 @@ local function getTeamColor(player)
     return Color3.fromRGB(255, 255, 255)
 end
 
-local function createVisuals(player)
+local function createVisuals()
     local data = {}
     
     local hl = Instance.new("Highlight")
     hl.Name = "PlayerOutline"
     hl.FillTransparency = 1
+    hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     
     local bg = Instance.new("BillboardGui")
     bg.Name = "PlayerInfo"
     bg.Size = UDim2.new(0, 200, 0, 45)
-    bg.StudsOffset = Vector3.new(0, 1.5, 0)
+    bg.StudsOffset = Vector3.new(0, 2, 0)
     bg.AlwaysOnTop = true
     bg.LightInfluence = 0
     bg.Parent = _G.SystemViewPlayerFolder
@@ -78,7 +88,7 @@ local function createVisuals(player)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Font = Enum.Font.GothamBold
     nameLabel.TextSize = 14
-    nameLabel.TextStrokeTransparency = 0.5
+    nameLabel.TextStrokeTransparency = 0.4
     nameLabel.RichText = true
     nameLabel.Parent = bg
     
@@ -101,13 +111,37 @@ local function createVisuals(player)
 end
 
 -- ==========================================
+-- LIMPEZA PERIÓDICA (A cada 10 minutos)
+-- ==========================================
+_G.CleanupThread = task.spawn(function()
+    while true do
+        task.wait(600) -- 10 minutos
+        print("[SYSTEM] Realizando limpeza de cache preventiva...")
+        for p, vis in pairs(localCache) do
+            if not Players:FindFirstChild(p.Name) then
+                if vis.Highlight then vis.Highlight:Destroy() end
+                if vis.UI then vis.UI:Destroy() end
+                localCache[p] = nil
+            end
+        end
+    end
+end)
+
+-- ==========================================
 -- LOOP DE RENDERIZAÇÃO
 -- ==========================================
 _G.SystemViewPlayerConnection = RunService.RenderStepped:Connect(function()
     local myChar = localPlayer.Character
     local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
     
-    if not myHRP then return end
+    -- Se eu estiver morto ou sem HRP, limpa as outlines da minha tela por segurança
+    if not myHRP then 
+        for _, vis in pairs(localCache) do
+            vis.Highlight.Parent = nil
+            vis.UI.Enabled = false
+        end
+        return 
+    end
     
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= localPlayer then
@@ -115,20 +149,25 @@ _G.SystemViewPlayerConnection = RunService.RenderStepped:Connect(function()
             local head = char and char:FindFirstChild("Head")
             local hum = char and char:FindFirstChild("Humanoid")
             
-            if char and head and hum and hum.Health > 0 then
+            -- ✅ CHECAGEM ROBUSTA: Se player morreu ou resetou, remove outline na hora
+            if char and head and hum and hum.Health > 0 and char.Parent ~= nil then
                 local dist = (myHRP.Position - head.Position).Magnitude
                 
                 if dist <= MAX_DISTANCE then
                     if not localCache[p] then
-                        localCache[p] = createVisuals(p)
+                        localCache[p] = createVisuals()
                     end
                     
                     local vis = localCache[p]
-                    local tColor = getTeamColor(p)
+                    local amIFriend = isFriend(p)
+                    
+                    -- Define cores baseadas na amizade ou time
+                    local tColor = amIFriend and FRIEND_OUTLINE or getTeamColor(p)
+                    local nameColorHex = amIFriend and FRIEND_NAME_COLOR or string.format("#%02X%02X%02X", tColor.R*255, tColor.G*255, tColor.B*255)
+                    local emoji = amIFriend and FRIEND_EMOJI or "👤"
                     
                     local fade = math.clamp((dist - FADE_START) / (MAX_DISTANCE - FADE_START), 0, 1)
                     
-                    -- CORREÇÃO: Highlight Parent
                     vis.Highlight.Parent = char
                     vis.Highlight.OutlineColor = tColor
                     vis.Highlight.OutlineTransparency = fade
@@ -136,36 +175,24 @@ _G.SystemViewPlayerConnection = RunService.RenderStepped:Connect(function()
                     vis.UI.Adornee = head
                     vis.UI.Enabled = true
                     
-                    local hexTeam = string.format("#%02X%02X%02X", tColor.R*255, tColor.G*255, tColor.B*255)
-                    
-                    local strokeFade = 0.5 + (fade * 0.5)
-                    vis.NameLabel.TextStrokeTransparency = strokeFade
-                    vis.StatsLabel.TextStrokeTransparency = strokeFade
                     vis.NameLabel.TextTransparency = fade
                     vis.StatsLabel.TextTransparency = fade
+                    vis.NameLabel.TextStrokeTransparency = 0.4 + (fade * 0.6)
                     
-                    vis.NameLabel.Text = string.format('<font color="%s">👤: %s</font>', hexTeam, p.DisplayName)
-                    vis.StatsLabel.Text = string.format('<font color="%s">📏: %dm.</font> | <font color="%s">❤: %d</font>', DIST_COLOR, math.floor(dist), HP_COLOR, math.floor(hum.Health))
+                    vis.NameLabel.Text = string.format('<font color="%s">%s: %s</font>', nameColorHex, emoji, p.DisplayName)
+                    vis.StatsLabel.Text = string.format('<font color="%s">%dm.</font> | <font color="%s">❤: %d</font>', DIST_COLOR, math.floor(dist), HP_COLOR, math.floor(hum.Health))
                 else
-                    -- Fora da distância: Oculta visualmente, mas mantém no cache para performance
                     if localCache[p] then
                         localCache[p].Highlight.Parent = nil
                         localCache[p].UI.Enabled = false
                     end
                 end
             else
-                -- Sem personagem: Oculta
+                -- ✅ CORREÇÃO: Limpa a outline imediatamente se o alvo morrer/sumir
                 if localCache[p] then
                     localCache[p].Highlight.Parent = nil
                     localCache[p].UI.Enabled = false
                 end
-            end
-        else
-            -- CORREÇÃO: Limpa cache se o player saiu do servidor
-            if localCache[p] then
-                if localCache[p].Highlight then localCache[p].Highlight:Destroy() end
-                if localCache[p].UI then localCache[p].UI:Destroy() end
-                localCache[p] = nil
             end
         end
     end
