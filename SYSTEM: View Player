@@ -41,7 +41,7 @@ local DIST_COLOR = "#C8C800"
 local HP_COLOR = "#B40000"
 local FRIEND_OUTLINE = Color3.fromRGB(0, 200, 255) -- Azul Claro
 local FRIEND_NAME_COLOR = "#00FF7F" -- Verde Primavera
-local FRIEND_EMOJI = "🫂"
+local FRIEND_EMOJI = "👥"
 
 -- Pasta Global
 _G.SystemViewPlayerFolder = Instance.new("Folder")
