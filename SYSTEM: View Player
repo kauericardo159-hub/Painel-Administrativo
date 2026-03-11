@@ -33,7 +33,7 @@ print("[SYSTEM] View Player: ATIVADO")
 -- ==========================================
 -- CONFIGURAÇÕES
 -- ==========================================
-local MAX_DISTANCE = 450
+local MAX_DISTANCE = 350
 local FADE_START = 200
 
 -- Cores e Emojis
