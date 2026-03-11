@@ -1,57 +1,102 @@
-local DataStoreService = game:GetService("DataStoreService")
-local myDataStore = DataStoreService:GetDataStore("FPSMonitorSettings_V1")
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local localPlayer = Players.LocalPlayer
 
--- Função para carregar dados
-Players.PlayerAdded:Connect(function(player)
-	local leaderstats = Instance.new("Folder")
-	leaderstats.Name = "leaderstats"
-	leaderstats.Parent = player
-	
-	-- Criamos um valor no servidor para rastrear o estado
-	local statusValue = Instance.new("BoolValue")
-	statusValue.Name = "FPSMonitorStatus"
-	statusValue.Parent = player -- Parent ao player, não leaderstats para não aparecer na lista
-	
-	-- Tenta carregar os dados
-	local userId = player.UserId
-	local success, data = pcall(function()
-		return myDataStore:GetAsync(userId)
-	end)
-	
-	if success then
-		statusValue.Value = data or false -- Se não houver dados, assume false
-	else
-		warn("Erro ao carregar dados de FPS Monitor para " .. player.Name)
-		statusValue.Value = false
-	end
+-- Referências da Interface (Ajuste os nomes se necessário)
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+local coreGui = playerGui:WaitForChild("SistemaPainel_V3")
+local painel = coreGui:WaitForChild("Panel") -- O seu painel principal
+
+-- Remote para salvar no DataStore (o que você enviou)
+local remoteEvent = ReplicatedStorage:WaitForChild("UpdateFPSMonitorStatus")
+
+-- ==========================================
+-- 1. CONFIGURAÇÕES DE DESIGN
+-- ==========================================
+local ICON_ID = "rbxassetid://10734950309" -- Apenas 1 ID de imagem (engrenagem/config)
+local COLOR_OPEN = Color3.fromRGB(255, 100, 0)  -- Laranja (Aberto)
+local COLOR_CLOSE = Color3.fromRGB(40, 40, 40) -- Cinza Escuro (Fechado)
+local STROKE_COLOR = Color3.fromRGB(255, 255, 255)
+
+-- ==========================================
+-- 2. CRIAÇÃO DO BOTÃO RESPONSIVO (MOBILE READY)
+-- ==========================================
+-- Se já existir um botão antigo, removemos
+if coreGui:FindFirstChild("ToggleMenuBtn") then
+    coreGui.ToggleMenuBtn:Destroy()
+end
+
+local btn = Instance.new("ImageButton")
+btn.Name = "ToggleMenuBtn"
+-- Tamanho proporcional (aprox 45px em telas normais, se ajusta em qualquer celular)
+btn.Size = UDim2.new(0.08, 0, 0.08, 0) 
+btn.SizeConstraint = Enum.SizeConstraint.RelativeXX -- Mantém o botão sempre quadrado
+btn.Position = UDim2.new(0.02, 0, 0.4, 0) -- Lado esquerdo centralizado
+btn.BackgroundColor3 = COLOR_CLOSE
+btn.Image = ICON_ID
+btn.BorderSizePixel = 0
+btn.ZIndex = 10
+btn.Parent = coreGui
+
+-- Bordas Arredondadas
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0.3, 0)
+corner.Parent = btn
+
+-- Contorno (Stroke)
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = STROKE_COLOR
+stroke.Transparency = 0.6
+stroke.Parent = btn
+
+-- Proporção da Imagem interna
+btn.ScaleType = Enum.ScaleType.Fit
+local padding = Instance.new("UIPadding")
+padding.PaddingBottom = UDim.new(0.15, 0)
+padding.PaddingTop = UDim.new(0.15, 0)
+padding.PaddingLeft = UDim.new(0.15, 0)
+padding.PaddingRight = UDim.new(0.15, 0)
+padding.Parent = btn
+
+-- ==========================================
+-- 3. LÓGICA DE ABRIR/FECHAR
+-- ==========================================
+local menuAberto = false
+
+local function toggleMenu()
+    menuAberto = not menuAberto
+    
+    -- 1. Sincroniza com o Servidor (DataStore que você enviou)
+    remoteEvent:FireServer(menuAberto)
+    
+    -- 2. Animação de Cor e Rotação
+    local targetColor = menuAberto and COLOR_OPEN or COLOR_CLOSE
+    local targetRotation = menuAberto and 90 or 0
+    local panelPos = menuAberto and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(-1, 0, 0.5, 0)
+    
+    -- Tween do Botão
+    TweenService:Create(btn, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {
+        BackgroundColor3 = targetColor,
+        Rotation = targetRotation
+    }):Play()
+    
+    -- Tween do Painel (Ajuste a posição de destino conforme seu painel)
+    TweenService:Create(painel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = panelPos
+    }):Play()
+end
+
+btn.Activated:Connect(toggleMenu)
+
+-- Efeito de "Apertar" (Visual)
+btn.MouseButton1Down:Connect(function()
+    TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0.07, 0, 0.07, 0)}):Play()
 end)
 
--- Função para salvar dados ao sair
-Players.PlayerRemoving:Connect(function(player)
-	local userId = player.UserId
-	local statusValue = player:FindFirstChild("FPSMonitorStatus")
-	
-	if statusValue then
-		local success, err = pcall(function()
-			myDataStore:SetAsync(userId, statusValue.Value)
-		end)
-		
-		if not success then
-			warn("Erro ao salvar dados de FPS Monitor para " .. player.Name .. ": " .. err)
-		end
-	end
+btn.MouseButton1Up:Connect(function()
+    TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0.08, 0, 0.08, 0)}):Play()
 end)
 
--- RemoteEvent para atualizar do cliente para o servidor
-local remoteEvent = Instance.new("RemoteEvent")
-remoteEvent.Name = "UpdateFPSMonitorStatus"
-remoteEvent.Parent = game:GetService("ReplicatedStorage")
-
-remoteEvent.OnServerEvent:Connect(function(player, newStatus)
-	local statusValue = player:FindFirstChild("FPSMonitorStatus")
-	if statusValue then
-		statusValue.Value = newStatus
-	end
-end)
-
+print("✅ Botão de Controle Mobile V5 Carregado!")
