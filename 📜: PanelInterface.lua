@@ -29,7 +29,7 @@ painel.Position = UDim2.new(0.5, 0, 1.6, 0) -- Fora da tela (baixo)
 painel.AnchorPoint = Vector2.new(0.5, 0.5)
 painel.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 painel.BackgroundTransparency = 0.1
-painel.Visible = false -- Invisível ao criar
+painel.Visible = true -- Invisível ao criar
 painel.Parent = screenGui
 
 local painelCorner = Instance.new("UICorner")
