@@ -7,26 +7,16 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 --[[ 
 ===========================================================
-       ⚙ CONTROLADOR DO BOTÃO PREMIUM V3 ⚙
+       ⚙ CONTROLADOR DO BOTÃO PREMIUM V4 ⚙
 ===========================================================
 ]]
 
--- ==========================================
--- CONFIGURAÇÕES DO BOTÃO
--- ==========================================
--- IMAGENS DO BOTÃO (Pode colocar IDs diferentes para abrir/fechar)
 local BUTTON_ID_CLOSED = "rbxassetid://16007391180" 
-local BUTTON_ID_OPEN = "rbxassetid://16007391180" 
+local MENU_NAME = "InterfaceMenu_V4"
+local PAINEL_CORE_NAME = "SistemaPainel_V3" -- Nome que usamos no script do Painel
+local BUTTON_SIZE = 60
 
-local MENU_NAME = "InterfaceMenu_V3"
-local SAVE_NAME = "PremiumMenuPos"
-local BUTTON_SIZE = 60 -- Quadrado
-
--- 1. LIMPEZA E CONFIGURAÇÃO DE EFEITOS
-local oldMenu = playerGui:FindFirstChild(MENU_NAME)
-if oldMenu then oldMenu:Destroy() end
-
--- Configura o Blur no Lighting
+-- 1. CONFIGURAÇÃO DE EFEITOS
 local blurEffect = Lighting:FindFirstChild("MenuBlur")
 if not blurEffect then
     blurEffect = Instance.new("BlurEffect")
@@ -35,9 +25,11 @@ if not blurEffect then
     blurEffect.Parent = Lighting
 end
 
--- ==========================================
--- 2. CRIAÇÃO DA INTERFACE (Quadrada e Estilosa)
--- ==========================================
+-- Limpeza
+local oldMenu = playerGui:FindFirstChild(MENU_NAME)
+if oldMenu then oldMenu:Destroy() end
+
+-- 2. CRIAÇÃO DA INTERFACE DO BOTÃO
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = MENU_NAME
 screenGui.ResetOnSpawn = false
@@ -47,153 +39,93 @@ screenGui.Parent = playerGui
 local mainButton = Instance.new("ImageButton") 
 mainButton.Name = "ToggleButton"
 mainButton.Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE)
-
--- LÓGICA DE SALVAMENTO DE POSIÇÃO
-local savedPos = nil
-if pcall(function() savedPos = game:GetService("HttpService"):JSONDecode(readfile(SAVE_NAME..".json")) end) and savedPos then
-    mainButton.Position = UDim2.new(savedPos.X.Scale, savedPos.X.Offset, savedPos.Y.Scale, savedPos.Y.Offset)
-else
-    mainButton.Position = UDim2.new(0, 25, 0.5, -(BUTTON_SIZE/2)) -- Posição padrão
-end
-
+mainButton.Position = UDim2.new(0, 25, 0.5, -(BUTTON_SIZE/2))
 mainButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+mainButton.BackgroundTransparency = 0.2
 mainButton.Image = BUTTON_ID_CLOSED
-mainButton.ScaleType = Enum.ScaleType.Crop -- Preenche o botão inteiro
+mainButton.ScaleType = Enum.ScaleType.Crop
 mainButton.AutoButtonColor = false
 mainButton.Parent = screenGui
 
--- Estilização: Cantos arredondados
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
+corner.CornerRadius = UDim.new(0, 15)
 corner.Parent = mainButton
 
--- Estilização: Borda (UIStroke)
 local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
-stroke.Color = Color3.fromRGB(200, 200, 200)
+stroke.Thickness = 3
+stroke.Color = Color3.fromRGB(255, 255, 255)
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Parent = mainButton
 
--- Estilização: Gradiente refinado no botão
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 180))
-})
-gradient.Rotation = 45
-gradient.Parent = mainButton
-
--- ==========================================
--- 3. LÓGICA DE ARRRASTAR (Segurar por 3s)
--- ==========================================
-local dragging = false
-local dragStart
-local startPos
-local isDraggingMode = false
-
-mainButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainButton.Position
-        local holdTimer = tick()
-        
-        -- Loop para verificar se o usuário está segurando
-        task.spawn(function()
-            while dragging and not isDraggingMode do
-                if tick() - holdTimer >= 3 then
-                    isDraggingMode = true
-                    -- Feedback visual ao entrar no modo arrastar
-                    TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-                end
-                task.wait()
-            end
-        end)
-    end
-end)
-
-mainButton.InputChanged:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and isDraggingMode then
-        local delta = input.Position - dragStart
-        mainButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
-mainButton.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-        
-        if isDraggingMode then
-            isDraggingMode = false
-            -- Salva a posição após arrastar
-            local pos = mainButton.Position
-            pcall(function() writefile(SAVE_NAME..".json", game:GetService("HttpService"):JSONEncode(pos)) end)
-            TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15, 15, 15)}):Play()
-        end
-    end
-end)
-
--- ==========================================
--- 4. LÓGICA DE ABRIR/FECHAR E CLIQUE
--- ==========================================
+-- 3. LÓGICA DE ABRIR/FECHAR (Sincronizada com o Painel)
 local isOpen = false
-local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+local isAnimating = false -- Evita bugs de spam de clique
 
 local function toggleUI()
-    -- Busca o painel criado pelo PanelInterface.lua
-    local coreGui = playerGui:FindFirstChild("SistemaPainel_V3")
+    local coreGui = playerGui:FindFirstChild(PAINEL_CORE_NAME)
     local painel = coreGui and coreGui:FindFirstChild("Panel")
     
-    if not painel then return end
-    if isDraggingMode then return end -- Não abre se estiver apenas arrastando
-
+    if not painel or isAnimating then return end
+    
+    isAnimating = true
     isOpen = not isOpen
 
+    -- Configurações de animação (EasingStyle.Quart para combinar com o painel)
+    local tInfo = TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local tInfoBlur = TweenInfo.new(0.6, Enum.EasingStyle.Linear)
+
     if isOpen then
+        -- ABRIR
         painel.Visible = true
-        painel.Position = UDim2.new(0.5, 0, 1.5, 0) -- Inicia abaixo
-        -- Animação Sobe
-        TweenService:Create(painel, tweenInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
-        TweenService:Create(blurEffect, tweenInfo, {Size = 20}):Play()
-        TweenService:Create(stroke, tweenInfo, {Color = Color3.fromRGB(0, 255, 255)}):Play() -- Borda ciano ao abrir
+        painel.Position = UDim2.new(0.5, 0, 1.5, 0) -- Garante que começa embaixo
         
-        mainButton.Image = BUTTON_ID_OPEN
+        local openTween = TweenService:Create(painel, tInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)})
+        local blurTween = TweenService:Create(blurEffect, tInfoBlur, {Size = 15})
+        local strokeTween = TweenService:Create(stroke, tInfo, {Color = Color3.fromRGB(0, 255, 200)}) -- Feedback visual no botão
+        
+        openTween:Play()
+        blurTween:Play()
+        strokeTween:Play()
+        
+        openTween.Completed:Wait()
     else
-        -- Animação Desce
-        local closeTween = TweenService:Create(painel, tweenInfo, {Position = UDim2.new(0.5, 0, 1.5, 0)})
+        -- FECHAR
+        local closeTween = TweenService:Create(painel, tInfo, {Position = UDim2.new(0.5, 0, 1.6, 0)})
+        local blurTween = TweenService:Create(blurEffect, tInfoBlur, {Size = 0})
+        local strokeTween = TweenService:Create(stroke, tInfo, {Color = Color3.fromRGB(255, 255, 255)})
+        
         closeTween:Play()
-        TweenService:Create(blurEffect, tweenInfo, {Size = 0}):Play()
-        TweenService:Create(stroke, tweenInfo, {Color = Color3.fromRGB(200, 200, 200)}):Play()
+        blurTween:Play()
+        strokeTween:Play()
         
-        mainButton.Image = BUTTON_ID_CLOSED
-        
-        closeTween.Completed:Connect(function()
-            if not isOpen then painel.Visible = false end
-        end)
+        closeTween.Completed:Wait()
+        if not isOpen then 
+            painel.Visible = false 
+        end
     end
+    
+    isAnimating = false
 end
 
--- Animação de clique (Encolher)
+-- 4. INTERAÇÕES DO BOTÃO
+mainButton.MouseButton1Click:Connect(toggleUI)
+
+-- Efeito de "Apertar"
 mainButton.MouseButton1Down:Connect(function()
-    if isDraggingMode then return end
-    TweenService:Create(mainButton, TweenInfo.new(0.1), {Size = UDim2.new(0, BUTTON_SIZE-10, 0, BUTTON_SIZE-10)}):Play()
+    TweenService:Create(mainButton, TweenInfo.new(0.1), {Size = UDim2.new(0, BUTTON_SIZE-8, 0, BUTTON_SIZE-8)}):Play()
 end)
 
 mainButton.MouseButton1Up:Connect(function()
-    if isDraggingMode then return end
-    TweenService:Create(mainButton, TweenInfo.new(0.2), {Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE)}):Play()
-    toggleUI()
+    TweenService:Create(mainButton, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE)}):Play()
 end)
 
--- Hover efeitos (Transparência)
+-- Hover (Brilho suave ao passar o mouse)
 mainButton.MouseEnter:Connect(function()
-    if isDraggingMode then return end
-    TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
+    TweenService:Create(mainButton, TweenInfo.new(0.3), {BackgroundTransparency = 0, BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
 end)
 
 mainButton.MouseLeave:Connect(function()
-    if isDraggingMode then return end
-    TweenService:Create(mainButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.1}):Play()
+    TweenService:Create(mainButton, TweenInfo.new(0.3), {BackgroundTransparency = 0.2, BackgroundColor3 = Color3.fromRGB(15, 15, 15)}):Play()
 end)
 
-print("✅ Controlador do Botão Premium V3 Carregado!")
+print("✅ Controlador do Botão V4 Sincronizado!")
