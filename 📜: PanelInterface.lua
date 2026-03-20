@@ -24,7 +24,7 @@ screenGui.Parent = playerGui
 -- 3. PAINEL PRINCIPAL
 local painel = Instance.new("Frame")
 painel.Name = "Panel" 
-painel.Size = UDim2.new(0, 780, 0, 480)
+painel.Size = UDim2.new(0, 480, 0, 280)
 painel.Position = UDim2.new(0.5, 0, 1.6, 0) -- Fora da tela (baixo)
 painel.AnchorPoint = Vector2.new(0.5, 0.5)
 painel.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
