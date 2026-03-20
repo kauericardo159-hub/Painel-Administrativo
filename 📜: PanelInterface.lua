@@ -5,7 +5,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 --[[ 
 ===========================================================
-       ⚙ ESTRUTURA E ESTILIZAÇÃO DO PAINEL V8 (Shadow Edit) ⚙
+⚙ ESTRUTURA E ESTILIZAÇÃO DO PAINEL V8 (Shadow Edit) ⚙
 ===========================================================
 ]]
 
@@ -24,7 +24,7 @@ screenGui.Parent = playerGui
 -- 3. PAINEL PRINCIPAL
 local painel = Instance.new("Frame")
 painel.Name = "Panel" 
-painel.Size = UDim2.new(0, 480, 0, 280)
+painel.Size = UDim2.new(0, 520, 0, 300)
 painel.Position = UDim2.new(0.5, 0, 1.6, 0) -- Fora da tela (baixo)
 painel.AnchorPoint = Vector2.new(0.5, 0.5)
 painel.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
@@ -64,9 +64,9 @@ strokeExterno.Parent = painel
 
 local strokeGradient = Instance.new("UIGradient")
 strokeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 100, 100)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 100, 100)),
+ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
 })
 strokeGradient.Parent = strokeExterno
 
@@ -78,7 +78,7 @@ local function iniciarPainel()
     
     -- Animação da Base (Sobe suavemente)
     local tweenBase = TweenService:Create(painel, TweenInfo.new(1.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, 0, 0.5, 0)
+    Position = UDim2.new(0.5, 0, 0.5, 0)
     })
     tweenBase:Play()
 end
