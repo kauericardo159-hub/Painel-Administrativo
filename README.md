@@ -1,41 +1,42 @@
-# Seja Bem Vindo (A) ao Painel Administrativo <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/74280d7e-1def-4ecd-8158-31d4ea0e3df9" />
+# 🎮 Painel Administrativo Roblox
+<img width="50" height="50" alt="Bem-vindo" src="https://github.com/user-attachments/assets/74280d7e-1def-4ecd-8158-31d4ea0e3df9" align="right" />
 
-
----
-
-# View Player
-
-O View Player é um sistema que mostra as posições dos usuários do servidor, exibindo uma outline, metros e vida de usuário, para os amigos ficam com outline verde.
-
-# View Bot
-
-O mesmo tipo de sistema, mas focado em Bot's & Npc's.
-
-# View Iten's
-
-Ele foca nos itens espalhados no jogo.
-
-- Funciona um pouco no Doors dos itens.
-
----
-# Pequeno Aviso:
-
-- Ambos podem ocorrer bugs, travamentos e algumas experiências não funcionam.
+Seja bem-vindo(a) ao Painel Administrativo! Este é um script utilitário focado em fornecer vantagens visuais e informações de desempenho para suas gameplays.
 
 ---
 
-# Sistemas Extras
+## ✨ Funcionalidades
 
-# FPS | PING | PLAYER'S
+### 👁️ Sistema de Visão (ESP)
+Estes sistemas ajudam você a localizar elementos cruciais pelo mapa:
 
-- FPS, exibir o FPS do próprio jogador.
+* **View Player:** Monitoramento avançado dos jogadores do servidor. Exibe contorno (*outline*), distância em metros e a vida do usuário. **Dica:** Seus amigos recebem um destaque especial com outline verde.
+* **View Bot:** O mesmo sistema de rastreamento aplicado acima, mas focado exclusivamente em Bot's e NPC's do jogo.
+* **View Items:** Destaca itens espalhados pelo mapa para facilitar o loot. *(Nota: Possui suporte parcial para os itens do jogo "Doors").*
 
-- PING, exibir o PING do próprio jogador.
+### 📊 Painel de Status (Sistemas Extras)
+Mantenha o controle do desempenho do seu jogo em tempo real:
 
-- PLAYER'S, exibi o máximo de Player no server & quantos players tem no servidor.
+* **FPS:** Exibe a sua taxa de quadros por segundo atual.
+* **PING:** Mostra a latência da sua conexão com o servidor.
+* **PLAYER'S:** Exibe a quantidade atual de jogadores online e o limite máximo suportado pelo servidor.
 
 ---
 
-Feito por Script Lua para Roblox, necessário utilizar Delta, ou algum outro que execute scripts.
+## ⚙️ Como Utilizar (Requisitos)
 
-<img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/8428ea1b-19d0-4e63-8ca1-189752ee9d60" /> por enquanto é isso.
+Este projeto foi desenvolvido em **Script Lua** para o Roblox. Para executá-lo, você precisará de:
+
+1. Um executor de scripts de sua preferência (recomendamos o **Delta** ou equivalentes).
+2. Injetar o script enquanto estiver dentro da experiência desejada no Roblox.
+
+---
+
+## ⚠️ Avisos Importantes
+
+> **Atenção:** Devido à variedade de mecânicas e proteções dos jogos no Roblox, **ambos os sistemas visuais podem apresentar bugs ou causar travamentos**. Além disso, algumas funcionalidades podem simplesmente não funcionar em determinadas experiências. Use com ciência!
+
+---
+
+Feito com ❤️ em Script Lua. 
+<img width="50" height="50" alt="Ícone de encerramento" src="https://github.com/user-attachments/assets/8428ea1b-19d0-4e63-8ca1-189752ee9d60" /> *Por enquanto é isso, aproveite o painel!*
