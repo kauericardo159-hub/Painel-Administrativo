@@ -4,80 +4,105 @@ local player = Players.LocalPlayer
 
 --[[ 
 ===========================================================
-       ⚙ GERENCIADOR DE PERFIL V6 (ESTILIZADO) ⚙
+       ⚙ GERENCIADOR DE PERFIL V7 (MODERNO & ESCALÁVEL) ⚙
 ===========================================================
 ]]
 
--- 1. LOCALIZAÇÃO E LIMPEZA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3")
 local painel = coreGui:WaitForChild("Panel")
 
--- Limpa perfil anterior se existir
+-- 1. LIMPEZA
 if painel:FindFirstChild("ProfileContainer") then
     painel.ProfileContainer:Destroy()
 end
 
--- 2. CONTAINER DO PERFIL (Topo Esquerdo)
+-- 2. CONTAINER DO PERFIL (Usando Escala para ser Responsivo)
 local profileContainer = Instance.new("Frame")
 profileContainer.Name = "ProfileContainer"
-profileContainer.Size = UDim2.new(0, 300, 0, 80) -- Tamanho compacto para o topo
-profileContainer.Position = UDim2.new(0, 20, 0, 20)
+-- Tamanho em escala (aprox 45% da largura e 20% da altura do painel)
+profileContainer.Size = UDim2.new(0.45, 0, 0.22, 0) 
+profileContainer.Position = UDim2.new(0.04, 0, 0.05, 0) -- Canto superior esquerdo
 profileContainer.BackgroundTransparency = 1
-profileContainer.ZIndex = painel.ZIndex + 2
+profileContainer.ZIndex = painel.ZIndex + 5
 profileContainer.Parent = painel
 
--- 3. FOTO DE PERFIL (Imagem Arredondada)
+-- 3. FOTO DE PERFIL (Círculo elegante)
 local avatarImage = Instance.new("ImageLabel")
 avatarImage.Name = "AvatarImage"
-avatarImage.Size = UDim2.new(0, 60, 0, 60)
-avatarImage.Position = UDim2.new(0, 10, 0.5, 0)
+-- Mantém proporção quadrada usando o SizeConstraint
+avatarImage.Size = UDim2.new(0.7, 0, 0.7, 0) 
+avatarImage.SizeConstraint = Enum.SizeConstraint.RelativeYY
+avatarImage.Position = UDim2.new(0, 5, 0.5, 0)
 avatarImage.AnchorPoint = Vector2.new(0, 0.5)
-avatarImage.BackgroundTransparency = 1
+avatarImage.BackgroundTransparency = 0.9
+avatarImage.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 avatarImage.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
 avatarImage.ZIndex = profileContainer.ZIndex + 1
 avatarImage.Parent = profileContainer
 
--- UICorner na Foto
-local avatarCorner = Instance.new("UICorner")
-avatarCorner.CornerRadius = UDim.new(1, 0) -- Círculo
-avatarCorner.Parent = avatarImage
+Instance.new("UICorner", avatarImage).CornerRadius = UDim.new(1, 0)
+local imgStroke = Instance.new("UIStroke", avatarImage)
+imgStroke.Thickness = 2
+imgStroke.Color = Color3.fromRGB(255, 255, 255)
+imgStroke.Transparency = 0.4
 
--- UIStroke na Foto (Borda Branca)
-local avatarStroke = Instance.new("UIStroke")
-avatarStroke.Thickness = 2
-avatarStroke.Color = Color3.fromRGB(255, 255, 255)
-avatarStroke.Parent = avatarImage
+-- 4. CONTAINER DE TEXTOS (Organização Vertical)
+local infoFrame = Instance.new("Frame")
+infoFrame.Name = "InfoFrame"
+infoFrame.Size = UDim2.new(1, -60, 0.8, 0)
+infoFrame.Position = UDim2.new(0, 65, 0.5, 0)
+infoFrame.AnchorPoint = Vector2.new(0, 0.5)
+infoFrame.BackgroundTransparency = 1
+infoFrame.Parent = profileContainer
 
--- 4. NOME DO USUÁRIO (Texto Estilizado)
-local usernameLabel = Instance.new("TextLabel")
-usernameLabel.Name = "UsernameLabel"
-usernameLabel.Size = UDim2.new(1, -90, 1, 0)
-usernameLabel.Position = UDim2.new(0, 80, 0, 0)
-usernameLabel.BackgroundTransparency = 1
-usernameLabel.Text = player.DisplayName
-usernameLabel.Font = Enum.Font.GothamBold
-usernameLabel.TextSize = 22
-usernameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
-usernameLabel.ZIndex = profileContainer.ZIndex + 1
-usernameLabel.Parent = profileContainer
+local listLayout = Instance.new("UIListLayout", infoFrame)
+listLayout.Padding = UDim.new(0, 2)
+listLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 
--- 5. ANIMAÇÃO DE ENTRADA (Slide suave)
+-- NOME EXIBIDO (DisplayName)
+local displayName = Instance.new("TextLabel")
+displayName.Size = UDim2.new(1, 0, 0, 18)
+displayName.BackgroundTransparency = 1
+displayName.Text = player.DisplayName
+displayName.Font = Enum.Font.GothamBold
+displayName.TextColor3 = Color3.fromRGB(255, 255, 255)
+displayName.TextSize = 14 -- Menor e mais elegante
+displayName.TextXAlignment = Enum.TextXAlignment.Left
+displayName.Parent = infoFrame
+
+-- @USUARIO E ID
+local userTag = Instance.new("TextLabel")
+userTag.Size = UDim2.new(1, 0, 0, 14)
+userTag.BackgroundTransparency = 1
+userTag.Text = "@" .. player.Name .. " | ID: " .. player.UserId
+userTag.Font = Enum.Font.Gotham
+userTag.TextColor3 = Color3.fromRGB(180, 180, 180)
+userTag.TextSize = 11
+userTag.TextXAlignment = Enum.TextXAlignment.Left
+userTag.Parent = infoFrame
+
+-- 5. ANIMAÇÃO DE ENTRADA (Ajustada para o novo Painel)
 local function animateProfile()
-    profileContainer.Position = UDim2.new(0, -320, 0, 20) -- Começa fora da tela
+    -- Começa um pouco mais para a esquerda e invisível
+    infoFrame.GroupTransparency = 1
+    local originalPos = UDim2.new(0.04, 0, 0.05, 0)
+    profileContainer.Position = UDim2.new(-0.1, 0, 0.05, 0)
     
-    TweenService:Create(profileContainer, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 20, 0, 20)
+    TweenService:Create(profileContainer, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Position = originalPos
     }):Play()
 end
 
--- Sincronização com a abertura do painel
+-- Sincronizar com a visibilidade do painel
 painel:GetPropertyChangedSignal("Visible"):Connect(function()
     if painel.Visible then
-        task.wait(0.2) 
+        task.wait(0.3) -- Espera o painel começar a subir
         animateProfile()
     end
 end)
 
-print("✅ Perfil V6 Carregado!")
+-- Executar caso o painel já esteja aberto
+if painel.Visible then animateProfile() end
+
+print("✅ Perfil V7: Compacto, Elegante e Responsivo!")
