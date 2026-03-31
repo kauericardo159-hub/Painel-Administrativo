@@ -2,7 +2,7 @@
 ===========================================================
        ⚙ CARREGAMENTO DO PAINEL ADMINISTRATIVO V3 ⚙
 ===========================================================
-]]
+
 
 print("🚀 Iniciando sistema...")
 
@@ -36,11 +36,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 
 print("✅ Painel Completo Carregado com Sucesso!")
 
---[[
+
 ===============================
      📄  Lista de Funções 
 ===============================
-]]
 
 -- 1. MiniPainel: VIEW PLAYERS & BOTS
 -- FUNÇÃO: Ver posição de Player & Bot no Jogo
@@ -53,24 +52,22 @@ print("✅ Carregando Sistema View Itens...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPanel-VIEW-ITENS"))()
 task.wait(3)
 
---[[
+
 ==================================
      📜  Lista  Extra de Funções
 ===================================
-]]
 
 -- 1. MiniPainel: FPS | PING | PLAYER's
 -- Função: Exibir FPS, Ping e números de Players no server
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20MiniPainel%3A%20FPS%20PING%20PLAYER's"))()
 task.wait(3)
 
---[[
 ===============================
      🔴 LISTA DE MANUTENÇÃO 🔴
 ===============================
-]]
 
---[[
+
+
 -- 🔴 AVISO: Grande Manutenção, demora grande para concluir.
 -- 0. MiniPainel: 👀 DOORS
 -- FUNÇÃO: Apenas funciona em Doors.
@@ -78,4 +75,4 @@ print("☑ Carregando Sistema ...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20Doors"))()
 ]]
 
-print("✅ Sistemas Carregado com Sucesso!")
+print("⚠️ Sistema em manutenção! por favor, use-o mais tarde.")
