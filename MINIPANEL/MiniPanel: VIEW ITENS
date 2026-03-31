@@ -29,7 +29,7 @@ end
 -- 3. CRIAÇÃO DO MINI-PAINEL (Design Premium V10)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "ViewItensCard"
-miniPainel.Size = UDim2.new(0.96, 0, 0, 100) -- Um pouco mais compacto que o de Players
+miniPainel.Size = UDim2.new(0.96, 0, 0, 100) 
 miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 miniPainel.BackgroundTransparency = 0.4 
 miniPainel.BorderSizePixel = 0
@@ -40,7 +40,6 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 14)
 corner.Parent = miniPainel
 
--- Borda com Transparência (Estilo V9/V10)
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 1.5
 stroke.Color = Color3.fromRGB(255, 255, 255)
@@ -48,7 +47,6 @@ stroke.Transparency = 0.7
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Parent = miniPainel
 
--- Título Minimalista
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.new(0, 0, 0, 5)
@@ -82,13 +80,11 @@ iconLabel.BackgroundTransparency = 1
 iconLabel.ZIndex = miniPainel.ZIndex + 2
 iconLabel.Parent = container
 
--- Configuração de Cores (Padrão Elite)
 local colorInactiveBase = Color3.fromRGB(40, 15, 15)
 local colorInactiveStroke = Color3.fromRGB(200, 50, 50)
 local colorActiveBase = Color3.fromRGB(15, 40, 25)
 local colorActiveStroke = Color3.fromRGB(50, 200, 100)
 
--- Botão Switch
 local btnBase = Instance.new("TextButton")
 btnBase.Size = UDim2.new(0, 55, 0, 26)
 btnBase.Position = UDim2.new(0.5, 0, 0.8, 0)
@@ -106,7 +102,6 @@ btnStroke.Thickness = 1.5
 btnStroke.Color = _G.ViewItensActive and colorActiveStroke or colorInactiveStroke
 btnStroke.Parent = btnBase
 
--- Knob (Círculo deslizante)
 local knob = Instance.new("Frame")
 knob.Size = UDim2.new(0, 20, 0, 20)
 knob.Position = _G.ViewItensActive and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
@@ -116,10 +111,16 @@ knob.ZIndex = btnBase.ZIndex + 1
 knob.Parent = btnBase
 Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
--- 5. LÓGICA DE CLIQUE
+-- 5. LÓGICA DE CLIQUE (Com Notificação Integrada)
 btnBase.MouseButton1Click:Connect(function()
     _G.ViewItensActive = not _G.ViewItensActive
     local ativo = _G.ViewItensActive
+    
+    -- Disparar Notificação Elite
+    if _G.NotifyElite then
+        local statusTxt = ativo and "ATIVADO" or "DESATIVADO"
+        _G.NotifyElite("INVENTORY SYSTEM", "O rastreio de itens foi " .. statusTxt .. "!", ativo)
+    end
     
     local targetPos = ativo and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
     local targetBaseColor = ativo and colorActiveBase or colorInactiveBase
@@ -130,14 +131,14 @@ btnBase.MouseButton1Click:Connect(function()
     TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = targetStrokeColor}):Play()
 end)
 
--- 6. ANIMAÇÃO DE ENTRADA (Slide Lateral Sincronizado)
+-- 6. ANIMAÇÃO DE ENTRADA
 local function animateEntry()
     local originalPos = UDim2.new(0.02, 0, 0, 0)
     miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
     miniPainel.BackgroundTransparency = 1
     stroke.Transparency = 1
     
-    task.wait(0.6) -- Pequeno delay para aparecer após o card de players
+    task.wait(0.6)
     TweenService:Create(miniPainel, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
         Position = originalPos,
         BackgroundTransparency = 0.4
@@ -147,4 +148,4 @@ end
 
 animateEntry()
 
-print("✅ MiniPainel Itens V10: Design e Posição Atualizados!")
+print("✅ MiniPainel Itens V10: Agora com Notificações Elite!")
