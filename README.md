@@ -35,4 +35,6 @@ Ele foca nos itens espalhados no jogo.
 
 ---
 
+Feito por Script Lua para Roblox, necessário utilizar Delta, ou algum outro que execute scripts.
+
 por enquanto é isso. ;P
