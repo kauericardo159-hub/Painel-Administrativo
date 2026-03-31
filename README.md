@@ -40,9 +40,7 @@
 ---
 
 ### 📊 **Sistemas Extras**
-- ⚡ **FPS Optimizer**
-- 📶 **Ping Monitor**
-- 👥 **Player Counter**
+- ⚡ **FPS | PING | Number Player's server**
 
 ---
 
