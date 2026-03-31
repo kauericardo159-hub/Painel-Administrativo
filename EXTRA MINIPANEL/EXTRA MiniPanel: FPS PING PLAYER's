@@ -140,7 +140,7 @@ btnBase.MouseButton1Click:Connect(function()
     if isActive then
         -- ✅ LOADSTRING ATIVADO (Sem comentários)
         print("Ativando Monitor FPS...")
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
     else
         -- ✅ LÓGICA DE DESATIVAÇÃO (Para sumir da tela)
         print("Desativando Monitor FPS...")
