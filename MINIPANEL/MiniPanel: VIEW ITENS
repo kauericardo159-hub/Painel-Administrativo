@@ -4,169 +4,147 @@ local player = Players.LocalPlayer
 
 --[[ 
 ===========================================================
-       ⚙ GERENCIADOR DO MINI-PAINEL ITENS V9 ⚙
+       ⚙ GERENCIADOR DO MINI-PAINEL ITENS V10 (ELITE) ⚙
 ===========================================================
 ]]
 
 -- 1. CONEXÃO SEGURA COM O SISTEMA LÓGICO
 if not _G.ViewItensSystemLoaded then
-    task.spawn(function()
-        local success, err = pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Itens"))()
-        end)
-        if success then
-            _G.ViewItensSystemLoaded = true
-            print("Sistema Lógico de Itens carregado com sucesso.")
-        else
-            warn("Erro ao carregar sistema de itens: " .. tostring(err))
-        end
+    task.spawn(pcall, function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Itens"))()
+        _G.ViewItensSystemLoaded = true
     end)
 end
 
--- 2. LOCALIZAÇÃO NA LISTA
+-- 2. LOCALIZAÇÃO E LIMPEZA
 local playerGui = player:WaitForChild("PlayerGui")
 local coreGui = playerGui:WaitForChild("SistemaPainel_V3")
 local painel = coreGui:WaitForChild("Panel")
 local lista = painel:WaitForChild("ListaOpcoesContainer")
 
--- Limpeza de segurança para evitar duplicatas ao recarregar
 if lista:FindFirstChild("ViewItensCard") then
     lista.ViewItensCard:Destroy()
 end
 
--- 3. CRIAÇÃO DO MINI-PAINEL (Design Elegante e Moderno)
+-- 3. CRIAÇÃO DO MINI-PAINEL (Design Premium V10)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "ViewItensCard"
-miniPainel.Size = UDim2.new(0.95, 0, 0, 130)
-miniPainel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-miniPainel.BackgroundTransparency = 0.5 
+miniPainel.Size = UDim2.new(0.96, 0, 0, 100) -- Um pouco mais compacto que o de Players
+miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+miniPainel.BackgroundTransparency = 0.4 
 miniPainel.BorderSizePixel = 0
--- Garante que fique acima dos itens da lista
-miniPainel.ZIndex = lista.ZIndex + 1 
+miniPainel.ZIndex = lista.ZIndex + 10
 miniPainel.Parent = lista
 
--- UICorner no MiniPainel
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
+corner.CornerRadius = UDim.new(0, 14)
 corner.Parent = miniPainel
 
--- UIStroke Estiloso em volta do MiniPainel (Cinza)
+-- Borda com Transparência (Estilo V9/V10)
 local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
-stroke.Color = Color3.fromRGB(100, 100, 100)
+stroke.Thickness = 1.5
+stroke.Color = Color3.fromRGB(255, 255, 255)
+stroke.Transparency = 0.7
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Parent = miniPainel
 
--- Título Estilizado
+-- Título Minimalista
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 35)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "VIEW ITENS"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.GothamBlack
-title.TextSize = 18
+title.Text = "INVENTORY VIEWER"
+title.TextColor3 = Color3.fromRGB(200, 200, 200)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 12
+title.TextTransparency = 0.3
 title.ZIndex = miniPainel.ZIndex + 1
 title.Parent = miniPainel
 
--- Linha divisória BRANCA
-local line = Instance.new("Frame")
-line.Size = UDim2.new(0.85, 0, 0, 2)
-line.Position = UDim2.new(0.5, 0, 0, 35)
-line.AnchorPoint = Vector2.new(0.5, 0)
-line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-line.BorderSizePixel = 0
-line.ZIndex = miniPainel.ZIndex + 1
-line.Parent = miniPainel
-
--- Versão V2 no Canto Inferior Direito
-local versionLabel = Instance.new("TextLabel")
-versionLabel.Size = UDim2.new(0, 40, 0, 20)
-versionLabel.Position = UDim2.new(1, -45, 1, -25)
-versionLabel.BackgroundTransparency = 1
-versionLabel.Text = "V1.2"
-versionLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-versionLabel.Font = Enum.Font.GothamBold
-versionLabel.TextSize = 12
-versionLabel.TextXAlignment = Enum.TextXAlignment.Right
-versionLabel.ZIndex = miniPainel.ZIndex + 1
-versionLabel.Parent = miniPainel
-
--- 4. ESTRUTURA DO BOTÃO TOGGLE (Cores Solicitadas)
+-- 4. ESTRUTURA DO TOGGLE CENTRALIZADO
 local container = Instance.new("Frame")
 container.Name = "ToggleContainer"
-container.Size = UDim2.new(0, 140, 0, 65)
-container.Position = UDim2.new(0.5, 0, 0.65, 0) 
+container.Size = UDim2.new(0.6, 0, 0, 50)
+container.Position = UDim2.new(0.5, 0, 0.65, 0)
 container.AnchorPoint = Vector2.new(0.5, 0.5)
 container.BackgroundTransparency = 1
 container.ZIndex = miniPainel.ZIndex + 1
 container.Parent = miniPainel
 
 local iconLabel = Instance.new("TextLabel")
-iconLabel.Size = UDim2.new(1, 0, 0, 25)
-iconLabel.Position = UDim2.new(0, 0, -0.1, 0)
-iconLabel.Text = "📦 Itens"
+iconLabel.Size = UDim2.new(1, 0, 0, 20)
+iconLabel.Position = UDim2.new(0, 0, 0, 0)
+iconLabel.Text = "📦 View Itens"
 iconLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-iconLabel.Font = Enum.Font.GothamBold
-iconLabel.TextSize = 16
+iconLabel.Font = Enum.Font.GothamMedium
+iconLabel.TextSize = 14
 iconLabel.BackgroundTransparency = 1
-iconLabel.ZIndex = miniPainel.ZIndex + 1
+iconLabel.ZIndex = miniPainel.ZIndex + 2
 iconLabel.Parent = container
 
--- Cores configuráveis
-local colorInactiveBase = Color3.fromRGB(100, 0, 0) -- Red Escuro
-local colorInactiveStroke = Color3.fromRGB(255, 0, 0) -- Red Forte
-local colorActiveBase = Color3.fromRGB(0, 80, 0) -- Verde Escuro
-local colorActiveStroke = Color3.fromRGB(0, 255, 0) -- Verde Forte
+-- Configuração de Cores (Padrão Elite)
+local colorInactiveBase = Color3.fromRGB(40, 15, 15)
+local colorInactiveStroke = Color3.fromRGB(200, 50, 50)
+local colorActiveBase = Color3.fromRGB(15, 40, 25)
+local colorActiveStroke = Color3.fromRGB(50, 200, 100)
 
--- Base do Switch
+-- Botão Switch
 local btnBase = Instance.new("TextButton")
-btnBase.Size = UDim2.new(0, 60, 0, 30)
-btnBase.Position = UDim2.new(0.5, 0, 0.7, 0)
+btnBase.Size = UDim2.new(0, 55, 0, 26)
+btnBase.Position = UDim2.new(0.5, 0, 0.8, 0)
 btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
--- Define cor inicial baseada na variável global
 btnBase.BackgroundColor3 = _G.ViewItensActive and colorActiveBase or colorInactiveBase
 btnBase.Text = ""
 btnBase.AutoButtonColor = false
-btnBase.ZIndex = miniPainel.ZIndex + 1
+btnBase.ZIndex = miniPainel.ZIndex + 2
 btnBase.Parent = container
 
 Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
 
--- UIStroke Botão
 local btnStroke = Instance.new("UIStroke")
-btnStroke.Thickness = 2
--- Define cor inicial baseada na variável global
+btnStroke.Thickness = 1.5
 btnStroke.Color = _G.ViewItensActive and colorActiveStroke or colorInactiveStroke
-btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 btnStroke.Parent = btnBase
 
--- Círculo Deslizante (Knob)
+-- Knob (Círculo deslizante)
 local knob = Instance.new("Frame")
-knob.Size = UDim2.new(0, 24, 0, 24)
-knob.Position = _G.ViewItensActive and UDim2.new(0.9, -22, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
+knob.Size = UDim2.new(0, 20, 0, 20)
+knob.Position = _G.ViewItensActive and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
 knob.AnchorPoint = Vector2.new(0, 0.5)
 knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 knob.ZIndex = btnBase.ZIndex + 1
 knob.Parent = btnBase
 Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
--- 5. LÓGICA DE CLIQUE E SINCRONIZAÇÃO
+-- 5. LÓGICA DE CLIQUE
 btnBase.MouseButton1Click:Connect(function()
     _G.ViewItensActive = not _G.ViewItensActive
     local ativo = _G.ViewItensActive
     
-    -- Animação Visual e Troca de Cores
-    local targetPos = ativo and UDim2.new(0.9, -22, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
+    local targetPos = ativo and UDim2.new(0.9, -20, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
     local targetBaseColor = ativo and colorActiveBase or colorInactiveBase
     local targetStrokeColor = ativo and colorActiveStroke or colorInactiveStroke
 
-    TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
+    TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Position = targetPos}):Play()
     TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetBaseColor}):Play()
     TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = targetStrokeColor}):Play()
 end)
 
--- 6. ANIMAÇÃO DE ENTRADA DO CARD
-miniPainel.Position = UDim2.new(1.2, 0, 0.05, 0)
-TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.025, 0, 0.05, 0)}):Play()
+-- 6. ANIMAÇÃO DE ENTRADA (Slide Lateral Sincronizado)
+local function animateEntry()
+    local originalPos = UDim2.new(0.02, 0, 0, 0)
+    miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
+    miniPainel.BackgroundTransparency = 1
+    stroke.Transparency = 1
+    
+    task.wait(0.6) -- Pequeno delay para aparecer após o card de players
+    TweenService:Create(miniPainel, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Position = originalPos,
+        BackgroundTransparency = 0.4
+    }):Play()
+    TweenService:Create(stroke, TweenInfo.new(0.8), {Transparency = 0.7}):Play()
+end
 
-print("✅ MiniPainel Itens V9 (Cores Corrigidas) Carregado!")
+animateEntry()
+
+print("✅ MiniPainel Itens V10: Design e Posição Atualizados!")
