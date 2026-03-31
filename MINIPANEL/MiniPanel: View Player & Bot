@@ -155,11 +155,11 @@ end
 
 -- 4. CHAMADA DOS TOGGLES
 CreateToggle("PlayerView", "👤 Player", 0.3, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Player"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM/SYSTEM%3A%20View%20Player"))()
 end)
 
 CreateToggle("BotView", "🤖 Bot", 0.7, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Bot"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM/SYSTEM%3A%20View%20Bot"))()
 end)
 
 -- 5. ANIMAÇÃO DE ENTRADA
