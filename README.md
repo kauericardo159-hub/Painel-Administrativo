@@ -1,6 +1,3 @@
-![Ícone do Projeto](https://raw.githubusercontent.com/kauericardo159-hub/Imagens-gif-video/main/Icon.png)
-
-
 # 🛠️ Painel Administrativo
 
 <p align="center">
