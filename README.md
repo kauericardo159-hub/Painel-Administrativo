@@ -39,5 +39,5 @@
 Para utilizar o painel, copie o código abaixo e execute no **Delta** ou em seu executor de preferência:
 
 ```lua
-loadstring(game:HttpGet("[https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXECUTADOR%3A%20Funcionamento%20dos%20Scripts](https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXECUTADOR%3A%20Funcionamento%20dos%20Scripts)"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXECUTADOR%3A%20Funcionamento%20dos%20Scripts](https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXECUTADOR%3A%20Funcionamento%20dos%20Scripts"))()
 
