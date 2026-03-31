@@ -1,40 +1,51 @@
-# Painel Administrativo
+# 🛡️ Painel Administrativo Multi-Funcional
+
+Uma solução completa para visualização de entidades e monitoramento de performance em jogos Roblox. Desenvolvido em **Lua** para executores de alto nível.
 
 ---
 
-# View Player
+## 👁️ Módulos de Visualização (ESP)
 
-O View Player é um sistema que mostra as posições dos usuários do servidor, exibindo uma outline, metros e vida de usuário, para os amigos ficam com outline verde.
+O painel oferece três modos principais de rastreamento para facilitar sua jogabilidade:
 
-# View Bot
+### 👤 View Player
+Sistema avançado de rastreamento de jogadores.
+* **Outline:** Silhueta visível através de paredes.
+* **Status:** Exibe distância (metros) e vida (HP) em tempo real.
+* **Identificação:** Amigos são destacados automaticamente com **outline verde**.
 
-O mesmo tipo de sistema, mas focado em Bot's & Npc's.
+### 🤖 View Bot
+Mesma tecnologia de rastreamento, porém otimizada exclusivamente para **Bots e NPCs** do mapa.
 
-# View Iten's
-
-Ele foca nos itens espalhados no jogo.
-
-- Funciona um pouco no Doors dos itens.
-
----
-# Pequeno Aviso:
-
-- Ambos podem ocorrer bugs, travamentos e algumas experiências não funcionam.
+### 📦 View Items
+Focado na localização de itens espalhados pelo cenário.
+* **Compatibilidade:** Suporte experimental para itens no jogo **Doors**.
 
 ---
 
-# Sistemas Extras
+## ⚡ Sistemas Extras & Performance
 
-# FPS | PING | PLAYER'S
+Mantenha o controle total sobre o estado do seu jogo e do servidor:
 
-- FPS, exibir o FPS do próprio jogador.
-
-- PING, exibir o PING do próprio jogador.
-
-- PLAYER'S, exibi o máximo de Player no server & quantos players tem no servidor.
+* **FPS:** Contador de quadros por segundo em tempo real.
+* **PING:** Monitoramento de latência de conexão.
+* **PLAYERS:** Contador dinâmico (Jogadores Atuais / Capacidade Máxima do Servidor).
 
 ---
 
-Feito por Script Lua para Roblox, necessário utilizar Delta, ou algum outro que execute scripts.
+## 🛠️ Como Utilizar
 
-por enquanto é isso. ;P
+Este script foi desenvolvido para o ecossistema Roblox. Para o funcionamento correto, é necessário:
+
+1.  Possuir um executor de scripts (Ex: **Delta**, ou similares).
+2.  Injetar o código dentro do ambiente de execução enquanto o jogo estiver aberto.
+
+> [!IMPORTANT]
+> **Aviso:** Como o sistema está em desenvolvimento, podem ocorrer bugs pontuais ou travamentos em experiências específicas que possuem anti-cheats mais rigorosos.
+
+---
+
+## 👨‍💻 Créditos & Status
+* **Linguagem:** Lua 🌙
+* **Plataforma:** Roblox
+* **Status:** Versão Beta ;P
