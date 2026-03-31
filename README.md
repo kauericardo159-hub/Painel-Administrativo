@@ -8,7 +8,9 @@
 > Porquê?
 >
 > Estou organizando tudo para não ficar uma bagunça e ser mais fácil de mexer nos arquivos, por conta disso os links são mudados por eu estar alterando eles para as pastas, então meio que irá demorar um pouco por eu estar ocupado.
+>
 > 57% pronto
+>
 ---
 
 <div align="center">
