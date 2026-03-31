@@ -1,48 +1,40 @@
-# 🛠️ Painel Administrativo
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Roblox-Script-00A2FF?style=for-the-badge&logo=roblox&logoColor=white" />
-  <img src="https://img.shields.io/badge/Language-Lua-2C2D72?style=for-the-badge&logo=lua&logoColor=white" />
-  <img src="https://img.shields.io/badge/Status-Functional-brightgreen?style=for-the-badge" />
-</p>
+# Painel Administrativo
 
 ---
 
-## 📝 Descrição
-O **Painel Administrativo** é uma ferramenta multifuncional desenvolvida em Lua para Roblox, focada em visualização de entidades (ESP) e monitoramento de performance em tempo real.
+# View Player
+
+O View Player é um sistema que mostra as posições dos usuários do servidor, exibindo uma outline, metros e vida de usuário, para os amigos ficam com outline verde.
+
+# View Bot
+
+O mesmo tipo de sistema, mas focado em Bot's & Npc's.
+
+# View Iten's
+
+Ele foca nos itens espalhados no jogo.
+
+- Funciona um pouco no Doors dos itens.
+
+---
+# Pequeno Aviso:
+
+- Ambos podem ocorrer bugs, travamentos e algumas experiências não funcionam.
 
 ---
 
-## 🚀 Funcionalidades Principais
+# Sistemas Extras
 
-### 👤 View Player
-Sistema de rastreamento de usuários do servidor.
-* **Visualização:** Exibe Outline (contorno), distância em metros e vida atual.
-* **Identificação:** Amigos são destacados com uma **outline verde** para fácil reconhecimento.
+# FPS | PING | PLAYER'S
 
-### 🤖 View Bot
-Sistema especializado na detecção de **Bots e NPCs**, utilizando a mesma tecnologia de rastreamento do View Player.
+- FPS, exibir o FPS do próprio jogador.
 
-### 📦 View Items
-Focado na localização de itens espalhados pelo mapa.
-* **Destaque:** Possui compatibilidade parcial com itens do jogo *Doors*.
+- PING, exibir o PING do próprio jogador.
+
+- PLAYER'S, exibi o máximo de Player no server & quantos players tem no servidor.
 
 ---
 
-## 📊 Sistemas Extras (HUD)
-Mantenha o controle do desempenho do seu jogo em tempo real:
+Feito por Script Lua para Roblox, necessário utilizar Delta, ou algum outro que execute scripts.
 
-* **FPS:** Monitoramento da taxa de quadros por segundo.
-* **PING:** Latência atual da sua conexão com o servidor.
-* **PLAYERS:** Contador de usuários (Jogadores atuais / Capacidade máxima do servidor).
-
----
-
-## ⚙️ Como Utilizar
-Para executar este script, você precisará de um executor de scripts (como **Delta**, **Fluxus**, ou similares).
-
-### 📋 Script de Execução
-Copie e cole o código abaixo no seu executor:
-
-```lua
-loadstring(game:HttpGet("[https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXECUTADOR%3A%20Funcionamento%20dos%20Scripts](https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXECUTADOR%3A%20Funcionamento%20dos%20Scripts)"))()
+<img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/8428ea1b-19d0-4e63-8ca1-189752ee9d60" /> por enquanto é isso.
