@@ -22,11 +22,11 @@ end
 -- 2. CRIAÇÃO DO MINI-PAINEL (Design Refinado)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = "ViewControlCard"
-miniPainel.Size = UDim2.new(0.96, 0, 0, 115) -- Altura um pouco mais compacta
+miniPainel.Size = UDim2.new(0.96, 0, 0, 115) 
 miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 miniPainel.BackgroundTransparency = 0.4 
 miniPainel.BorderSizePixel = 0
-miniPainel.ZIndex = lista.ZIndex + 10 -- Garante que fique na frente
+miniPainel.ZIndex = lista.ZIndex + 10 
 miniPainel.Parent = lista
 
 local corner = Instance.new("UICorner")
@@ -110,11 +110,17 @@ local function CreateToggle(name, labelText, posX, loadstringFunction)
     knob.Parent = btnBase
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    -- LÓGICA DE CLIQUE
+    -- LÓGICA DE CLIQUE (Com Notificação)
     local isActive = false
     btnBase.MouseButton1Click:Connect(function()
         isActive = not isActive
         
+        -- Disparar Notificação Estilosa
+        if _G.NotifyElite then
+            local statusLabel = isActive and "ATIVADO" or "DESATIVADO"
+            _G.NotifyElite("VIEWER SYSTEM", labelText .. " foi " .. statusLabel .. "!", isActive)
+        end
+
         local targetPos = isActive and UDim2.new(0.9, -18, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
         local targetBaseColor = isActive and colorActiveBase or colorInactiveBase
         local targetStrokeColor = isActive and colorActiveStroke or colorInactiveStroke
@@ -127,7 +133,7 @@ local function CreateToggle(name, labelText, posX, loadstringFunction)
     end)
 end
 
--- 4. CHAMADA DOS TOGGLES (Lado a Lado)
+-- 4. CHAMADA DOS TOGGLES
 CreateToggle("PlayerView", "👤 Player", 0.28, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM/SYSTEM%3A%20View%20Player"))()
 end)
@@ -136,14 +142,14 @@ CreateToggle("BotView", "🤖 Bot", 0.72, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM/SYSTEM%3A%20View%20Bot"))()
 end)
 
--- 5. ANIMAÇÃO DE ENTRADA (Slide Lateral)
+-- 5. ANIMAÇÃO DE ENTRADA
 local function animateEntry()
-    local originalPos = UDim2.new(0.02, 0, 0, 0) -- Posição dentro da lista
+    local originalPos = UDim2.new(0.02, 0, 0, 0)
     miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
     miniPainel.BackgroundTransparency = 1
     stroke.Transparency = 1
     
-    task.wait(0.5) -- Espera a lista carregar
+    task.wait(0.5)
     TweenService:Create(miniPainel, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
         Position = originalPos,
         BackgroundTransparency = 0.4
@@ -153,4 +159,4 @@ end
 
 animateEntry()
 
-print("✅ MiniPainel V10 Carregado e Sincronizado!")
+print("✅ MiniPainel V10: Agora com Notificações Elite integradas!")
