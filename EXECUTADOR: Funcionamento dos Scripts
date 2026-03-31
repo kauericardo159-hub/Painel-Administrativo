@@ -36,10 +36,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Pa
 
 print("✅ Painel Completo Carregado com Sucesso!")
 
-
+--[[
 ===============================
      📄  Lista de Funções 
 ===============================
+]]
 
 -- 1. MiniPainel: VIEW PLAYERS & BOTS
 -- FUNÇÃO: Ver posição de Player & Bot no Jogo
@@ -52,21 +53,22 @@ print("✅ Carregando Sistema View Itens...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MINIPANEL/MiniPanel%3A%20VIEW%20ITENS"))()
 task.wait(3)
 
-
+--[[
 ==================================
      📜  Lista  Extra de Funções
 ===================================
+]]
 
 -- 1. MiniPainel: FPS | PING | PLAYER's
 -- Função: Exibir FPS, Ping e números de Players no server
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20MINIPANEL/EXTRA%20MiniPanel%3A%20FPS%20PING%20PLAYER's"))()
 task.wait(3)
 
+--[[
 ===============================
      🔴 LISTA DE MANUTENÇÃO 🔴
 ===============================
-
-
+]]
 
 -- 🔴 AVISO: Grande Manutenção, demora grande para concluir.
 -- 0. MiniPainel: 👀 DOORS
