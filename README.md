@@ -1,4 +1,5 @@
-# Painel Administrativo
+# Seja Bem Vindo (A) ao Painel Administrativo <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/74280d7e-1def-4ecd-8158-31d4ea0e3df9" />
+
 
 ---
 
