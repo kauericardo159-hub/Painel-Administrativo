@@ -1,0 +1,231 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- ==========================================
+-- SISTEMA DE TOGGLE (LIGA/DESLIGA REFORMULADO)
+-- ==========================================
+if _G.SystemViewEntitiesActive then
+    _G.SystemViewEntitiesActive = false 
+    
+    -- Disconecta o render loop
+    if _G.SystemViewEntitiesConnection then
+        _G.SystemViewEntitiesConnection:Disconnect()
+        _G.SystemViewEntitiesConnection = nil
+    end
+    
+    -- Limpa entidades visuais do cache
+    if _G.EntitiesCache then
+        for model, visualData in pairs(_G.EntitiesCache) do
+            if visualData.Highlight then visualData.Highlight:Destroy() end
+            if visualData.UI then visualData.UI:Destroy() end
+        end
+        table.clear(_G.EntitiesCache)
+    end
+    
+    -- Remove a pasta do GUI
+    if _G.SystemEntitiesFolder then
+        _G.SystemEntitiesFolder:Destroy()
+        _G.SystemEntitiesFolder = nil
+    end
+    
+    print("[SYSTEM] View Entities: DESATIVADO")
+    return
+end
+
+-- Ativa o sistema
+_G.SystemViewEntitiesActive = true
+print("[SYSTEM] View Entities: ATIVADO (Monitoramento reforçado)")
+
+-- ==========================================
+-- CONFIGURAÇÕES VISUAIS & DISTÂNCIA
+-- ==========================================
+local MAX_DISTANCE = 2000 -- Distância máxima de detecção (aumentado para prever)
+local FADE_START = 800    -- Começa a sumir de longe para não poluir a tela
+local UPDATE_RATE = 0.5   -- Scanner rápido (0.5s)
+
+local STROKE_COLOR = Color3.fromRGB(255, 60, 0) -- Laranja intenso Doors
+local OUTLINE_COLOR = Color3.fromRGB(255, 0, 0)  -- Vermelho Alerta intenso
+local DIST_COLOR = "#FFD700" -- Dourado
+local HP_COLOR = "#FF3232"
+
+-- ==========================================
+-- LISTA MESTRE DE ENTIDADES (AMPLIADA)
+-- ==========================================
+-- Adicionado variações de nomes e novas entidades de updates
+local DOORS_MASTER_LIST = {
+    -- Hotel
+    "rush", "ambush", "figure", "seek", "screech", "halt", "eyes", "glitch", "dupe", "void", "snare", "hide", "jack", "timothy",
+    
+    -- Mines (Floor 2)
+    "giggle", "grumble", "gloombat", "seek_mines", "figure_mines", "dam", "flesh_panopticon", "gloom",
+    
+    -- The Rooms (A-XXX)
+    "a60", "a120", "a90", "a-60", "a-120", "a-90", "a200",
+    
+    -- Backdoor
+    "blitz", "lookman", "haste", "vacuum",
+    
+    -- Entidades Especiais/Eventos
+    "guiding", "curious", "dread", "backdoor_haste", "shia", "scream"
+}
+
+-- Lista de exceções para não marcar npcs amigos ou itens
+local IGNORE_LIST = {
+    "jeff", "el goblino", "bob", "sebastian", "merchant", "shop", "dummy", "guide", "light", "player", "coin", "key", "lever"
+}
+
+-- Pasta Global
+if _G.SystemEntitiesFolder then _G.SystemEntitiesFolder:Destroy() end
+_G.SystemEntitiesFolder = Instance.new("Folder")
+_G.SystemEntitiesFolder.Name = "ViewEntitiesCache"
+_G.SystemEntitiesFolder.Parent = localPlayer:WaitForChild("PlayerGui")
+
+_G.EntitiesCache = {}
+local entCache = _G.EntitiesCache
+
+-- ==========================================
+-- FUNÇÕES AUXILIARES
+-- ==========================================
+local function createVisuals(model)
+    local data = {}
+    
+    local hl = Instance.new("Highlight")
+    hl.Name = "EntityOutline"
+    hl.FillTransparency = 0.8
+    hl.FillColor = OUTLINE_COLOR
+    hl.OutlineColor = Color3.new(1, 1, 1) -- Branco para contraste
+    hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    
+    local bg = Instance.new("BillboardGui")
+    bg.Name = "EntityInfo"
+    bg.Size = UDim2.new(0, 200, 0, 50)
+    bg.StudsOffset = Vector3.new(0, 3, 0)
+    bg.AlwaysOnTop = true
+    bg.LightInfluence = 0
+    bg.Parent = _G.SystemEntitiesFolder
+    
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 14
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.TextStrokeColor3 = STROKE_COLOR
+    nameLabel.RichText = true
+    nameLabel.Parent = bg
+    
+    local statsLabel = Instance.new("TextLabel")
+    statsLabel.Size = UDim2.new(1, 0, 0.4, 0)
+    statsLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    statsLabel.BackgroundTransparency = 1
+    statsLabel.Font = Enum.Font.GothamMedium
+    statsLabel.TextSize = 12
+    statsLabel.TextStrokeTransparency = 0.5
+    statsLabel.RichText = true
+    statsLabel.Parent = bg
+    
+    data.Highlight = hl
+    data.UI = bg
+    data.NameLabel = nameLabel
+    data.StatsLabel = statsLabel
+    
+    return data
+end
+
+local function isEntity(model)
+    if not model:IsA("Model") or not model:FindFirstChild("HumanoidRootPart") then return false end
+    if Players:GetPlayerFromCharacter(model) then return false end
+    
+    local nameLower = string.lower(model.Name)
+    
+    -- 1. Verifica Ignore List
+    for _, ignored in ipairs(IGNORE_LIST) do
+        if string.find(nameLower, ignored) then return false end
+    end
+    
+    -- 2. Verifica Whitelist Mestre
+    for _, entityName in ipairs(DOORS_MASTER_LIST) do
+        if string.find(nameLower, entityName) then return true end
+    end
+    
+    -- 3. Verificação Extra para Entidades com nomes complexos
+    if string.find(nameLower, "grum") or string.find(nameLower, "gigg") or string.find(nameLower, "seek") then return true end
+
+    return false
+end
+
+-- ==========================================
+-- THREAD 1: SCANNER DE ENTIDADES (Previsão)
+-- ==========================================
+task.spawn(function()
+    while _G.SystemViewEntitiesActive do
+        -- Busca descendants de forma eficiente
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if not _G.SystemViewEntitiesActive then break end
+            
+            if obj:IsA("Model") and not entCache[obj] then
+                if isEntity(obj) then
+                    entCache[obj] = createVisuals(obj)
+                end
+            end
+        end
+        task.wait(UPDATE_RATE)
+    end
+end)
+
+-- ==========================================
+-- THREAD 2: ATUALIZADOR (RenderLoop)
+-- ==========================================
+_G.SystemViewEntitiesConnection = RunService.RenderStepped:Connect(function()
+    if not _G.SystemViewEntitiesActive then return end
+    
+    local myChar = localPlayer.Character
+    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+
+    for model, vis in pairs(entCache) do
+        -- Limpeza automática de entidades mortas ou removidas
+        if not model or not model.Parent or not model:FindFirstChild("HumanoidRootPart") then
+            if vis.Highlight then vis.Highlight:Destroy() end
+            if vis.UI then vis.UI:Destroy() end
+            entCache[model] = nil
+            continue
+        end
+
+        local anchor = model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")
+        local dist = (myHRP.Position - anchor.Position).Magnitude
+        
+        if dist <= MAX_DISTANCE then
+            -- Calcula transparência baseado na distância (Fade)
+            local fade = math.clamp((dist - FADE_START) / (MAX_DISTANCE - FADE_START), 0, 1)
+            
+            vis.Highlight.Parent = model
+            vis.Highlight.OutlineTransparency = fade
+            vis.Highlight.FillTransparency = 0.5 + (fade * 0.5) -- Fica mais transparente de longe
+            
+            vis.UI.Adornee = anchor
+            vis.UI.Enabled = true
+            
+            -- Atualiza transparência dos textos
+            vis.NameLabel.TextTransparency = fade
+            vis.StatsLabel.TextTransparency = fade
+            vis.NameLabel.TextStrokeTransparency = fade
+            
+            local hum = model:FindFirstChildOfClass("Humanoid")
+            local hpText = (hum and hum.MaxHealth < 10000) and math.floor(hum.Health) or "???"
+
+            -- Formatação do Texto
+            vis.NameLabel.Text = string.format('<font color="#FFFFFF">⚠️ %s</font>', string.upper(model.Name))
+            vis.StatsLabel.Text = string.format('<font color="%s">%dm</font> | <font color="%s">HP: %s</font>', DIST_COLOR, math.floor(dist), HP_COLOR, tostring(hpText))
+        else
+            -- Entidade muito longe
+            vis.Highlight.Parent = nil
+            vis.UI.Enabled = false
+        end
+    end
+end)
+
+print("✅ View Entities V5 Ativo (Previsão de Entidades ON)")
