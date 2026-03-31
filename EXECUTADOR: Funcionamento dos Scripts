@@ -59,7 +59,7 @@ task.wait(3)
 
 -- 1. MiniPainel: FPS | PING | PLAYER's
 -- Função: Exibir FPS, Ping e números de Players no server
-loadstring(game:HttpGet(""))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20MINIPANEL/EXTRA%20MiniPanel%3A%20FPS%20PING%20PLAYER's"))()
 task.wait(3)
 
 ===============================
