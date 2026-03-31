@@ -2,84 +2,62 @@
 ===========================================================
        ⚙ CARREGAMENTO DO PAINEL ADMINISTRATIVO V3 ⚙
 ===========================================================
-
+]]
 
 print("🚀 Iniciando sistema...")
+
+-- 0. GERENCIADOR DE NOTIFICAÇÕES (Essencial carregar primeiro)
+print("🔷️ Carregando Sistema de Notificações...")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20NotificationManager.lua"))()
+task.wait(0.5)
 
 -- 1. INTERFACE DO PAINEL (O "Coração" do sistema)
 print("🔷️ Carregando Interface...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20PanelInterface.lua"))()
+
 -- Aguarda o CoreGui ser criado antes de prosseguir
 local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 playerGui:WaitForChild("SistemaPainel_V3") 
 task.wait(1)
 
--- 1.5. TÍTULO
-print("🔷️ Carregando Interface...")
-loadstring(game:HttpGet(""))()
-task.wait(1)
-
 -- 2. LISTA DE COMANDOS & FUNÇÕES
 print("🔷️ Carregando Lista de Comandos...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20ListManager.lua"))()
-task.wait(1)
+task.wait(0.5)
 
--- 3. LISTA DE COMANDOS & FUNÇÕES
+-- 3. LISTA EXTRA
 print("🔷️ Carregando Extra Lista de Comandos...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20ExtraListManager.lua"))()
-task.wait(1)
+task.wait(0.5)
 
 -- 4. BOTÃO PRINCIPAL (O Controle)
 print("🔷️ Carregando Controlador do Botão...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/%F0%9F%93%9C%3A%20ButtonController.lua"))()
-task.wait(1)
+task.wait(0.5)
 
 -- 5. NOME & PERFIL
--- Carrega por último para garantir que o Painel exista.
 print("🔷️ Carregando Perfil do Usuário...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/Foto%20de%20perfil%20e%20nome"))()
 
-print("✅ Painel Completo Carregado com Sucesso!")
-
---[[
-===============================
-     📄  Lista de Funções 
-===============================
+--[[ 
+   CARREGAMENTO DE MÓDULOS (MINI-PAINÉIS)
 ]]
 
--- 1. MiniPainel: VIEW PLAYERS & BOTS
--- FUNÇÃO: Ver posição de Player & Bot no Jogo
+-- 1. VIEW PLAYERS & BOTS
 print("✅ Carregando Sistema View Player & Bot...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MINIPANEL/MiniPanel%3A%20View%20Player%20%26%20Bot"))()
 
--- 2. MiniPainel: VIEW ITENS
--- FUNÇÃO: Ver itens pelo mapa
+-- 2. VIEW ITENS
 print("✅ Carregando Sistema View Itens...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MINIPANEL/MiniPanel%3A%20VIEW%20ITENS"))()
-task.wait(3)
 
---[[
-==================================
-     📜  Lista  Extra de Funções
-===================================
-]]
-
--- 1. MiniPainel: FPS | PING | PLAYER's
--- Função: Exibir FPS, Ping e números de Players no server
+-- 3. EXTRA: FPS | PING | PLAYERS
+print("✅ Carregando Monitor de Performance...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20MINIPANEL/EXTRA%20MiniPanel%3A%20FPS%20PING%20PLAYER's"))()
-task.wait(3)
 
---[[
-===============================
-     🔴 LISTA DE MANUTENÇÃO 🔴
-===============================
-]]
+print("✅ Painel Completo Carregado com Sucesso!")
 
--- 🔴 AVISO: Grande Manutenção, demora grande para concluir.
--- 0. MiniPainel: 👀 DOORS
--- FUNÇÃO: Apenas funciona em Doors.
-print("☑ Carregando Sistema ...")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/MiniPainel%3A%20Doors"))()
-]]
-
-print("⚠️ Sistema em manutenção! por favor, use-o mais tarde.")
+-- Notificação Inicial de Sucesso
+if _G.NotifyElite then
+    _G.NotifyElite("SISTEMA V3", "Painel Administrativo carregado com sucesso!", true)
+end
