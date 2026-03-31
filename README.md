@@ -16,7 +16,10 @@ Ele foca nos itens espalhados no jogo.
 
 - Funciona um pouco no Doors dos itens.
 
-● Ambos podem ocorrer bugs, travamentos e algumas experiências não funcionam.
+---
+# Pequeno Aviso:
+
+- Ambos podem ocorrer bugs, travamentos e algumas experiências não funcionam.
 
 ---
 
@@ -24,11 +27,11 @@ Ele foca nos itens espalhados no jogo.
 
 # FPS | PING | PLAYER'S
 
-● FPS, exibir o FPS do próprio jogador.
+- FPS, exibir o FPS do próprio jogador.
 
-● PING, exibir o PING do próprio jogador.
+- PING, exibir o PING do próprio jogador.
 
-● PLAYER'S, exibi o máximo de Player no server & quantos players tem no servidor.
+- PLAYER'S, exibi o máximo de Player no server & quantos players tem no servidor.
 
 ---
 
