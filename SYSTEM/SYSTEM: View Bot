@@ -6,14 +6,11 @@ local localPlayer = Players.LocalPlayer
 -- SISTEMA DE TOGGLE (LIGA/DESLIGA)
 -- ==========================================
 if _G.SystemViewBotActive then
-    _G.SystemViewBotActive = false -- Desativa o loop de busca
+    _G.SystemViewBotActive = false
     
-    if _G.SystemViewBotConnection then
-        _G.SystemViewBotConnection:Disconnect()
-        _G.SystemViewBotConnection = nil
-    end
+    if _G.SystemViewBotConnection then _G.SystemViewBotConnection:Disconnect() end
+    if _G.SystemViewBotAddedConn then _G.SystemViewBotAddedConn:Disconnect() end
     
-    -- Limpeza profunda do Cache ao desativar
     if _G.BotCacheViewBot then
         for _, visualData in pairs(_G.BotCacheViewBot) do
             if visualData.Highlight then visualData.Highlight:Destroy() end
@@ -24,7 +21,6 @@ if _G.SystemViewBotActive then
     
     if _G.SystemViewBotFolder then
         _G.SystemViewBotFolder:Destroy()
-        _G.SystemViewBotFolder = nil
     end
     
     print("[SYSTEM] View Bot: DESATIVADO E LIMPO")
@@ -32,7 +28,7 @@ if _G.SystemViewBotActive then
 end
 
 _G.SystemViewBotActive = true
-print("[SYSTEM] View Bot: ATIVADO (Otimizado)")
+print("[SYSTEM] View Bot: ATIVADO (Detecção em Tempo Real)")
 
 -- ==========================================
 -- CONFIGURAÇÕES
@@ -47,31 +43,30 @@ local OUTLINE_COLOR = Color3.fromRGB(255, 0, 0)
 local DIST_COLOR = "#C8C800"
 local HP_COLOR = "#B40000"
 
--- Nomes de entidades que o script DEVE focar (Mesmo sem Humanoid)
+-- Nomes focados (detecta até se for apenas um "Part" solto)
 local MONSTER_NAMES = {
     "rush", "ambush", "figure", "seek", "screech", "halt", "eyes",
     "angler", "pandemonium", "blitz", "chainsmoker", "pinkie", "froger",
     "ayuwoki", "rakoof", "monster", "killer", "bot", "enemy", "chaser"
 }
 
--- Nomes de entidades que o script DEVE ignorar (Vendedores, NPCs)
+-- NPCs ignorados (Vendedores, guias, dummies)
 local IGNORED_NAMES = {
-    "npc", "vendor", "shop", "merchant", "dummy", "guide", "trader", "jeff", "el goblino", "bob", "sebastian"
+    "npc", "vendor", "shop", "merchant", "dummy", "guide", "trader", 
+    "jeff", "el goblino", "bob", "sebastian", "guidance"
 }
 
--- Pasta Global
 _G.SystemViewBotFolder = Instance.new("Folder")
 _G.SystemViewBotFolder.Name = "ViewBotCache"
 _G.SystemViewBotFolder.Parent = localPlayer:WaitForChild("PlayerGui")
 
--- Cache Global para facilitar a limpeza
 _G.BotCacheViewBot = {}
 local botCache = _G.BotCacheViewBot
 
 -- ==========================================
 -- FUNÇÕES AUXILIARES
 -- ==========================================
-local function createVisuals(model)
+local function createVisuals(entity)
     local data = {}
     
     local hl = Instance.new("Highlight")
@@ -79,6 +74,7 @@ local function createVisuals(model)
     hl.FillTransparency = 1
     hl.OutlineColor = OUTLINE_COLOR
     hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     
     local bg = Instance.new("BillboardGui")
     bg.Name = "BotInfo"
@@ -93,7 +89,6 @@ local function createVisuals(model)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Font = Enum.Font.GothamBold
     nameLabel.TextSize = 14
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     nameLabel.TextStrokeTransparency = 0
     nameLabel.TextStrokeColor3 = BOT_STROKE_COLOR
     nameLabel.RichText = true
@@ -113,65 +108,73 @@ local function createVisuals(model)
     data.UI = bg
     data.NameLabel = nameLabel
     data.StatsLabel = statsLabel
-    data.Model = model -- Referência guardada
     
     return data
 end
 
--- Função para verificar bots
-local function isBot(model)
-    if not model:IsA("Model") then return false end
-    if Players:GetPlayerFromCharacter(model) then return false end
-    if model == localPlayer.Character then return false end
+local function isBot(obj)
+    -- Ignora o jogador atual e outros jogadores
+    if Players:GetPlayerFromCharacter(obj) or obj == localPlayer.Character then return false end
     
-    local nameLower = string.lower(model.Name)
+    local nameLower = string.lower(obj.Name)
     
+    -- Ignora NPCs pacíficos
     for _, ignored in ipairs(IGNORED_NAMES) do
         if string.find(nameLower, ignored) then return false end
     end
     
+    -- Prioridade 1: É um monstro da lista? (Aceita Models ou Parts)
     for _, monster in ipairs(MONSTER_NAMES) do
         if string.find(nameLower, monster) then return true end
     end
     
-    local hum = model:FindFirstChildOfClass("Humanoid")
-    if hum then
-        if hum.WalkSpeed == 0 or hum.MaxHealth > 99999 then return false end 
-        return true
+    -- Prioridade 2: É um Model genérico com Humanoid vivo?
+    if obj:IsA("Model") then
+        local hum = obj:FindFirstChildOfClass("Humanoid")
+        if hum then
+            -- Ignora "Lojistas" ou estruturas invencíveis que usam Humanoid
+            if hum.WalkSpeed == 0 or hum.MaxHealth > 99990 then return false end 
+            return true
+        end
     end
     
     return false
 end
 
--- ==========================================
--- THREAD 1: BUSCADOR DE BOTS (Lento para não dar Lag)
--- ==========================================
-task.spawn(function()
-    while _G.SystemViewBotActive do
-        local descendants = workspace:GetDescendants()
-        
-        for i, obj in ipairs(descendants) do
-            if not _G.SystemViewBotActive then break end
-            
-            -- Só checa se for um modelo e se ainda não estiver no cache
-            if obj:IsA("Model") and not botCache[obj] then
-                if isBot(obj) then
-                    botCache[obj] = createVisuals(obj)
-                end
-            end
-            
-            -- Pausa a cada 500 itens verificados para evitar que o FPS caia
-            if i % 500 == 0 then
-                task.wait()
-            end
+local function checkAndAddEntity(obj)
+    if (obj:IsA("Model") or obj:IsA("BasePart")) and not botCache[obj] then
+        if isBot(obj) then
+            botCache[obj] = createVisuals(obj)
         end
-        
-        task.wait(1.5) -- Espera 1.5 segundos antes de buscar de novo
+    end
+end
+
+-- ==========================================
+-- THREAD 1: DETECÇÃO EM TEMPO REAL E INICIAL
+-- ==========================================
+
+-- 1. Varredura inicial rápida no que já existe no mapa
+task.spawn(function()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if not _G.SystemViewBotActive then break end
+        checkAndAddEntity(obj)
     end
 end)
 
+-- 2. Escuta ativa: Detecta IMEDIATAMENTE quando algo novo spawna
+_G.SystemViewBotAddedConn = workspace.DescendantAdded:Connect(function(descendant)
+    if not _G.SystemViewBotActive then return end
+    
+    -- Usamos um pequeno delay para dar tempo do jogo carregar o Humanoid/Partes dentro do Model
+    task.delay(0.3, function()
+        if descendant and descendant.Parent then
+            checkAndAddEntity(descendant)
+        end
+    end)
+end)
+
 -- ==========================================
--- THREAD 2: LOOP DE RENDERIZAÇÃO (Leve e Rápido)
+-- THREAD 2: LOOP DE RENDERIZAÇÃO
 -- ==========================================
 _G.SystemViewBotConnection = RunService.RenderStepped:Connect(function()
     local myChar = localPlayer.Character
@@ -179,29 +182,27 @@ _G.SystemViewBotConnection = RunService.RenderStepped:Connect(function()
     
     if not myHRP then return end
 
-    -- Loop EXCLUSIVO no cache (Não procura no Workspace inteiro!)
-    for botModel, vis in pairs(botCache) do
+    for botEntity, vis in pairs(botCache) do
         
-        -- Limpeza caso o bot seja deletado do jogo
-        if not botModel or not botModel.Parent then
+        -- Limpeza automática se a entidade foi deletada
+        if not botEntity or not botEntity.Parent then
             vis.Highlight:Destroy()
             vis.UI:Destroy()
-            botCache[botModel] = nil
+            botCache[botEntity] = nil
             continue
         end
 
-        local head = botModel:FindFirstChild("Head") 
-            or botModel:FindFirstChild("HumanoidRootPart") 
-            or botModel:FindFirstChild("Torso") 
-            or botModel.PrimaryPart 
-            or botModel:FindFirstChildWhichIsA("BasePart")
+        -- Tenta achar a melhor parte para focar, seja um Model ou um BasePart solto
+        local head = botEntity:IsA("BasePart") and botEntity
+            or botEntity:FindFirstChild("Head") 
+            or botEntity:FindFirstChild("HumanoidRootPart") 
+            or botEntity.PrimaryPart 
+            or botEntity:FindFirstChildWhichIsA("BasePart")
             
-        local hum = botModel:FindFirstChildOfClass("Humanoid")
+        local hum = botEntity:FindFirstChildOfClass("Humanoid")
         
-        local isAlive = true
-        if hum then
-            isAlive = hum.Health > 0
-        end
+        -- Só oculta se tiver um Humanoid morto (se for um objeto solto sem vida, continua mostrando)
+        local isAlive = hum and (hum.Health > 0) or (not hum)
         
         if head and isAlive then
             local dist = (myHRP.Position - head.Position).Magnitude
@@ -209,7 +210,7 @@ _G.SystemViewBotConnection = RunService.RenderStepped:Connect(function()
             if dist <= MAX_DISTANCE then
                 local fade = math.clamp((dist - FADE_START) / (MAX_DISTANCE - FADE_START), 0, 1)
                 
-                vis.Highlight.Parent = botModel
+                vis.Highlight.Parent = botEntity
                 vis.Highlight.OutlineTransparency = fade
                 
                 vis.UI.Adornee = head
@@ -221,10 +222,10 @@ _G.SystemViewBotConnection = RunService.RenderStepped:Connect(function()
                 vis.NameLabel.TextTransparency = fade
                 vis.StatsLabel.TextTransparency = fade
                 
-                local hpText = hum and math.floor(hum.Health) or "???"
+                local hpText = hum and math.floor(hum.Health) or "N/A"
                 
-                vis.NameLabel.Text = string.format('<font color="%s">🤖: %s</font>', BOT_NAME_COLOR, botModel.Name)
-                vis.StatsLabel.Text = string.format('<font color="%s">📏: %dm.</font> | <font color="%s">❤: %s</font>', DIST_COLOR, math.floor(dist), HP_COLOR, tostring(hpText))
+                vis.NameLabel.Text = string.format('<font color="%s">👾: %s</font>', BOT_NAME_COLOR, botEntity.Name)
+                vis.StatsLabel.Text = string.format('<font color="%s">📏 %dm</font> | <font color="%s">❤ %s</font>', DIST_COLOR, math.floor(dist), HP_COLOR, tostring(hpText))
             else
                 vis.Highlight.Parent = nil
                 vis.UI.Enabled = false
