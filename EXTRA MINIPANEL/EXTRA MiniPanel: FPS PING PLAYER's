@@ -30,7 +30,7 @@ miniPainel.Size = UDim2.new(0.96, 0, 0, 90) -- Altura ajustada para Título + Bo
 miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 miniPainel.BackgroundTransparency = 0.4
 miniPainel.BorderSizePixel = 0
-miniPainel.ZIndex = extraLista.ZIndex + 2
+miniPainel.ZIndex = extraLista.ZIndex + 3
 miniPainel.Parent = extraLista
 
 local corner = Instance.new("UICorner")
