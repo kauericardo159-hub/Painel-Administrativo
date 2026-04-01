@@ -3,7 +3,6 @@
 >
 > > 31/03/2026 - Data da mensagem.
 >
->
 > Atualização feita.
 >
 > - Novo Designer
@@ -23,7 +22,7 @@
 
 <div align="center">
   
-# <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/74280d7e-1def-4ecd-8158-31d4ea0e3df9" /> SEJA BEM-VINDO (A) PAINEL ADMINISTRATIVO <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/8428ea1b-19d)0-4e63-8ca1-189752ee9d60" />
+# <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/74280d7e-1def-4ecd-8158-31d4ea0e3df9" /> SEJA BEM-VINDO (A) PAINEL ADMINISTRATIVO <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/74280d7e-1def-4ecd-8158-31d4ea0e3df9" />
 
 [![Repositório Status](https://img.shields.io/github/directory-file-count/kauericardo159-hub/Painel-Administrativo?style=for-the-badge&color=8428ea&label=ARQUIVOS)](https://github.com/kauericardo159-hub/Painel-Administrativo/tree/main)
 [![Repo Size](https://img.shields.io/github/repo-size/kauericardo159-hub/Painel-Administrativo?style=for-the-badge&color=74280d)](https://github.com/kauericardo159-hub/Painel-Administrativo)
