@@ -4,7 +4,7 @@ local player = Players.LocalPlayer
 
 --[[ 
 ===========================================================
-       ⚙ MINI-PAINEL EXTRA: FPS | PING | PLAYERS V3 ⚙
+       ⚙ MINI-PAINEL EXTRA: FPS | PING | PLAYERS V10 ⚙
 ===========================================================
 ]]
 
@@ -16,104 +16,97 @@ local extraLista = painel:WaitForChild("ExtraListContainer")
 
 local functionName = "FPSPingCard"
 local saveKey = "FPSPingStatus"
-local monitorGuiName = "FPSPingMonitorUI" -- Nome do elemento visual na tela
+local monitorGuiName = "FPSPingMonitorUI"
 
 -- Limpeza de duplicatas
 if extraLista:FindFirstChild(functionName) then
     extraLista[functionName]:Destroy()
 end
 
--- 2. CRIAÇÃO DO MINI-PAINEL (Design Compacto)
+-- 2. CRIAÇÃO DO MINI-PAINEL (Elite Design V10)
 local miniPainel = Instance.new("Frame")
 miniPainel.Name = functionName
-miniPainel.Size = UDim2.new(0.95, 0, 0, 50)
-miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+miniPainel.Size = UDim2.new(0.96, 0, 0, 90) -- Altura ajustada para Título + Botão
+miniPainel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 miniPainel.BackgroundTransparency = 0.4
 miniPainel.BorderSizePixel = 0
 miniPainel.ZIndex = extraLista.ZIndex + 1
 miniPainel.Parent = extraLista
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
+corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = miniPainel
 
--- ✅ UIStroke AZUL ESCURO
-local strokeAzul = Instance.new("UIStroke")
-strokeAzul.Thickness = 2
-strokeAzul.Color = Color3.fromRGB(0, 50, 150)
-strokeAzul.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-strokeAzul.Parent = miniPainel
+-- Borda sutil Elite
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1.5
+stroke.Color = Color3.fromRGB(255, 255, 255)
+stroke.Transparency = 0.7
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Parent = miniPainel
 
--- ✅ UIStroke PRETO ANIMADO (Efeito de brilho)
-local strokePreto = Instance.new("UIStroke")
-strokePreto.Thickness = 4
-strokePreto.Color = Color3.fromRGB(0, 0, 0)
-strokePreto.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-strokePreto.Transparency = 1
-strokePreto.Parent = miniPainel
-
--- 3. ANIMAÇÃO DO UIStroke PRETO
-task.spawn(function()
-    while miniPainel.Parent do
-        local tweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
-        local fadeOut = TweenService:Create(strokePreto, tweenInfo, {Transparency = 1})
-        local fadeIn = TweenService:Create(strokePreto, tweenInfo, {Transparency = 0.5})
-        fadeIn:Play()
-        fadeIn.Completed:Wait()
-        fadeOut:Play()
-        fadeOut.Completed:Wait()
-    end
-end)
-
--- 4. TÍTULO (Posicionado à esquerda)
+-- 3. TÍTULO (Topo Centralizado)
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0.5, 0, 1, 0)
-title.Position = UDim2.new(0, 10, 0, 0)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 8)
 title.BackgroundTransparency = 1
-title.Text = "FPS | PING | P."
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "PERFORMANCE MONITOR"
+title.TextColor3 = Color3.fromRGB(200, 200, 200)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 14
-title.TextXAlignment = Enum.TextXAlignment.Left
+title.TextSize = 12
+title.TextTransparency = 0.3
 title.Parent = miniPainel
 
--- 5. LÓGICA DE SALVAMENTO E ESTADO
-local isActive = _G[saveKey] or false
+-- 4. CONTAINER DO BOTÃO (Embaixo do Título)
+local btnContainer = Instance.new("Frame")
+btnContainer.Size = UDim2.new(1, 0, 0, 40)
+btnContainer.Position = UDim2.new(0, 0, 0, 45)
+btnContainer.BackgroundTransparency = 1
+btnContainer.Parent = miniPainel
 
--- Botão (Switch) - Agora ao lado do título
+local labelText = Instance.new("TextLabel")
+labelText.Size = UDim2.new(1, 0, 0, 15)
+labelText.Position = UDim2.new(0, 0, 0, -5)
+labelText.Text = "FPS • PING • PLAYERS"
+labelText.TextColor3 = Color3.fromRGB(255, 255, 255)
+labelText.Font = Enum.Font.GothamMedium
+labelText.TextSize = 13
+labelText.BackgroundTransparency = 1
+labelText.Parent = btnContainer
+
+-- Cores
+local colorInactiveBase = Color3.fromRGB(40, 15, 15)
+local colorInactiveStroke = Color3.fromRGB(200, 50, 50)
+local colorActiveBase = Color3.fromRGB(15, 40, 25)
+local colorActiveStroke = Color3.fromRGB(50, 200, 100)
+
+-- Botão (Switch)
 local btnBase = Instance.new("TextButton")
-btnBase.Size = UDim2.new(0, 50, 0, 25)
-btnBase.Position = UDim2.new(1, -60, 0.5, 0)
-btnBase.AnchorPoint = Vector2.new(0, 0.5)
+btnBase.Size = UDim2.new(0, 50, 0, 24)
+btnBase.Position = UDim2.new(0.5, 0, 0.7, 0)
+btnBase.AnchorPoint = Vector2.new(0.5, 0.5)
 btnBase.Text = ""
 btnBase.AutoButtonColor = false
-btnBase.ZIndex = miniPainel.ZIndex + 2
-btnBase.Parent = miniPainel
+btnBase.Parent = btnContainer
 
 Instance.new("UICorner", btnBase).CornerRadius = UDim.new(1, 0)
 
--- Stroke do Botão (UIStroke no botão como solicitado)
 local btnStroke = Instance.new("UIStroke")
-btnStroke.Thickness = 2
+btnStroke.Thickness = 1.5
 btnStroke.Parent = btnBase
 
--- Knob (Círculo)
 local knob = Instance.new("Frame")
-knob.Size = UDim2.new(0, 19, 0, 19)
+knob.Size = UDim2.new(0, 18, 0, 18)
 knob.AnchorPoint = Vector2.new(0, 0.5)
 knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-knob.ZIndex = btnBase.ZIndex + 1
 knob.Parent = btnBase
 Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
--- Cores
-local colorInactiveBase = Color3.fromRGB(100, 0, 0)
-local colorInactiveStroke = Color3.fromRGB(255, 0, 0)
-local colorActiveBase = Color3.fromRGB(0, 80, 0)
-local colorActiveStroke = Color3.fromRGB(0, 255, 0)
+-- 5. LÓGICA DE ESTADO E ATUALIZAÇÃO
+local isActive = _G[saveKey] or false
 
 local function UpdateVisual(instant)
-    local targetPos = isActive and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+    local targetPos = isActive and UDim2.new(0.9, -18, 0.5, 0) or UDim2.new(0.1, 0, 0.5, 0)
     local targetBaseColor = isActive and colorActiveBase or colorInactiveBase
     local targetStrokeColor = isActive and colorActiveStroke or colorInactiveStroke
     
@@ -122,40 +115,38 @@ local function UpdateVisual(instant)
         btnBase.BackgroundColor3 = targetBaseColor
         btnStroke.Color = targetStrokeColor
     else
-        TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
-        TweenService:Create(btnBase, TweenInfo.new(0.2), {BackgroundColor3 = targetBaseColor}):Play()
-        TweenService:Create(btnStroke, TweenInfo.new(0.2), {Color = targetStrokeColor}):Play()
+        TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Position = targetPos}):Play()
+        TweenService:Create(btnBase, TweenInfo.new(0.3), {BackgroundColor3 = targetBaseColor}):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.3), {Color = targetStrokeColor}):Play()
     end
 end
 
--- Inicializa visual
 UpdateVisual(true)
 
--- 6. LÓGICA DE CLIQUE E loadstring (ATUALIZADA)
+-- 6. CLIQUE COM NOTIFICAÇÃO
 btnBase.MouseButton1Click:Connect(function()
     isActive = not isActive
     _G[saveKey] = isActive 
     UpdateVisual(false)
     
+    -- Disparar Notificação Elite
+    if _G.NotifyElite then
+        local statusTxt = isActive and "ATIVADO" or "DESATIVADO"
+        _G.NotifyElite("STATS MONITOR", "Monitor de Performance " .. statusTxt, isActive)
+    end
+    
     if isActive then
-        -- ✅ LOADSTRING ATIVADO (Sem comentários)
-        print("Ativando Monitor FPS...")
         loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/EXTRA%20SYSTEM/EXTRA%20SYSTEM%3A%20FPS%20PING%20PLAYER's"))()
     else
-        -- ✅ LÓGICA DE DESATIVAÇÃO (Para sumir da tela)
-        print("Desativando Monitor FPS...")
-        
-        -- PROCURA E REMOVE O ELEMENTO VISUAL NA TELA
         local existingMonitor = playerGui:FindFirstChild(monitorGuiName)
         if existingMonitor then
             existingMonitor:Destroy()
         end
-        -- Você também pode adicionar aqui uma lógica extra se o script loadstring criar variáveis globais
     end
 end)
 
--- 7. ANIMAÇÃO DE ENTRADA DO CARD
-miniPainel.Position = UDim2.new(1.2, 0, 0, 0)
-TweenService:Create(miniPainel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+-- 7. ANIMAÇÃO DE ENTRADA
+miniPainel.Position = UDim2.new(1.5, 0, 0, 0)
+TweenService:Create(miniPainel, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0.02, 0, 0, 0)}):Play()
 
-print("✅ MiniPainel Extra FPS/Ping V3 Carregado!")
+print("✅ Extra MiniPanel V10: Design e Notificações integrados!")
