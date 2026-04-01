@@ -11,7 +11,7 @@ local player = Players.LocalPlayer
 -- 1. CONEXÃO SEGURA COM O SISTEMA LÓGICO
 if not _G.ViewItensSystemLoaded then
     task.spawn(pcall, function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM%3A%20View%20Itens"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/kauericardo159-hub/Painel-Administrativo/refs/heads/main/SYSTEM/SYSTEM%3A%20View%20Itens"))()
         _G.ViewItensSystemLoaded = true
     end)
 end
