@@ -1,21 +1,29 @@
 
->[!WARNING]
+>[!TIP]
 >
 > > 31/03/2026 - Data da mensagem.
 >
-> O script total vai estar em **manutenção**, caso tente usa-lo, não irá acontecer nada e apenas terá um print do aviso no console.
 >
-> Porquê?
+> Atualização feita.
 >
-> Estou organizando tudo para não ficar uma bagunça e ser mais fácil de mexer nos arquivos, por conta disso os links são mudados por eu estar alterando eles para as pastas, então meio que irá demorar um pouco por eu estar ocupado.
+> - Novo Designer
+> > Ainda falta na lista extras
+> 
+> - Notificação adicionada.
 >
-> > 75% pronto
+> **Embreve:**
 >
+> - View Player & Bot terão melhorias
+> > View Bot vai ser mais melhorado.
+> 
+> - View Itens terá melhoria.
+> > Talvez irá funcionar em mais mapas.
+
 ---
 
 <div align="center">
   
-# <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/74280d7e-1def-4ecd-8158-31d4ea0e3df9" /> SEJA BEM-VINDO (A) PAINEL ADMINISTRATIVO <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/8428ea1b-19d0-4e63-8ca1-189752ee9d60" />
+# <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/74280d7e-1def-4ecd-8158-31d4ea0e3df9" /> SEJA BEM-VINDO (A) PAINEL ADMINISTRATIVO <img width="50" height="50" alt="8962" src="https://github.com/user-attachments/assets/8428ea1b-19d)0-4e63-8ca1-189752ee9d60" />
 
 [![Repositório Status](https://img.shields.io/github/directory-file-count/kauericardo159-hub/Painel-Administrativo?style=for-the-badge&color=8428ea&label=ARQUIVOS)](https://github.com/kauericardo159-hub/Painel-Administrativo/tree/main)
 [![Repo Size](https://img.shields.io/github/repo-size/kauericardo159-hub/Painel-Administrativo?style=for-the-badge&color=74280d)](https://github.com/kauericardo159-hub/Painel-Administrativo)
